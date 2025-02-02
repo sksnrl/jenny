@@ -11,27 +11,27 @@
       margin: 0;
     }
 
-    @keyframes spin {
-      0% { transform: translateY(0px); }
-      8.33% { transform: translateY(-150px); }
-      16.67% { transform: translateY(-300px); }
-      25% { transform: translateY(-450px); }
-      33.33% { transform: translateY(-600px); }
-      41.67% { transform: translateY(-750px); }
-      50% { transform: translateY(-900px); }
-      58.33% { transform: translateY(-1050px); }
-      66.67% { transform: translateY(-1200px); }
-      75% { transform: translateY(-1350px); }
-      83.33% { transform: translateY(-1500px); }
-      91.67% { transform: translateY(-1650px); }
-      100% { transform: translateY(-1800px); } 
-    }
+@keyframes spin {
+  0% { transform: translateY(0px); }
+  8.33% { transform: translateY(-100px); } /* 기존 -150px → -100px */
+  16.67% { transform: translateY(-200px); }
+  25% { transform: translateY(-300px); }
+  33.33% { transform: translateY(-400px); }
+  41.67% { transform: translateY(-500px); }
+  50% { transform: translateY(-600px); }
+  58.33% { transform: translateY(-700px); }
+  66.67% { transform: translateY(-800px); }
+  75% { transform: translateY(-900px); }
+  83.33% { transform: translateY(-1000px); }
+  91.67% { transform: translateY(-1100px); }
+  100% { transform: translateY(-1200px); } /* 마지막 위치도 맞춰야 함 */
+}
 
     /* 슬롯 칸 디자인 */
     .slot {
       background-color: white;
-      width: 150px;
-      height: 150px;
+  width: 100px; /* 기존 150px → 100px */
+  height: 100px; /* 기존 150px → 100px */
       overflow: hidden;
       position: relative;
       margin: 0 auto;
@@ -55,7 +55,7 @@
 
     .reel img {
       width: 100%;
-      height: 100%;
+  height: auto; /* 높이를 자동 조정 */
       display: block;
     }
 
@@ -63,10 +63,10 @@
     .start-button,
     .stop-button,
     .auto-button {
-      width: 150px;
+  width: 120px; /* 기존 150px → 120px */
+  font-size: 16px; /* 기존 18px → 16px */
+  padding: 8px 16px; /* 기존 10px 20px → 8px 16px */
       margin-top: 8px;
-      padding: 10px 20px;
-      font-size: 18px;
       cursor: pointer;
       border: none;
       border-radius: 25px; /* 버튼 모서리를 둥글게 */
@@ -85,8 +85,8 @@
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
     .slots-container {
-      width: 480px;
-      height: 150px;
+  width: 320px; /* 기존 480px → 320px */
+  height: 100px; /* 기존 150px → 100px */
       display: flex;
       justify-content: space-around;
       margin-top: 20px;
