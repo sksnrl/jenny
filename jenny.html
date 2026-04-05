@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JENNIE LAND</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
+        body { margin: 0; padding: 0; background-color: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        h1 { color: #ffeb3b; margin-bottom: 10px; text-shadow: 0 0 10px #ff9800, 2px 2px 0px #fff; font-size: 2rem; letter-spacing: 2px; }
+        #game-wrapper { position: relative; background: #16213e; padding: 15px; border-radius: 15px; box-shadow: 0 15px 50px rgba(255,235,59,0.1), inset 0 0 20px #0f3460; }
+        #game-container { width: 700px; height: 600px; border-radius: 8px; overflow: hidden; background: linear-gradient(to bottom, #e0f7fa, #fff); border: 5px solid #ffeb3b; position: relative; }
+        canvas { display: block; }
+        .status-panel { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); color: #00e676; padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; pointer-events: none; border: 1px solid #ffeb3b; text-align: right; line-height: 1.4; min-width: 180px; }
+        .controls { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        button { padding: 15px 30px; font-size: 18px; font-weight: 900; color: #fff; background-color: #29b6f6; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 6px 0 #0277bd; transition: all 0.1s ease; }
+        button:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 #0277bd; }
+        button:disabled { background-color: #455a64; box-shadow: 0 6px 0 #263238; opacity: 0.8; }
+        #btn-down { background-color: #ff4081; box-shadow: 0 6px 0 #c2185b; }
+    </style>
+</head>
+<body>
+
+    <h1>🕹️ 제니가 뽑아줄게요 🕹️</h1>
+
+    <div id="game-wrapper">
+        <div id="game-container">
+            <div class="status-panel" id="status-text">
+                남은 기회: 5/5<br>
+                준비 완료!
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-left">◀ 왼쪽</button>
+        <button id="btn-right">오른쪽 ▶</button>
+        <button id="btn-down">👇 잡기!</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script>
+        const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Body = Matter.Body, Composite = Matter.Composite, Events = Matter.Events;
+
+        let engine = Engine.create();
+        let world = engine.world;
+        const render = Render.create({
+            element: document.getElementById('game-container'),
+            engine: engine,
+            options: { width: 700, height: 600, wireframes: false, background: 'transparent' }
+        });
+
+        Render.run(render);
+        let runner = Runner.create();
+        Runner.run(runner, engine);
+
+        // --- 게임 변수 ---
+        let attempts = 0;
+        const MAX_ATTEMPTS = 5;
+        let caughtItems = []; // 획득한 아이템 리스트
+        let toys = [];
+        let gameState = 'IDLE'; 
+        let clawPos = { x: 400, y: 50 };
+        let currentLeftAngle = 0.75, targetLeftAngle = 0.75;
+        let isMovingLeft = false, isMovingRight = false;
+        let actionTimer = 0, willLoosen = false, dynamicLoosenHeight = 0, dynamicLoosenAngle = 0;
+
+        const ANGLE_OPEN = 0.55, ANGLE_CLOSE = 0.05, PIVOT_OFFSET = 5;
+        const uiStatus = document.getElementById('status-text'), btnLeft = document.getElementById('btn-left'), btnRight = document.getElementById('btn-right'), btnDown = document.getElementById('btn-down');
+        let clawBase, leftArm, rightArm;
+
+        function initGame() {
+            Composite.clear(world);
+            attempts = 0; caughtItems = []; toys = []; gameState = 'IDLE'; clawPos = { x: 400, y: 50 };
+            
+            // 구조물
+            const ground = Bodies.rectangle(350, 610, 720, 60, { isStatic: true, render: { fillStyle: '#263238' } });
+            const leftWall = Bodies.rectangle(-10, 300, 60, 620, { isStatic: true, render: { fillStyle: '#263238' } });
+            const rightWall = Bodies.rectangle(710, 300, 60, 620, { isStatic: true, render: { fillStyle: '#263238' } });
+            const roof = Bodies.rectangle(350, -50, 720, 60, { isStatic: true }); 
+
+            // 바구니 (중심 170, 두께 20 -> 안쪽 벽 경계선 약 160)
+            const binWall = Bodies.rectangle(170, 480, 20, 260, { isStatic: true, render: { fillStyle: '#ff4081' }, chamfer: { radius: 5 } });
+            const binFloor = Bodies.rectangle(85, 590, 150, 20, { isStatic: true, render: { fillStyle: '#000' } });
+
+            // 집게
+            clawBase = Bodies.rectangle(400, 50, 80, 35, { isStatic: true, render: { fillStyle: '#455a64', strokeStyle: '#ffeb3b', lineWidth: 2 } });
+            leftArm = Body.create({
+                parts: [Bodies.rectangle(385, 90, 8, 75, { render: { fillStyle: '#78909c' } }), Bodies.rectangle(393, 128, 14, 8, { angle: Math.PI/8, render: { fillStyle: '#ffeb3b' } })], isStatic: true 
+            });
+            rightArm = Body.create({
+                parts: [Bodies.rectangle(415, 90, 8, 75, { render: { fillStyle: '#78909c' } }), Bodies.rectangle(407, 128, 14, 8, { angle: -Math.PI/8, render: { fillStyle: '#ffeb3b' } })], isStatic: true 
+            });
+
+            targetLeftAngle = ANGLE_OPEN; currentLeftAngle = ANGLE_OPEN;
+            Body.rotate(leftArm, ANGLE_OPEN, { x: 400 - PIVOT_OFFSET, y: 30 });
+            Body.rotate(rightArm, -ANGLE_OPEN, { x: 400 + PIVOT_OFFSET, y: 30 });
+
+            // 아이템 생성
+            const itemTypes = [
+                { name: "꽝", size: 26, color: "#B0BEC5" }, { name: "신청곡", size: 26, color: "#FFCC80" },
+                { name: "구독", size: 24, color: "#EF9A9A" }, { name: "노래", size: 26, color: "#CE93D8" },
+                { name: "퀵뷰", size: 22, color: "#81D4FA" }, { name: "뽑기5", size: 20, color: "#80CBC4" },
+                { name: "댄스", size: 20, color: "#C5E1A5" }, { name: "역팬", size: 20, color: "#FFAB91" },
+                { name: "셀카", size: 14, color: "#F48FB1" }, { name: "스쿼트100", size: 14, color: "#BCAAA4" },
+                { name: "방셀", size: 12, color: "#9FA8DA" }, { name: "배민", size: 12, color: "#26C6DA" }
+            ];
+
+            itemTypes.forEach(item => {
+                for (let i = 0; i < 3; i++) {
+                    const body = Bodies.circle(250 + Math.random() * 400, 300 + Math.random() * 200, item.size, { 
+                        restitution: 0.2, friction: 0.5, density: 0.002, label: item.name,
+                        render: { fillStyle: item.color, strokeStyle: '#333', lineWidth: 1 }
+                    });
+                    body.isCaught = false; // 커스텀 속성 부여
+                    toys.push(body);
+                }
+            });
+
+            Composite.add(world, [ground, leftWall, rightWall, roof, binWall, binFloor, clawBase, leftArm, rightArm, ...toys]);
+            updateUI("준비 완료!");
+            btnDown.disabled = btnLeft.disabled = btnRight.disabled = false;
+        }
+
+        function updateUI(msg) {
+            uiStatus.innerHTML = `남은 기회: ${MAX_ATTEMPTS - attempts}/${MAX_ATTEMPTS}<br>${msg}`;
+        }
+
+        // 실시간으로 바구니 안을 체크하는 함수
+        function updateCatchDetection() {
+            toys.forEach(toy => {
+                // 바구니의 경계선(x=165) 보다 왼쪽으로 가면 획득 판정
+                if (!toy.isCaught && toy.position.x < 165 && toy.position.y > 400) {
+                    toy.isCaught = true;
+                    caughtItems.push(toy.label);
+                    console.log("획득 감지:", toy.label); // 디버깅용
+                }
+            });
+        }
+
+        function endGame() {
+            // 결과창을 띄우기 전에 한 번 더 최종 체크
+            updateCatchDetection();
+            
+            const summary = caughtItems.length > 0 
+                ? `총 ${caughtItems.length}개를 뽑았습니다!\n\n[목록]\n${caughtItems.join(", ")}` 
+                : "아쉽게도 하나도 뽑지 못했습니다.";
+            
+            alert(`[게임 종료]\n\n${summary}`);
+            initGame();
+        }
+
+        const moveLeft = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') isMovingLeft = true; };
+        const moveRight = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') isMovingRight = true; };
+        const stopMove = (e) => { if(e.cancelable) e.preventDefault(); isMovingLeft = false; isMovingRight = false; };
+        const grabAction = (e) => {
+            if(e.cancelable) e.preventDefault(); if (gameState !== 'IDLE' || attempts >= MAX_ATTEMPTS) return;
+            gameState = 'DROPPING'; btnDown.disabled = btnLeft.disabled = btnRight.disabled = true; updateUI("하강 중...");
+        };
+
+        btnLeft.addEventListener('mousedown', moveLeft); btnLeft.addEventListener('touchstart', moveLeft, {passive:false});
+        btnRight.addEventListener('mousedown', moveRight); btnRight.addEventListener('touchstart', moveRight, {passive:false});
+        btnDown.addEventListener('mousedown', grabAction); btnDown.addEventListener('touchstart', grabAction, {passive:false});
+        window.addEventListener('mouseup', stopMove); window.addEventListener('touchend', stopMove, {passive:false});
+
+        Events.on(engine, 'beforeUpdate', function() {
+            // 매 프레임마다 바구니 안의 아이템 감지
+            updateCatchDetection();
+
+            let dx = 0, dy = 0;
+            const speedDrop = 3.5, speedRise = 3.5, speedX = 4.0;
+
+            switch (gameState) {
+                case 'IDLE':
+                    if (isMovingLeft && clawPos.x > 220) dx = -speedX;
+                    if (isMovingRight && clawPos.x < 650) dx = speedX;
+                    break;
+                case 'DROPPING':
+                    dy = speedDrop;
+                    if (clawPos.y >= 460) { gameState = 'GRABBING'; actionTimer = 0; updateUI("꽉 쥐기!"); targetLeftAngle = ANGLE_CLOSE; }
+                    break;
+                case 'GRABBING':
+                    actionTimer++;
+                    if (actionTimer > 40) {
+                        gameState = 'ASCENDING'; updateUI("상승 중...");
+                        willLoosen = Math.random() < 0.98;
+                        dynamicLoosenHeight = 150 + Math.random() * 250;
+                        dynamicLoosenAngle = 0.10 + (Math.random() * 0.3);
+                    }
+                    break;
+                case 'ASCENDING':
+                    dy = -speedRise; dx = (Math.random() - 0.5) * 1.5;
+                    if (willLoosen && clawPos.y < dynamicLoosenHeight && targetLeftAngle === ANGLE_CLOSE) {
+                        targetLeftAngle = dynamicLoosenAngle;
+                        updateUI("집게가 흔들립니다!");
+                    }
+                    if (clawPos.y <= 60) { gameState = 'RETURNING'; dx = 0; clawPos.y = 60; updateUI("이동 중..."); }
+                    break;
+                case 'RETURNING':
+                    dx = -speedX;
+                    if (clawPos.x <= 100) { gameState = 'RELEASING'; actionTimer = 0; updateUI("투하!"); targetLeftAngle = ANGLE_OPEN; }
+                    break;
+                case 'RELEASING':
+                    actionTimer++;
+                    if (actionTimer > 120) { // 떨어지는 시간을 충분히 주기 위해 120프레임 대기
+                        attempts++;
+                        if (attempts >= MAX_ATTEMPTS) {
+                            endGame();
+                        } else {
+                            gameState = 'RESETTING';
+                        }
+                    }
+                    break;
+                case 'RESETTING':
+                    if (clawPos.x < 400) dx = speedX;
+                    else { dx = 400 - clawPos.x; gameState = 'IDLE'; updateUI("준비 완료!"); btnDown.disabled = btnLeft.disabled = btnRight.disabled = false; }
+                    break;
+            }
+
+            if (dx !== 0 || dy !== 0) {
+                Body.translate(clawBase, { x: dx, y: dy }); Body.translate(leftArm, { x: dx, y: dy }); Body.translate(rightArm, { x: dx, y: dy });
+                clawPos.x += dx; clawPos.y += dy;
+            }
+            let dAngle = (targetLeftAngle - currentLeftAngle) * 0.15;
+            if (Math.abs(dAngle) > 0.001) {
+                Body.rotate(leftArm, dAngle, { x: clawPos.x - PIVOT_OFFSET, y: clawPos.y });
+                Body.rotate(rightArm, -dAngle, { x: clawPos.x + PIVOT_OFFSET, y: clawPos.y });
+                currentLeftAngle += dAngle;
+            }
+        });
+
+        Events.on(render, 'afterRender', function() {
+            const context = render.context;
+            context.font = "bold 13px Pretendard";
+            context.textAlign = "center";
+            for (let body of toys) {
+                context.lineWidth = 3;
+                context.strokeStyle = "rgba(255, 255, 255, 0.8)";
+                context.strokeText(body.label, body.position.x, body.position.y);
+                context.fillStyle = "#111";
+                context.fillText(body.label, body.position.x, body.position.y);
+            }
+        });
+
+        initGame();
+    </script>
+</body>
+</html>
