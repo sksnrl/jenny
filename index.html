@@ -208,7 +208,7 @@
 
     const winTable = {
         "001": "댄스", "002": "노래", "003": "방셀", "005": "구독", 
-        "006": "역팬", "007": "스쿼트 100", "008": "배민", "009": "뽑기", "010": "구독"
+        "006": "역팬", "007": "스쿼트 100", "008": "배민", "009": "뽑기"
     };
 
     const symbols = [
@@ -220,7 +220,7 @@
         '<img src="007.png" class="symbol-image" data-id="007">',
         '<img src="008.png" class="symbol-image" data-id="008">',
         '<img src="009.png" class="symbol-image" data-id="009">'
-        
+
     ];
 
     const highProbIds = ["001", "002", "005", "006"];
@@ -333,9 +333,9 @@
     stopBtns.forEach((btn, idx) => btn.addEventListener('click', () => stopColumn(idx)));
     autoBtn.addEventListener('click', () => {
         startSpin();
-        setTimeout(() => stopColumn(0), 800);
-        setTimeout(() => stopColumn(1), 1400);
-        setTimeout(() => stopColumn(2), 2000);
+        setTimeout(() => stopColumn(0), 1600);
+        setTimeout(() => stopColumn(1), 3600);
+        setTimeout(() => stopColumn(2), 7200);
     });
 </script>
 </body>
