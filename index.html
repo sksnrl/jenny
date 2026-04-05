@@ -1,289 +1,376 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>슬롯머신</title>
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JENNIE LAND SLOT</title>
+    <style>
+        /* 🌟 프리텐다드 상세 폰트 적용 */
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+            font-weight: 100;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+            font-weight: 200;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+            font-weight: 300;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+            font-weight: 600;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+            font-weight: 800;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Pretendard';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+            font-weight: 900;
+            font-display: swap;
+        }
 
-    body {
-      background-color: #008400;
-      margin: 0;
-    }
+        :root {
+            --gold: #ffd700;
+            --neon-purple: #bc13fe;
+            --font-main: 'Pretendard', sans-serif;
+        }
 
-@keyframes spin {
-  0% { transform: translateY(0px); }
-  8.33% { transform: translateY(-100px); } /* 기존 -150px → -100px */
-  16.67% { transform: translateY(-200px); }
-  25% { transform: translateY(-300px); }
-  33.33% { transform: translateY(-400px); }
-  41.67% { transform: translateY(-500px); }
-  50% { transform: translateY(-600px); }
-  58.33% { transform: translateY(-700px); }
-  66.67% { transform: translateY(-800px); }
-  75% { transform: translateY(-900px); }
-  83.33% { transform: translateY(-1000px); }
-  91.67% { transform: translateY(-1100px); }
-  100% { transform: translateY(-1200px); } /* 마지막 위치도 맞춰야 함 */
+body {
+    background: #00ff00; /* 크로마키 녹색 적용 */
+    color: #fff;
+    font-family: var(--font-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
 }
+        .slot-machine {
+            background: linear-gradient(-150deg, #333, #000);
+            border: 10px solid #444;
+            border-radius: 50px;
+            padding: 50px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 30px #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            perspective: 1200px; 
+        }
 
-    /* 슬롯 칸 디자인 */
-    .slot {
-      background-color: white;
-  width: 100px; /* 기존 150px → 100px */
-  height: 100px; /* 기존 150px → 100px */
-      overflow: hidden;
-      position: relative;
-      margin: 0 auto;
-      border: 2px solid #ccc;
-      border-radius: 50%; /* 동그라미로 변경 */
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
+        .title-panel {
+            font-size: 48px;
+            font-weight: 900; /* Black */
+            color: var(--gold);
+            text-shadow: 0 0 10px var(--gold), 0 0 30px #ff8c00;
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+            font-style: italic;
+            text-transform: uppercase;
+        }
 
-    .reel-container {
-      height: 100px;
-      overflow: hidden;
-      position: absolute;
-      bottom: 0;
-    }
+        .reels-container {
+            background: #0a0a0a;
+            border: 5px solid var(--neon-purple);
+            border-radius: 25px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 25px;
+            box-shadow: 0 0 25px var(--neon-purple), inset 0 0 20px #000;
+            margin-bottom: 35px;
+        }
 
-    .reel {
-      width: 100%;
-      height: 100%;
-      transform: translateY(0);
-    }
+        .reel-cell {
+            width: 130px; height: 130px;
+            background: linear-gradient(to bottom, #111, #333, #111);
+            border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            border: 2px solid #222; overflow: hidden;
+            box-shadow: inset 0 0 15px #000;
+        }
 
-    .reel img {
-      width: 100%;
-  height: auto; /* 높이를 자동 조정 */
-      display: block;
-    }
+        .symbol-image {
+            width: 100px; height: 100px;
+            object-fit: contain; transition: transform 0.3s ease;
+        }
 
-    /* 버튼 디자인 */
-    .start-button,
-    .stop-button,
-    .auto-button {
-  width: 120px; /* 기존 150px → 120px */
-  font-size: 16px; /* 기존 18px → 16px */
-  padding: 8px 16px; /* 기존 10px 20px → 8px 16px */
-      margin-top: 8px;
-      cursor: pointer;
-      border: none;
-      border-radius: 25px; /* 버튼 모서리를 둥글게 */
-      background: linear-gradient(45deg, #ff7f50, #ff4500); /* 버튼 그라데이션 */
-      color: white;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    /* 버튼 호버 효과 */
-    .start-button:hover,
-    .stop-button:hover,
-    .auto-button:hover {
-      background: linear-gradient(45deg, #ff4500, #ff7f50);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-    .slots-container {
-  width: 320px; /* 기존 480px → 320px */
-  height: 100px; /* 기존 150px → 100px */
-      display: flex;
-      justify-content: space-around;
-      margin-top: 20px;
-    }
+        .win-effect {
+            animation: win-pulse 0.5s infinite alternate;
+            filter: drop-shadow(0 0 20px var(--gold));
+            z-index: 10;
+        }
 
-    .button-container {
-      width: 480px;
-      height: 100px;
-      display: flex;
-      justify-content: space-around;
-      margin-top: 10px;
-    }
+        @keyframes win-pulse {
+            from { transform: scale(1); rotate: 0deg; }
+            to { transform: scale(1.25); rotate: 5deg; }
+        }
 
-    /* 추가된 부분 */
-  .blinking {
-    animation: blinkBorder 4.5s infinite alternate;
+        .controls { width: 100%; display: flex; flex-direction: column; gap: 25px; }
 
-  }
+        .display-screen {
+            background: #000; border: 3px solid #333; padding: 18px;
+            border-radius: 12px; text-align: center;
+            font-size: 22px; font-weight: 700; color: #0f0;
+            text-shadow: 0 0 8px #0f0; box-shadow: inset 0 0 10px #0f04;
+        }
 
-@keyframes blinkBorder {
-  0% { border-color: #FF00FF; } /* 마젠타 */
-  25% { border-color: #00FF00; } /* 라임 그린 */
-  50% { border-color: #FFD700; } /* 금색 */
-  75% { border-color: #FF4500; } /* 오렌지 레드 */
-  100% { border-color: #00FFFF; } /* 시안 */
-}
+        .win-text { color: var(--gold) !important; text-shadow: 0 0 15px var(--gold) !important; }
 
+        .stop-btns { display: flex; justify-content: space-between; gap: 12px; }
 
-  </style>
+        .btn {
+            background: #222; color: #eee; border: 2px solid #444;
+            padding: 12px; border-radius: 12px; cursor: pointer;
+            font-weight: 600; font-size: 16px; transition: 0.2s;
+            flex: 1; font-family: var(--font-main);
+        }
+
+        .btn:active:not(:disabled) { transform: translateY(3px); background: #444; }
+        .btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        .btn-stop { border-color: #ff4444; color: #ff4444; }
+        .btn-auto { border-color: var(--gold); color: var(--gold); font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+
+        /* --- 🌟 리얼 CSS 레버 --- */
+        .lever-base {
+            position: absolute; right: -45px; top: 50%; transform: translateY(-50%);
+            width: 35px; height: 110px;
+            background: linear-gradient(to right, #111, #444, #111);
+            border-radius: 0 15px 15px 0; box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+        }
+        .lever-arm {
+            position: absolute; top: 15px; left: 10px; width: 14px; height: 150px;
+            background: linear-gradient(to bottom, #777, #eee, #777);
+            border-radius: 10px; transform-origin: top center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; z-index: 100;
+        }
+        .lever-ball {
+            position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+            width: 50px; height: 50px;
+            background: radial-gradient(circle at 35% 35%, #ff5555, #900, #300);
+            border-radius: 50%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.7), inset -3px -3px 10px rgba(0,0,0,0.5);
+        }
+        .lever-arm.pulling { transform: rotateX(-75deg) translateY(10px); }
+    </style>
 </head>
 <body>
 
-  <div> <center>   <button class="start-button" onclick="startSpin('reel1', 'reel2', 'reel3')">🎰 수동</button>
-    <button class="auto-button" onclick="startAuto()('reel1', 'reel2', 'reel3')">🎰 자동</button>
-  </div>  </div>
- <center> <div class="slots-container">
-    <div class="slot" id="reel1">
-      <div class="reel-container">
-        <div class="reel" id="reel1">
-          <img src="0.png" alt="0">
-        </div>
-      </div>
+<audio id="sound-lever" src="lever.mp3" preload="auto"></audio>
+<audio id="sound-spin" src="spin.mp3" preload="auto" loop></audio>
+<audio id="sound-stop" src="stop.mp3" preload="auto"></audio>
+<audio id="sound-win" src="win.mp3" preload="auto"></audio>
+
+<div class="slot-machine">
+    <div class="title-panel">JENNIE LAND</div>
+
+    <div class="reels-container">
+        <div class="reel-cell" id="reel0_0"></div>
+        <div class="reel-cell" id="reel0_1"></div>
+        <div class="reel-cell" id="reel0_2"></div>
+        <div class="reel-cell" id="reel1_0"></div>
+        <div class="reel-cell" id="reel1_1"></div>
+        <div class="reel-cell" id="reel1_2"></div>
+        <div class="reel-cell" id="reel2_0"></div>
+        <div class="reel-cell" id="reel2_1"></div>
+        <div class="reel-cell" id="reel2_2"></div>
     </div>
 
-    <div class="slot" id="reel2">
-      <div class="reel-container" id="reel2">
-        <div class="reel" id="reel2">
-          <img src="0.png" alt="0">
+    <div class="lever-base">
+        <div class="lever-arm" id="leverArm">
+            <div class="lever-ball"></div>
         </div>
-      </div>
     </div>
 
-    <div class="slot" id="reel3">
-      <div class="reel-container" id="reel2">
-        <div class="reel" id="reel3">
-          <img src="0.png" alt="0">
+    <div class="controls">
+        <div class="display-screen" id="result-display">슬롯 대기중</div>
+        <div class="stop-btns">
+            <button class="btn btn-stop" id="stop0" disabled>정지</button>
+            <button class="btn btn-stop" id="stop1" disabled>정지</button>
+            <button class="btn btn-stop" id="stop2" disabled>정지</button>
         </div>
-      </div>
+        <button class="btn btn-auto" id="autoBtn">자동 정지</button>
     </div>
-  </div>
+</div>
 
- <!-- 시작 및 정지 버튼 및 효과음 추가 -->
-  <div class="button-container">
-  <div>
-    <button class="stop-button" onclick="stopSpin('reel1')">정지</button>
-    <button class="stop-button" onclick="stopSpin('reel2')">정지</button>
-    <button class="stop-button" onclick="stopSpin('reel3')">정지</button>
+<script>
+    const sLever = document.getElementById('sound-lever');
+    const sSpin = document.getElementById('sound-spin');
+    const sStop = document.getElementById('sound-stop');
+    const sWin = document.getElementById('sound-win');
 
-    <audio id="spinSound" src="spin_sound.mp3" loop></audio>
-  </div>
-
- <script>
-    let isSpinning = false;
-    let spinCount = 0;
-    const reels = document.querySelectorAll('.reel');
-    const spinSound = document.getElementById('spinSound');
-    const images = [];
-
-    // 이미지 추가
-    for (let i = 1; i <= 12; i++) {
-      images.push(`${i}.png`);
+    function playSound(audio) {
+        if (!audio) return;
+        audio.currentTime = 0;
+        audio.play().catch(() => {}); // 사운드 파일 없을 시 무시
     }
 
-    function randomSpeed() {
-      const minSpeed = 4;
-      return Math.random() * (6 - minSpeed) + 1;
-    }
+    const winTable = {
+        "001": "댄스", "002": "노래", "003": "방셀", "005": "구독", 
+        "006": "역팬", "007": "스쿼트 100", "008": "배민", "009": "뽑기", "010": "구독"
+    };
 
-function startSpin() {
-  if (!isSpinning) {
-    spinCount = 0;
-    spinSound.play();
+    const symbols = [
+        '<img src="001.png" class="symbol-image" data-id="001">',
+        '<img src="002.png" class="symbol-image" data-id="002">',
+        '<img src="003.png" class="symbol-image" data-id="003">',
+        '<img src="005.png" class="symbol-image" data-id="005">',
+        '<img src="006.png" class="symbol-image" data-id="006">',
+        '<img src="007.png" class="symbol-image" data-id="007">',
+        '<img src="008.png" class="symbol-image" data-id="008">',
+        '<img src="009.png" class="symbol-image" data-id="009">',
+        '<img src="010.png" class="symbol-image" data-id="010">'
+    ];
 
-    document.querySelectorAll('.slot').forEach(slot => {
-      slot.classList.add('blinking');
+    const highProbIds = ["001", "002", "005", "006"];
+    let weightedSymbols = [];
+    symbols.forEach(s => {
+        const id = s.match(/data-id="(\d+)"/)[1];
+        const weight = highProbIds.includes(id) ? 3 : 1;
+        for(let i=0; i<weight; i++) weightedSymbols.push(s);
     });
 
-    reels.forEach((reel, index) => {
-      reel.innerHTML = '';
+    let intervals = [null, null, null];
+    let isSpinning = [false, false, false];
 
-      images.forEach(imgSrc => {
-        const img = document.createElement('img');
-        img.src = imgSrc;
-        img.alt = imgSrc;
-        reel.appendChild(img);
-      });
+    const leverArm = document.getElementById('leverArm');
+    const autoBtn = document.getElementById('autoBtn');
+    const resultDisplay = document.getElementById('result-display');
+    const stopBtns = [document.getElementById('stop0'), document.getElementById('stop1'), document.getElementById('stop2')];
+    const cells = [
+        [document.getElementById('reel0_0'), document.getElementById('reel0_1'), document.getElementById('reel0_2')],
+        [document.getElementById('reel1_0'), document.getElementById('reel1_1'), document.getElementById('reel1_2')],
+        [document.getElementById('reel2_0'), document.getElementById('reel2_1'), document.getElementById('reel2_2')]
+    ];
 
-      const additionalImg = document.createElement('img');
-      additionalImg.src = '1.png';
-      additionalImg.alt = '1';
-      reel.appendChild(additionalImg);
-
-      reel.innerHTML = reel.innerHTML;
-
-      reel.style.animation = 'none';
-      void reel.offsetWidth;
-      reel.style.animation = `spin ${randomSpeed()}s infinite linear`;
-
-      reel.style.animationPlayState = 'running';
-    });
-
-    isSpinning = true;
-  }
-}
-    function startAuto() {
-      function stopAfterRandomTime(reel1, reel2, reel3) {
-        const randomTime = Math.random() * (5000 - 1000) + 3000;
-        setTimeout(() => {
-          stopSpin(reel1, reel2, reel3);
-        }, randomTime);
-      }
-
-      startSpin('reel1', 'reel2', 'reel3');
-      stopAfterRandomTime('reel1');
-      stopAfterRandomTime('reel2');
-      stopAfterRandomTime('reel3');
+    function setInitialSymbols() {
+        cells.forEach(row => row.forEach(cell => {
+            cell.innerHTML = weightedSymbols[Math.floor(Math.random() * weightedSymbols.length)];
+        }));
     }
+    setInitialSymbols();
 
-    function stopSpin(reelId) {
-      if (isSpinning) {
-        reels.forEach((reel, index) => {
-          if (reel.id === reelId) {
-            reel.style.animationPlayState = 'paused';
-
-            const computedStyle = window.getComputedStyle(reel);
-            const translateY = parseInt(computedStyle.transform.split(',')[5], 10);
-
-            let closestPosition = 0;
-            let closestDistance = Math.abs(translateY + 900);
-
-            for (let i = 1; i <= 11; i++) {
-              const position = -150 * i;
-              const distance = Math.abs(translateY - position);
-              if (distance < closestDistance) {
-                closestPosition = position;
-                closestDistance = distance;
-              }
+    function checkWinCondition() {
+        let winningCells = [];
+        let winNames = new Set();
+        function checkLine(c1, c2, c3) {
+            const id1 = c1.querySelector('img').dataset.id;
+            const id2 = c2.querySelector('img').dataset.id;
+            const id3 = c3.querySelector('img').dataset.id;
+            if (id1 === id2 && id2 === id3) {
+                winningCells.push(c1, c2, c3);
+                winNames.add(winTable[id1] || "JACKPOT");
             }
-
-            const positionIndex = Math.abs(closestPosition / 150) + 1;
-
-            const newImage = new Image();
-            newImage.onload = function () {
-              reel.style.animation = 'none';
-              reel.style.overflow = 'block';
-
-              const reelContainer = reel.parentElement;
-              reelContainer.style.position = 'absolute';
-              reelContainer.style.bottom = '0';
-
-              reel.innerHTML = '';
-              reel.appendChild(newImage);
-
-              spinCount++;
-
-              if (spinCount === 3) {
-                isSpinning = false;
-                spinSound.pause();
-
-                document.querySelectorAll('.slot').forEach(slot => {
-                  slot.classList.remove('blinking');
-                });
-
-                startButton.disabled = false;
-              }
-            };
-
-            newImage.onerror = function () {
-              console.error('이미지 로드에 실패했습니다.');
-            };
-
-            newImage.src = images[positionIndex - 1];
-            newImage.alt = `${positionIndex}`;
-          }
-        });
-      }
+        }
+        for (let i = 0; i < 3; i++) {
+            checkLine(cells[i][0], cells[i][1], cells[i][2]);
+            checkLine(cells[0][i], cells[1][i], cells[2][i]);
+        }
+        checkLine(cells[0][0], cells[1][1], cells[2][2]);
+        checkLine(cells[0][2], cells[1][1], cells[2][0]);
+        return { winningCells, winNames: Array.from(winNames) };
     }
-  </script>
+
+    function spinColumn(colIndex) {
+        if (isSpinning[colIndex]) return;
+        isSpinning[colIndex] = true;
+        stopBtns[colIndex].disabled = false;
+        resultDisplay.classList.remove('win-text');
+        document.querySelectorAll('.symbol-image').forEach(img => img.classList.remove('win-effect'));
+        
+        let i = 0;
+        intervals[colIndex] = setInterval(() => {
+            for (let r = 0; r < 3; r++) {
+                cells[r][colIndex].innerHTML = symbols[(i + r) % symbols.length];
+            }
+            i++;
+        }, 50);
+    }
+
+    function stopColumn(colIndex) {
+        if (!isSpinning[colIndex]) return;
+        clearInterval(intervals[colIndex]);
+        playSound(sStop);
+
+        for (let r = 0; r < 3; r++) {
+            cells[r][colIndex].innerHTML = weightedSymbols[Math.floor(Math.random() * weightedSymbols.length)];
+        }
+        isSpinning[colIndex] = false;
+        stopBtns[colIndex].disabled = true;
+
+        if (!isSpinning.some(s => s)) {
+            sSpin.pause();
+            sSpin.currentTime = 0;
+            leverArm.style.pointerEvents = 'auto';
+            autoBtn.disabled = false;
+            const { winningCells, winNames } = checkWinCondition();
+            if (winningCells.length > 0) {
+                playSound(sWin);
+                resultDisplay.innerHTML = `WIN: ${winNames.join(', ')}!`;
+                resultDisplay.classList.add('win-text');
+                winningCells.forEach(cell => cell.querySelector('img').classList.add('win-effect'));
+            } else {
+                resultDisplay.innerHTML = "다시 도전하세요!";
+            }
+        }
+    }
+
+    function startSpin() {
+        if (isSpinning.some(s => s)) return;
+        playSound(sLever);
+        setTimeout(() => playSound(sSpin), 200);
+
+        leverArm.classList.add('pulling');
+        setTimeout(() => leverArm.classList.remove('pulling'), 300);
+        leverArm.style.pointerEvents = 'none';
+        autoBtn.disabled = true;
+        resultDisplay.innerHTML = "행운을 빕니다!";
+        [0, 1, 2].forEach(spinColumn);
+    }
+
+    leverArm.addEventListener('click', startSpin);
+    stopBtns.forEach((btn, idx) => btn.addEventListener('click', () => stopColumn(idx)));
+    autoBtn.addEventListener('click', () => {
+        startSpin();
+        setTimeout(() => stopColumn(0), 800);
+        setTimeout(() => stopColumn(1), 1400);
+        setTimeout(() => stopColumn(2), 2000);
+    });
+</script>
 </body>
 </html>
