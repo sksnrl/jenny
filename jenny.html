@@ -26,7 +26,7 @@
 
     <div id="game-wrapper">
         <div id="game-container">
-            <div class="status-panel" id="status-text">남은 기회: 5/5<br>준비 완료!</div>
+            <div class="status-panel" id="status-text">남은 기회: 3/3<br>준비 완료!</div>
         </div>
     </div>
 
@@ -88,7 +88,7 @@
         const runner = Runner.create();
         Runner.run(runner, engine);
 
-        let attempts = 0; const MAX_ATTEMPTS = 5;
+        let attempts = 0; const MAX_ATTEMPTS = 3;
         let caughtItems = []; let toys = [];
         let gameState = 'IDLE'; 
         let isMovingLeft = false, isMovingRight = false;
@@ -169,7 +169,7 @@
             Body.setAngle(leftArm, currentAngle);
             Body.setAngle(rightArm, -currentAngle);
 
-            const speedX = 2.5, speedRope = 2.5, maxRope = 485;
+            const speedX = 3.0, speedRope = 2.5, maxRope = 485;
             let tx = trolley.position.x;
 
             switch (gameState) {
