@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>역재생 퀴즈 PRO - 랜덤 지점 추가</title>
+    <style>
+        :root { --accent: #00d2ff; --bg: #1a1a2e; --card: #16213e; --success: #00b894; --gold: #fbc531; --danger: #e84118; }
+        body { 
+            font-family: 'Pretendard', sans-serif; background: var(--bg); color: white; 
+            display: flex; flex-direction: column; align-items: center; padding: 40px 0; margin: 0; 
+        }
+        .game-card { 
+            width: 550px; background: var(--card); padding: 30px; border-radius: 25px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4); text-align: center; border: 1px solid #0f3460;
+        }
+        #drop-zone {
+            border: 2px dashed #4e4e6a; border-radius: 15px; padding: 25px;
+            cursor: pointer; transition: 0.3s; background: rgba(255, 255, 255, 0.02); margin-bottom: 20px;
+        }
+        #drop-zone.hover { border-color: var(--accent); background: rgba(0, 210, 255, 0.05); }
+
+        .playlist {
+            margin: 20px 0; text-align: left; max-height: 180px; overflow-y: auto;
+            background: #0f3460; border-radius: 12px; padding: 5px;
+        }
+        .song-item {
+            padding: 12px; border-bottom: 1px solid #1a1a2e; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; font-size: 14px;
+        }
+        .song-item.active { background: rgba(0, 210, 255, 0.2); border-left: 4px solid var(--accent); }
+        .song-item.revealed { color: var(--gold); font-weight: bold; }
+
+        .progress-container { width: 100%; height: 6px; background: #1a1a2e; border-radius: 3px; margin: 15px 0; overflow: hidden; display: none; }
+        #progress-bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.1s linear; }
+
+        .quiz-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
+        button { 
+            padding: 12px; border: none; border-radius: 10px; font-weight: bold; 
+            cursor: pointer; transition: 0.2s; font-size: 14px;
+        }
+        .btn-rev { background: var(--accent); color: #000; }
+        .btn-orig { background: var(--success); color: white; }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-rand { background: #6c5ce7; color: white; grid-column: span 3; margin-top: 5px; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .answer-box { margin-top: 20px; padding-top: 20px; border-top: 1px solid #4e4e6a; }
+        input[type="text"] { 
+            width: 80%; padding: 12px; border-radius: 8px; border: none; 
+            background: #1a1a2e; color: white; text-align: center; font-size: 16px;
+        }
+        #status { color: var(--gold); margin-top: 12px; font-size: 14px; min-height: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <h1>🎧 역재생 퀴즈 랜덤 지점</h1>
+
+    <div id="drop-zone" onclick="document.getElementById('fileInput').click()">
+        <p>음악들을 끌어다 놓거나 클릭하세요</p>
+    </div>
+    <input type="file" id="fileInput" accept="audio/*" multiple>
+
+    <div class="playlist" id="playlist">
+        <p style="text-align:center; color:#888;">추가된 곡이 없습니다.</p>
+    </div>
+
+    <div class="progress-container" id="progressArea">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div class="quiz-controls">
+        <button id="playRevBtn" class="btn-rev" onclick="playAudio(true)" disabled>🔄 역재생</button>
+        <button id="playOrigBtn" class="btn-orig" onclick="playAudio(false)" disabled>▶️ 정답 공개</button>
+        <button id="stopBtn" class="btn-stop" onclick="stopAudio()" disabled>⏹ 중지</button>
+        <button class="btn-rand" onclick="playRandom()">🎲 랜덤 곡 문제</button>
+    </div>
+
+    <div class="answer-box">
+        <input type="text" id="answerInput" placeholder="정답을 입력하세요!">
+        <div id="status">파일을 업로드해주세요.</div>
+    </div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const playlistContainer = document.getElementById('playlist');
+    const fileInput = document.getElementById('fileInput');
+    const statusText = document.getElementById('status');
+    const answerInput = document.getElementById('answerInput');
+    const progressBar = document.getElementById('progress-bar');
+    const progressArea = document.getElementById('progressArea');
+    
+    let songs = []; 
+    let currentSongIndex = -1;
+    let currentSource = null;
+    let progressTimer = null;
+
+    // 드래그 앤 드롭 방지
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        document.body.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+    });
+    document.getElementById('drop-zone').addEventListener('dragover', (e) => e.target.classList.add('hover'));
+    document.getElementById('drop-zone').addEventListener('dragleave', (e) => e.target.classList.remove('hover'));
+    document.getElementById('drop-zone').addEventListener('drop', (e) => {
+        e.target.classList.remove('hover');
+        handleFiles(e.dataTransfer.files);
+    });
+    fileInput.onchange = (e) => handleFiles(e.target.files);
+
+    async function handleFiles(files) {
+        statusText.innerText = "⏳ 로딩 중...";
+        for (let file of files) {
+            if (!file.type.startsWith('audio/')) continue;
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const originalBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                const revBuffer = audioCtx.createBuffer(originalBuffer.numberOfChannels, originalBuffer.length, originalBuffer.sampleRate);
+                for (let i = 0; i < originalBuffer.numberOfChannels; i++) {
+                    const chan = originalBuffer.getChannelData(i);
+                    const rev = revBuffer.getChannelData(i);
+                    for (let j = 0; j < chan.length; j++) { rev[j] = chan[chan.length - 1 - j]; }
+                }
+                const title = file.name.split('.').slice(0, -1).join('.');
+                songs.push({ title, orig: originalBuffer, rev: revBuffer, revealed: false });
+            } catch (err) { console.error(err); }
+        }
+        updateUI();
+        statusText.innerText = `✅ ${songs.length}곡 준비 완료!`;
+    }
+
+    function updateUI() {
+        playlistContainer.innerHTML = '';
+        songs.forEach((song, i) => {
+            const div = document.createElement('div');
+            div.className = 'song-item' + (currentSongIndex === i ? ' active' : '') + (song.revealed ? ' revealed' : '');
+            div.innerHTML = `<span>${i + 1}. ${song.revealed ? '🎵 ' + song.title : '❓❓❓'}</span>`;
+            div.onclick = () => selectSong(i);
+            playlistContainer.appendChild(div);
+        });
+    }
+
+    function selectSong(index) {
+        stopAudio();
+        currentSongIndex = index;
+        updateUI();
+        document.getElementById('playRevBtn').disabled = false;
+        document.getElementById('playOrigBtn').disabled = false;
+        statusText.innerText = `${index + 1}번 곡 선택됨`;
+    }
+
+    function playAudio(isReverse) {
+        if (currentSongIndex === -1) return;
+        stopAudio();
+        
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!isReverse) { songs[currentSongIndex].revealed = true; updateUI(); }
+
+        const song = songs[currentSongIndex];
+        const buffer = isReverse ? song.rev : song.orig;
+        const duration = buffer.duration;
+        const playTime = 8; // 재생 시간 (8초)
+
+        // 중요: 랜덤 시작 지점 계산 (전체 길이 - 재생할 시간 사이에서 랜덤하게 선정)
+        // 정방향일 때는 보통 시작 지점부터, 역방향일 때 랜덤 지점을 활용하면 재미있습니다.
+        let startTime = 0;
+        if (isReverse && duration > playTime) {
+            startTime = Math.random() * (duration - playTime);
+        }
+
+        currentSource = audioCtx.createBufferSource();
+        currentSource.buffer = buffer;
+        currentSource.connect(audioCtx.destination);
+        
+        currentSource.start(0, startTime, playTime);
+        document.getElementById('stopBtn').disabled = false;
+        progressArea.style.display = 'block';
+
+        let startTS = Date.now();
+        progressTimer = setInterval(() => {
+            let elapsed = (Date.now() - startTS) / 1000;
+            let percent = (elapsed / playTime) * 100;
+            if (percent >= 100) { stopAudio(); }
+            progressBar.style.width = percent + '%';
+        }, 50);
+
+        statusText.innerText = isReverse ? `🔄 역재생 중...` : `▶️ 정답 공개 중...`;
+    }
+
+    function stopAudio() {
+        if (currentSource) {
+            try { currentSource.stop(); } catch(e) {}
+            currentSource = null;
+        }
+        clearInterval(progressTimer);
+        progressBar.style.width = '0%';
+        progressArea.style.display = 'none';
+        document.getElementById('stopBtn').disabled = true;
+        statusText.innerText = "⏹ 중지됨";
+    }
+
+    function playRandom() {
+        if (songs.length === 0) return alert("곡을 먼저 추가하세요!");
+        selectSong(Math.floor(Math.random() * songs.length));
+        setTimeout(() => playAudio(true), 300);
+    }
+
+    answerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            if (currentSongIndex === -1) return;
+            const userAns = answerInput.value.trim().replace(/\s+/g, '').toLowerCase();
+            const realAns = songs[currentSongIndex].title.trim().replace(/\s+/g, '').toLowerCase();
+            if (userAns === realAns) {
+                songs[currentSongIndex].revealed = true;
+                updateUI();
+                statusText.innerHTML = `<span style="color:var(--success)">⭕ 정답! : ${songs[currentSongIndex].title}</span>`;
+                stopAudio();
+            } else {
+                statusText.innerHTML = `<span style="color:var(--danger)">❌ 땡! 다시 들어보세요.</span>`;
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
