@@ -82,7 +82,7 @@
     
     // 볼륨 조절을 위한 GainNode 생성
     const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.5; // 볼륨을 50%로 설정
+    gainNode.gain.value = 0.1; // 볼륨을 50%로 설정
     gainNode.connect(audioCtx.destination);
 
     const playlistContainer = document.getElementById('playlist');
