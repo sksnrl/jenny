@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JENNIE LAND - SLEEK PRO</title>
+    <title>JENNIE LAND - SLEEK PRO (SFX Version)</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -28,6 +28,12 @@
 
     <h1>🕹️ JENNIE LAND 🕹️</h1>
 
+    <audio id="snd-move" src="move.mp3" preload="auto"></audio>
+    <audio id="snd-grab" src="grab.mp3" preload="auto"></audio>
+    <audio id="snd-success" src="success.mp3" preload="auto"></audio>
+    <audio id="snd-fail" src="fail.mp3" preload="auto"></audio>
+    <audio id="bgm" src="bgm.mp3" loop></audio>
+
     <div id="game-wrapper">
         <div id="game-container">
             <div class="status-panel" id="status-text">남은 기회: 3/3<br>준비 완료!</div>
@@ -50,17 +56,20 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // 새로운 사운드 재생 함수
         function playSound(type) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            const now = audioCtx.currentTime;
-            if (type === 'move') { osc.type = 'square'; osc.frequency.setValueAtTime(150, now); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(); osc.stop(now + 0.1); }
-            else if (type === 'drop') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.5); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.5); osc.start(); osc.stop(now + 0.5); }
-            else if (type === 'grab') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); osc.start(); osc.stop(now + 0.2); }
-            else if (type === 'success') { osc.type = 'triangle'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(); osc.stop(now + 0.3); }
-            else if (type === 'fail') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(); osc.stop(now + 0.3); }
+            let sound;
+            switch(type) {
+                case 'move': sound = document.getElementById('snd-move'); break;
+                case 'grab': 
+                case 'drop': sound = document.getElementById('snd-grab'); break;
+                case 'success': sound = document.getElementById('snd-success'); break;
+                case 'fail': sound = document.getElementById('snd-fail'); break;
+            }
+            if (sound) {
+                sound.currentTime = 0; // 재생 위치 초기화
+                sound.play().catch(() => {}); // 브라우저 정책 대응용 빈 catch
+            }
         }
 
         const { Engine, Render, Runner, Bodies, Body, Composite, Events, Constraint } = Matter;
@@ -91,6 +100,7 @@
 
         const uiStatus = document.getElementById('status-text'), btnLeft = document.getElementById('btn-left'), btnRight = document.getElementById('btn-right'), btnDown = document.getElementById('btn-down');
         const modalOverlay = document.getElementById('modal-overlay'), totalCountTxt = document.getElementById('total-count'), resultListTxt = document.getElementById('result-list');
+        const bgm = document.getElementById('bgm');
         let trolley, clawBase, leftArm, rightArm, rope, ropeBody;
 
         const itemNames = ["구독", "퀵뷰", "신청곡", "노래", "역구독", "댄스", "셀카", "방셀", "스쿼트20", "뽑기5", "배민", "꽝", "임티", "역팬200"];
@@ -103,6 +113,10 @@
             Composite.clear(world);
             attempts = 0; caughtItems = []; toys = []; gameState = 'IDLE';
             btnDown.disabled = false; btnLeft.disabled = false; btnRight.disabled = false;
+
+            // 배경음악 재생
+            bgm.volume = 0.5;
+            bgm.play().catch(() => {});
 
             const wallColor = '#0a0a1a';
             const ground = Bodies.rectangle(350, 610, 720, 60, { isStatic: true, render: { fillStyle: wallColor } });
@@ -117,11 +131,9 @@
                 render: { fillStyle: '#455a64', strokeStyle: '#ffeb3b', lineWidth: 3 } 
             });
 
-            // --- [수정] 줄 물리 충돌체 슬림화 (10 -> 4) ---
             ropeBody = Bodies.rectangle(400, 55, 4, 1, { isStatic: false, density: 0.01, collisionFilter: { group: -1 }, render: { visible: false } });
 
             const armGroup = -1;
-            // --- [수정] 발톱 물리 두께 슬림화 (20 -> 8) ---
             const leftParts = [ 
                 Bodies.rectangle(0, 30, 8, 60, { render: { fillStyle: '#78909c' } }), 
                 Bodies.rectangle(10, 65, 40, 8, { angle: 0.4, friction: 1.0, render: { fillStyle: '#ffeb3b' } }) 
@@ -151,7 +163,7 @@
 
         function setReleaseLogic(pickupX) {
             const rand = Math.random();
-            if (rand < 0.2) releaseType = 'NONE';
+            if (rand < 0.35) releaseType = 'NONE';
             else if (rand < 0.4) { releaseType = 'ASCENT'; releasePoint = 150 + Math.random() * 250; }
             else { releaseType = 'TRAVEL'; const minX = 180; releasePoint = (pickupX > minX + 10) ? minX + Math.random() * (pickupX - minX) : minX + Math.random() * 22; }
             releaseStrength = 0.75 + Math.random() * 0.2;
@@ -224,10 +236,10 @@
             toys.forEach(toy => { ctx.fillText(toy.label, toy.position.x, toy.position.y + 5); });
         });
 
-        const moveLeft = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') { isMovingLeft = true; if(audioCtx.state==='suspended') audioCtx.resume(); }};
-        const moveRight = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') { isMovingRight = true; if(audioCtx.state==='suspended') audioCtx.resume(); }};
+        const moveLeft = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') { isMovingLeft = true; }};
+        const moveRight = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') { isMovingRight = true; }};
         const stopMove = (e) => { if(e.cancelable) e.preventDefault(); isMovingLeft = false; isMovingRight = false; };
-        const grabAction = (e) => { if(e.cancelable) e.preventDefault(); if(audioCtx.state==='suspended') audioCtx.resume(); if(gameState === 'IDLE') gameState = 'DROPPING'; else if (gameState === 'DROPPING') { gameState = 'GRABBING'; actionTimer = 0; targetAngle = ANGLE_CLOSE; btnDown.disabled = true; playSound('grab'); setReleaseLogic(clawBase.position.x); } };
+        const grabAction = (e) => { if(e.cancelable) e.preventDefault(); if(gameState === 'IDLE') gameState = 'DROPPING'; else if (gameState === 'DROPPING') { gameState = 'GRABBING'; actionTimer = 0; targetAngle = ANGLE_CLOSE; btnDown.disabled = true; playSound('grab'); setReleaseLogic(clawBase.position.x); } };
 
         btnLeft.addEventListener('mousedown', moveLeft); btnLeft.addEventListener('touchstart', moveLeft, {passive:false});
         btnRight.addEventListener('mousedown', moveRight); btnRight.addEventListener('touchstart', moveRight, {passive:false});
