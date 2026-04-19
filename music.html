@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JENNIE Music Quiz - Time Traveler Edition</title>
+    <title>JENNIE music Quiz</title>
     <script src="https://unpkg.com/hangul-js"></script>
     <style>
         :root {
             --primary: #6366f1; --secondary: #a855f7; --success: #10b981; --error: #f43f5e;
-            --bg: #0f172a; --card: rgba(30, 41, 59, 0.8);
+            --bg: #0f172a; --card: rgba(30, 41, 59, 0.85);
         }
         body {
             font-family: 'Pretendard', sans-serif;
@@ -17,44 +17,56 @@
             min-height: 100vh; margin: 0;
         }
         .container {
-            width: 90%; max-width: 460px; background: var(--card); backdrop-filter: blur(15px);
+            width: 90%; max-width: 480px; background: var(--card); backdrop-filter: blur(15px);
             padding: 2rem; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.1); text-align: center; position: relative;
         }
         .setting-card { background: rgba(51, 65, 85, 0.4); padding: 18px; border-radius: 20px; margin-bottom: 15px; text-align: left; }
         label.section-label { display: block; margin-bottom: 12px; font-size: 0.85rem; color: #94a3b8; font-weight: 600; }
-        select { width: 100%; padding: 12px; background: #1e293b; border: 1px solid #475569; border-radius: 12px; color: white; outline: none; }
+        
+        select { width: 100%; padding: 12px; background: #1e293b; border: 1px solid #475569; border-radius: 12px; color: white; font-size: 1rem; outline: none; }
+        
         .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .checkbox-item {
             display: flex; align-items: center; gap: 8px; background: rgba(15, 23, 42, 0.4);
-            padding: 10px; border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+            padding: 10px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: 0.2s;
         }
-        .checkbox-item input { accent-color: var(--primary); }
+        .checkbox-item:hover { background: rgba(99, 102, 241, 0.1); }
+        .checkbox-item input { accent-color: var(--primary); cursor: pointer; }
+        
         .volume-container { display: flex; align-items: center; gap: 10px; }
-        input[type="range"] { flex: 1; height: 5px; appearance: none; background: #1e293b; border-radius: 5px; }
+        input[type="range"] { flex: 1; height: 5px; appearance: none; background: #1e293b; border-radius: 5px; cursor: pointer; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; background: var(--secondary); border-radius: 50%; }
+
         #lobby { display: block; } #game { display: none; }
+        
         .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .current-info { font-size: 0.75rem; color: var(--secondary); background: rgba(168, 85, 247, 0.1); padding: 4px 12px; border-radius: 20px; }
+        
         .stage-indicator { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .stage-dot { width: 23%; height: 5px; background: #334155; border-radius: 10px; }
+        .stage-dot { width: 23%; height: 5px; background: #334155; border-radius: 10px; transition: 0.3s; }
         .stage-dot.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
         .hint-box {
             background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px;
             padding: 25px 15px; margin-bottom: 25px; min-height: 150px; display: flex; flex-direction: column; justify-content: center;
         }
         .hint-text { font-size: 1.3rem; font-weight: 700; margin: 10px 0; opacity: 0; transform: translateY(10px); transition: 0.4s; }
         .hint-text.visible { opacity: 1; transform: translateY(0); }
+
         .btn { border: none; border-radius: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; margin-top: 10px; }
         .btn-main { padding: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-size: 1.1rem; }
         .btn-sub { padding: 8px 12px; background: #334155; color: #cbd5e1; font-size: 0.8rem; width: auto; margin: 0; }
-        .btn-audio { padding: 10px; background: #475569; font-size: 0.8rem; width: 31%; color: white; display: none; }
+        .btn-audio { padding: 10px; background: #475569; font-size: 0.8rem; width: 31%; color: white; display: none; border: 1px solid rgba(255,255,255,0.1); }
         .btn-audio.active { display: inline-block; }
+        
         .btn-submit { padding: 16px; background: var(--primary); color: white; margin-top: 20px; }
         .btn-submit:disabled { opacity: 0.2; }
         .btn-next { padding: 16px; background: var(--success); color: white; display: none; }
+
         .audio-group { display: flex; justify-content: space-between; margin-top: 20px; gap: 5px; }
         input[type="text"] { width: 100%; padding: 16px; box-sizing: border-box; background: #0f172a; border: 2px solid #334155; border-radius: 16px; color: white; font-size: 1.1rem; text-align: center; outline: none; }
+
         .loading-overlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.95); border-radius:32px; justify-content:center; align-items:center; z-index:100; flex-direction: column; }
     </style>
 </head>
@@ -62,14 +74,27 @@
 
 <div class="container">
     <div id="loading" class="loading-overlay">
-        <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
-        <div id="load-text">각 시대의 명곡들을 수집하는 중...</div>
+        <div style="font-size: 2rem; margin-bottom: 10px;">🎧</div>
+        <div id="load-text">노래를 선별 중...</div>
     </div>
 
     <div id="lobby">
         <h1 style="margin: 0 0 10px 0; font-size: 1.8rem; letter-spacing: -1px;">JENNIE Music Quiz</h1>
+        
         <div class="setting-card">
-            <label class="section-label">포함할 시대 (다중 선택)</label>
+            <label class="section-label">장르 선택</label>
+            <select id="genre-select">
+                <option value="kpop">K-POP (가요)</option>
+                <option value="pop">Pop (해외 팝)</option>
+                <option value="ost">OST (드라마/영화)</option>
+                <option value="hiphop">Hip-Hop / R&B</option>
+                <option value="rock">Rock / Band</option>
+                <option value="jpop">J-POP (일본)</option>
+            </select>
+        </div>
+
+        <div class="setting-card">
+            <label class="section-label">포함할 시대</label>
             <div class="checkbox-group">
                 <label class="checkbox-item"><input type="checkbox" class="year-check" value="2020" checked><span>2020년대</span></label>
                 <label class="checkbox-item"><input type="checkbox" class="year-check" value="2010" checked><span>2010년대</span></label>
@@ -78,6 +103,7 @@
                 <label class="checkbox-item"><input type="checkbox" class="year-check" value="1980"><span>1980년대</span></label>
             </div>
         </div>
+
         <div class="setting-card">
             <label class="section-label">마스터 볼륨</label>
             <div class="volume-container">
@@ -96,6 +122,7 @@
         <div class="stage-indicator">
             <div class="stage-dot active"></div><div class="stage-dot"></div><div class="stage-dot"></div><div class="stage-dot"></div>
         </div>
+        
         <div class="hint-box">
             <div id="hint-1" class="hint-text">1단계: 가수 정보</div>
             <div id="hint-2" class="hint-text" style="letter-spacing: 2px; color: #94a3b8;">제목 힌트</div>
@@ -105,8 +132,10 @@
                 <button id="btn-3s" class="btn btn-audio" onclick="playAudio(3000)">🔊 3초</button>
             </div>
         </div>
-        <button id="next-hint-btn" class="btn btn-sub" style="width:100%;" onclick="nextHint()">다음 힌트 열기</button>
-        <div style="margin-top: 20px;">
+
+        <button id="next-hint-btn" class="btn btn-sub" style="width:100%; margin-bottom: 10px;" onclick="nextHint()">다음 힌트 열기</button>
+
+        <div>
             <input type="text" id="user-answer" placeholder="정답 입력">
             <button id="submit-btn" class="btn btn-submit" onclick="checkAnswer()">정답 제출</button>
         </div>
@@ -124,7 +153,8 @@
 
     async function initGameFlow(isNewSetting) {
         const loading = document.getElementById('loading');
-        const selectedDecades = Array.from(document.querySelectorAll('.year-check:checked')).map(cb => cb.value);
+        const selectedDecades = Array.from(document.querySelectorAll('.year-check:checked')).map(cb => parseInt(cb.value));
+        const genre = document.getElementById('genre-select').value;
         
         if (selectedDecades.length === 0) { alert("최소 하나 이상의 시대를 선택해주세요!"); return; }
 
@@ -137,26 +167,35 @@
 
         resetGameState();
 
-        // [핵심 개선]: 선택한 연대별로 각각 API 호출하여 풍부한 데이터 확보
         if (songPool.length === 0) {
             try {
                 const fetchPromises = selectedDecades.map(decade => {
-                    // 90년대면 '1990 Korean', 2010년대면 '2010 Kpop' 등으로 검색 최적화
-                    const term = decade < 2000 ? `${decade} Korean` : `${decade} Kpop`;
-                    return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=kr&entity=song&limit=100`).then(r => r.json());
+                    // 검색어 조합 (예: 1990 Korean, 2010 Kpop 등)
+                    let term = (genre === 'kpop' && decade < 2010) ? `${decade} Korean` : `${decade} ${genre}`;
+                    return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=kr&entity=song&limit=150`).then(r => r.json());
                 });
 
                 const results = await Promise.all(fetchPromises);
-                results.forEach(data => {
-                    songPool.push(...data.results);
+                let tempPool = [];
+                results.forEach((data, index) => {
+                    const targetDecade = selectedDecades[index];
+                    // [정밀 필터링]: 출시 연도가 선택한 10년 단위 안에 들어오는지 엄격히 체크
+                    const filtered = data.results.filter(song => {
+                        const releaseYear = new Date(song.releaseDate).getFullYear();
+                        return releaseYear >= targetDecade && releaseYear < targetDecade + 10;
+                    });
+                    tempPool.push(...filtered);
                 });
 
                 // 중복 제거 및 무작위 셔플
-                songPool = Array.from(new Map(songPool.map(s => [s.trackId, s])).values()).sort(() => Math.random() - 0.5);
+                songPool = Array.from(new Map(tempPool.map(s => [s.trackId, s])).values()).sort(() => Math.random() - 0.5);
 
-                if (songPool.length === 0) throw new Error();
+                if (songPool.length === 0) {
+                    alert("해당 연대의 정밀 데이터를 충분히 찾을 수 없습니다. 범위를 넓히거나 다시 시도해주세요.");
+                    goBackToLobby(); return;
+                }
             } catch (e) {
-                alert("노래를 가져오는데 실패했습니다."); goBackToLobby(); return;
+                alert("데이터 수집 중 오류가 발생했습니다."); goBackToLobby(); return;
             }
         }
 
@@ -192,13 +231,18 @@
     function playAudio(ms) { audioPlayer.currentTime = 0; audioPlayer.play(); setTimeout(() => { if(!isFinished) audioPlayer.pause(); }, ms); }
 
     function checkAnswer() {
+        if (isFinished) return;
         isFinished = true;
         const userVal = document.getElementById('user-answer').value.replace(/\s/g, '').toLowerCase();
         const correctVal = currentSong.trackName.replace(/\s/g, '').toLowerCase();
+        
         document.getElementById('user-answer').disabled = true;
         document.getElementById('submit-btn').disabled = true;
         document.getElementById('next-hint-btn').style.display = 'none';
-        document.getElementById('result-msg').innerHTML = (userVal === correctVal) ? `<span style="color:var(--success)">정답! 🎉</span>` : `<span style="color:var(--error)">오답 😢 (정답: ${currentSong.trackName})</span>`;
+        
+        const isCorrect = userVal === correctVal;
+        document.getElementById('result-msg').innerHTML = isCorrect ? `<span style="color:var(--success)">정답! 🎉</span>` : `<span style="color:var(--error)">오답 😢 (정답: ${currentSong.trackName})</span>`;
+        
         document.getElementById('hint-2').innerText = currentSong.trackName;
         document.getElementById('hint-2').classList.add('visible');
         document.getElementById('hint-2').style.color = "var(--success)";
