@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>H.Gravity Lyrics - Optimized Quiz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --neon: #00f2ff; --pink: #ff007f; --glass: rgba(255, 255, 255, 0.1); }
+        body { margin: 0; overflow: hidden; background: #08080a; font-family: 'Noto Sans KR', sans-serif; color: white; }
+        
+        #ui-panel { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100; 
+                    background: var(--glass); padding: 20px; border-radius: 20px; backdrop-filter: blur(15px);
+                    border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; gap: 15px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 450px; }
+        
+        .row { display: flex; align-items: center; gap: 15px; width: 100%; justify-content: center; }
+        button { padding: 10px 22px; border-radius: 30px; border: none; background: var(--neon); color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.9em; }
+        button:hover { box-shadow: 0 0 15px var(--neon); transform: scale(1.05); }
+        button.pause { background: #ffeb3b; }
+        button.reveal { background: var(--pink); color: white; }
+        
+        .volume-container { display: flex; align-items: center; gap: 10px; font-size: 0.75em; letter-spacing: 1px; }
+        input[type="range"] { accent-color: var(--neon); width: 80px; }
+
+        #status { font-size: 0.85em; color: var(--neon); letter-spacing: 1px; min-height: 1.5em; text-align: center; font-weight: 300; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <div id="status">H.GRAVITY LYRICS: READY</div>
+        <div class="row">
+            <button id="btn-start" onclick="startAutoGame()">START</button>
+            <button class="pause" onclick="togglePause()">PAUSE/RESUME</button>
+            <div class="volume-container">
+                <span>VOL</span>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.5" oninput="updateVolume(this.value)">
+            </div>
+            <button id="btn-reveal" class="reveal" onclick="revealAnswer()" style="display: none;">정답 공개</button>
+        </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+        let audioCtx, audioBuffer, sourceNode, gainNode;
+        let isReversed = true, currentSong = null, startTime = 0, pausedAt = 0, isPaused = false;
+        let lyrics = [], lyricIndex = 0, width, height;
+        let lastSpawnTime = 0; // 가사 생성 간격 조절용
+
+        const { Engine, Runner, Bodies, Composite, World, Body } = Matter;
+        const engine = Engine.create();
+        const runner = Runner.create();
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            World.add(engine.world, [Bodies.rectangle(width/2, height+30, width, 60, { isStatic: true })]);
+            Runner.run(runner, engine);
+            requestAnimationFrame(renderLoop);
+        }
+
+        async function startAutoGame() {
+            document.getElementById('btn-start').disabled = true;
+            document.getElementById('btn-reveal').style.display = "none";
+            updateStatus("🛰️ 곡 정보를 분석하고 있습니다...");
+            
+            try {
+                const chartRes = await fetch(`https://itunes.apple.com/search?term=kpop&media=music&limit=50`);
+                const chartData = await chartRes.json();
+                const track = chartData.results[Math.floor(Math.random() * chartData.results.length)];
+                currentSong = { title: track.trackName, artist: track.artistName, preview: track.previewUrl };
+
+                updateStatus("🎵 분석 완료. 퀴즈를 시작합니다.");
+                
+                const [buffer, lrcData] = await Promise.all([
+                    loadAudio(currentSong.preview),
+                    fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(currentSong.artist + " " + currentSong.title)}`).then(res => res.json())
+                ]);
+
+                audioBuffer = buffer;
+                const targetLrc = lrcData.find(i => i.syncedLyrics);
+                lyrics = targetLrc ? parseLRC(targetLrc.syncedLyrics) : [];
+
+                resetGameState();
+                playBuffer(true);
+                document.getElementById('btn-reveal').style.display = "block";
+            } catch (err) {
+                updateStatus("❌ 로딩 오류. 다시 시작해주세요.");
+                document.getElementById('btn-start').disabled = false;
+            }
+        }
+
+        function parseLRC(lrc) {
+            return lrc.split('\n').map(line => {
+                const m = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+                if(m) {
+                    let text = m[3].trim();
+                    // --- 가사 길이 제한 (10자 이상이면 자름) ---
+                    if (text.length > 10) text = text.substring(0, 10) + "...";
+                    return { time: parseInt(m[1])*60 + parseFloat(m[2]), text: text };
+                }
+                return null;
+            }).filter(i => i && i.text);
+        }
+
+        function resetGameState() {
+            lyricIndex = 0; pausedAt = 0; isReversed = true; isPaused = false; lastSpawnTime = 0;
+            Composite.clear(engine.world, false);
+            World.add(engine.world, [Bodies.rectangle(width/2, height+30, width, 60, { isStatic: true })]);
+        }
+
+        async function loadAudio(url) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            return await audioCtx.decodeAudioData(arrayBuffer);
+        }
+
+        function playBuffer(reverse = false) {
+            if (sourceNode) sourceNode.stop();
+            sourceNode = audioCtx.createBufferSource();
+            if (reverse) {
+                const revBuf = audioCtx.createBuffer(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
+                for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                    const data = audioBuffer.getChannelData(i);
+                    const revData = revBuf.getChannelData(i);
+                    for (let j = 0; j < data.length; j++) revData[j] = data[data.length - 1 - j];
+                }
+                sourceNode.buffer = revBuf;
+            } else {
+                sourceNode.buffer = audioBuffer;
+            }
+            if (!gainNode) { 
+                gainNode = audioCtx.createGain(); 
+                gainNode.gain.value = document.getElementById('volume-slider').value;
+                gainNode.connect(audioCtx.destination); 
+            }
+            sourceNode.connect(gainNode);
+            sourceNode.start(0, pausedAt);
+            startTime = audioCtx.currentTime - pausedAt;
+            isPaused = false;
+        }
+
+        function updateVolume(val) { if (gainNode) gainNode.gain.value = val; }
+        function togglePause() {
+            if (!sourceNode) return;
+            if (!isPaused) { sourceNode.stop(); pausedAt = audioCtx.currentTime - startTime; isPaused = true; updateStatus("PAUSED"); }
+            else { playBuffer(isReversed); updateStatus(isReversed ? "REVERSING..." : "PLAYING..."); }
+        }
+
+        function revealAnswer() {
+            if (!currentSong) return;
+            updateStatus(`📢 정답: [ ${currentSong.artist} - ${currentSong.title} ]`);
+            isReversed = false; pausedAt = 0; lyricIndex = 0;
+            playBuffer(false);
+            Composite.allBodies(engine.world).forEach(b => { if(!b.isStatic) Body.applyForce(b, b.position, {x: (Math.random()-0.5)*0.1, y: -0.1}); });
+            document.getElementById('btn-start').disabled = false;
+        }
+
+        function updateStatus(msg) { document.getElementById('status').innerText = msg; }
+
+        function spawnJewelLyric(text) {
+            const fontSize = 22;
+            ctx.font = `bold ${fontSize}px 'Noto Sans KR'`;
+            const textWidth = ctx.measureText(text).width + 50;
+            
+            // --- 가로 영역 중앙 40% 제한 ---
+            const minX = width * 0.3;
+            const maxX = width * 0.7;
+            const x = Math.random() * (maxX - minX - textWidth) + minX + (textWidth/2);
+            
+            const body = Bodies.rectangle(x, -50, textWidth, 45, {
+                restitution: 0.5, friction: 0.1,
+                render: { text: text, hue: Math.random() * 60 + 180 }
+            });
+            World.add(engine.world, body);
+        }
+
+        function renderLoop(time) {
+            ctx.fillStyle = '#08080a';
+            ctx.fillRect(0, 0, width, height);
+
+            if (sourceNode && !isPaused) {
+                const now = audioCtx.currentTime - startTime;
+                
+                // --- 가사 생성 빈도 조절 (최소 1.5초 간격) ---
+                if (isReversed) {
+                    if (time - lastSpawnTime > 1500 && Math.random() < 0.2 && lyrics.length > 0) {
+                        const randLyric = lyrics[Math.floor(Math.random() * lyrics.length)];
+                        spawnJewelLyric(randLyric.text);
+                        lastSpawnTime = time;
+                    }
+                } else {
+                    if (lyricIndex < lyrics.length && now >= lyrics[lyricIndex].time) {
+                        spawnJewelLyric(lyrics[lyricIndex].text);
+                        lyricIndex++;
+                    }
+                }
+            }
+
+            Composite.allBodies(engine.world).forEach(body => {
+                if (body.isStatic) return;
+                const { x, y } = body.position;
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(body.angle);
+                const w = body.bounds.max.x - body.bounds.min.x;
+                const grad = ctx.createLinearGradient(-w/2, -22, w/2, 22);
+                grad.addColorStop(0, `hsla(${body.render.hue}, 100%, 70%, 0.3)`);
+                grad.addColorStop(1, `hsla(${body.render.hue}, 100%, 30%, 0.1)`);
+                ctx.beginPath(); ctx.roundRect(-w/2, -22, w, 45, 12);
+                ctx.fillStyle = grad; ctx.fill();
+                ctx.strokeStyle = `hsla(${body.render.hue}, 100%, 70%, 0.8)`;
+                ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = "bold 18px 'Noto Sans KR'";
+                ctx.fillText(body.render.text, 0, 0);
+                ctx.restore();
+                if (y > height + 100) World.remove(engine.world, body);
+            });
+            requestAnimationFrame(renderLoop);
+        }
+
+        window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+        init();
+    </script>
+</body>
+</html>
