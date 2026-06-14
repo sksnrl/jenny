@@ -172,7 +172,7 @@
                 const fetchPromises = selectedDecades.map(decade => {
                     // 검색어 조합 (예: 1990 Korean, 2010 Kpop 등)
                     let term = (genre === 'kpop' && decade < 2010) ? `${decade} Korean` : `${decade} ${genre}`;
-                    return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=kr&entity=song&limit=200`).then(r => r.json());
+                    return fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=kr&entity=song&limit=1000`).then(r => r.json());
                 });
 
                 const results = await Promise.all(fetchPromises);
