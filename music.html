@@ -1,150 +1,519 @@
-let songPool = []; let playedSongIds = new Set(); let currentSong = null; let stage = 1; let isFinished = false;
-const audioPlayer = document.getElementById('music-player');
-
-function syncVolume(val) { audioPlayer.volume = val; document.getElementById('lobby-volume').value = val; document.getElementById('game-volume').value = val; }
-
-// 현재 연도(2026년)를 자동으로 계산하여 최신곡 유실 방지
-const CURRENT_YEAR = new Date().getFullYear();
-
-async function initGameFlow(isNewSetting) {
-    const loading = document.getElementById('loading');
-    const selectedDecades = Array.from(document.querySelectorAll('.year-check:checked')).map(cb => parseInt(cb.value));
-    const genre = document.getElementById('genre-select').value;
-    
-    if (selectedDecades.length === 0) { alert("최소 하나 이상의 시대를 선택해주세요!"); return; }
-
-    loading.style.display = 'flex';
-    if (isNewSetting) {
-        document.getElementById('lobby').style.display = 'none';
-        document.getElementById('game').style.display = 'block';
-        playedSongIds.clear(); songPool = [];
-    }
-
-    resetGameState();
-
-    if (songPool.length === 0) {
-        try {
-            let allYearsPromises = [];
-
-            // 선택한 각 10년 단위(Decade)에 대해 내부 연도별로 TOP 100씩 루프 추출
-            selectedDecades.forEach(decade => {
-                // 해당 시대의 시작 연도부터 끝 연도 계산 (예: 2020년대 -> 2020 ~ 2026)
-                const startYear = decade;
-                const endYear = Math.min(decade + 9, CURRENT_YEAR);
-
-                for (let year = startYear; year <= endYear; year++) {
-                    let term = '';
-                    // 장르 및 연도별 최적의 인기 키워드 검색 조합
-                    if (genre === 'kpop') {
-                        term = `${year} K-Pop`;
-                    } else if (genre === 'pop') {
-                        term = `${year} Pop`;
-                    } else {
-                        term = `${year} ${genre}`;
-                    }
-
-                    // 각 연도별로 가장 인기 있는 Top 100 곡을 확보하기 위해 limit=100 설정
-                    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=kr&entity=song&limit=100&sort=recent`;
-                    
-                    const fetchPromise = fetch(url)
-                        .then(r => r.json())
-                        .then(data => {
-                            // 엄격한 연도 필터링: 해당 연도에 정확히 발매된 곡만 필터링
-                            return data.results.filter(song => {
-                                if (!song.releaseDate) return false;
-                                return new Date(song.releaseDate).getFullYear() === year;
-                            });
-                        })
-                        .catch(err => {
-                            console.error(`${year}년 데이터 호출 오류:`, err);
-                            return [];
-                        });
-                    
-                    allYearsPromises.push(fetchPromise);
-                }
-            });
-
-            document.getElementById('load-text').innerText = "연도별 TOP 100 곡 수집 중...";
-            const resultsPerYear = await Promise.all(allYearsPromises);
-            
-            let tempPool = [];
-            resultsPerYear.forEach(songs => {
-                tempPool.push(...songs);
-            });
-
-            // 전체 수집된 데이터에서 중복 트랙 제거 및 무작위 셔플
-            songPool = Array.from(new Map(tempPool.map(s => [s.trackId, s])).values()).sort(() => Math.random() - 0.5);
-
-            if (songPool.length === 0) {
-                alert("선택하신 조건의 연도별 TOP 100 데이터를 충분히 찾을 수 없습니다. 장르를 바꾸거나 다시 시도해주세요.");
-                goBackToLobby(); return;
-            }
-        } catch (e) {
-            console.error(e);
-            alert("데이터를 빌드하는 과정에서 오류가 발생했습니다."); goBackToLobby(); return;
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JENNIE Music Quiz (2026 Ultimate Edition)</title>
+    <script src="https://unpkg.com/hangul-js"></script>
+    <style>
+        :root {
+            --primary: #6366f1; 
+            --secondary: #a855f7; 
+            --success: #10b981; 
+            --error: #f43f5e;
+            --bg: #0f172a; 
+            --card: rgba(30, 41, 59, 0.85);
         }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: #f1f5f9; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh; 
+            margin: 0;
+        }
+        .container {
+            width: 90%; 
+            max-width: 480px; 
+            background: var(--card); 
+            backdrop-filter: blur(15px);
+            padding: 2rem; 
+            border-radius: 32px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1); 
+            text-align: center; 
+            position: relative;
+        }
+        .setting-card { 
+            background: rgba(51, 65, 85, 0.4); 
+            padding: 18px; 
+            border-radius: 20px; 
+            margin-bottom: 15px; 
+            text-align: left; 
+        }
+        label.section-label { 
+            display: block; 
+            margin-bottom: 12px; 
+            font-size: 0.85rem; 
+            color: #94a3b8; 
+            font-weight: 600; 
+        }
+        
+        select { 
+            width: 100%; 
+            padding: 12px; 
+            background: #1e293b; 
+            border: 1px solid #475569; 
+            border-radius: 12px; 
+            color: white; 
+            font-size: 1rem; 
+            outline: none; 
+        }
+        
+        .checkbox-group { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+        }
+        .checkbox-item {
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: rgba(15, 23, 42, 0.4);
+            padding: 10px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            border: 1px solid transparent; 
+            transition: 0.2s;
+        }
+        .checkbox-item:hover { 
+            background: rgba(99, 102, 241, 0.1); 
+        }
+        .checkbox-item input { 
+            accent-color: var(--primary); 
+            cursor: pointer; 
+        }
+        
+        .volume-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        input[type="range"] { 
+            flex: 1; 
+            height: 5px; 
+            appearance: none; 
+            background: #1e293b; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        input[type="range"]::-webkit-slider-thumb { 
+            appearance: none; 
+            width: 14px; 
+            height: 14px; 
+            background: var(--secondary); 
+            border-radius: 50%; 
+        }
+
+        #lobby { display: block; } 
+        #game { display: none; }
+        
+        .game-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+        }
+        .current-info { 
+            font-size: 0.75rem; 
+            color: var(--secondary); 
+            background: rgba(168, 85, 247, 0.1); 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+        }
+        
+        .stage-indicator { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 20px; 
+        }
+        .stage-dot { 
+            width: 23%; 
+            height: 5px; 
+            background: #334155; 
+            border-radius: 10px; 
+            transition: 0.3s; 
+        }
+        .stage-dot.active { 
+            background: var(--primary); 
+            box-shadow: 0 0 10px var(--primary); 
+        }
+
+        .hint-box {
+            background: rgba(15, 23, 42, 0.5); 
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 24px;
+            padding: 25px 15px; 
+            margin-bottom: 25px; 
+            min-height: 150px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+        }
+        .hint-text { 
+            font-size: 1.3rem; 
+            font-weight: 700; 
+            margin: 10px 0; 
+            opacity: 0; 
+            transform: translateY(10px); 
+            transition: 0.4s; 
+        }
+        .hint-text.visible { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+
+        .btn { 
+            border: none; 
+            border-radius: 16px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            width: 100%; 
+            margin-top: 10px; 
+        }
+        .btn-main { 
+            padding: 16px; 
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; 
+            font-size: 1.1rem; 
+        }
+        .btn-sub { 
+            padding: 8px 12px; 
+            background: #334155; 
+            color: #cbd5e1; 
+            font-size: 0.8rem; 
+            width: auto; 
+            margin: 0; 
+        }
+        .btn-audio { 
+            padding: 10px; 
+            background: #475569; 
+            font-size: 0.8rem; 
+            width: 31%; 
+            color: white; 
+            display: none; 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .btn-audio.active { 
+            display: inline-block; 
+        }
+        
+        .btn-submit { 
+            padding: 16px; 
+            background: var(--primary); 
+            color: white; 
+            margin-top: 20px; 
+        }
+        .btn-submit:disabled { 
+            opacity: 0.2; 
+        }
+        .btn-next { 
+            padding: 16px; 
+            background: var(--success); 
+            color: white; 
+            display: none; 
+        }
+
+        .audio-group { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 20px; 
+            gap: 5px; 
+        }
+        input[type="text"] { 
+            width: 100%; 
+            padding: 16px; 
+            box-sizing: border-box; 
+            background: #0f172a; 
+            border: 2px solid #334155; 
+            border-radius: 16px; 
+            color: white; 
+            font-size: 1.1rem; 
+            text-align: center; 
+            outline: none; 
+        }
+
+        .loading-overlay { 
+            display: none; 
+            position: absolute; 
+            top:0; 
+            left:0; 
+            width:100%; 
+            height:100%; 
+            background: rgba(15,23,42,0.95); 
+            border-radius:32px; 
+            justify-content:center; 
+            align-items:center; 
+            z-index:100; 
+            flex-direction: column; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="loading" class="loading-overlay">
+        <div style="font-size: 2rem; margin-bottom: 10px;">🎧</div>
+        <div id="load-text">노래를 선별 중...</div>
+    </div>
+
+    <div id="lobby">
+        <h1 style="margin: 0 0 10px 0; font-size: 1.8rem; letter-spacing: -1px;">JENNIE Music Quiz</h1>
+        
+        <div class="setting-card">
+            <label class="section-label">장르 선택</label>
+            <select id="genre-select">
+                <option value="kpop">K-POP (가요)</option>
+                <option value="pop">Pop (해외 팝)</option>
+                <option value="ost">OST (드라마/영화)</option>
+                <option value="hiphop">Hip-Hop / R&B</option>
+                <option value="rock">Rock / Band</option>
+                <option value="jpop">J-POP (일본)</option>
+            </select>
+        </div>
+
+        <div class="setting-card">
+            <label class="section-label">포함할 시대 (다중 선택 가능)</label>
+            <div class="checkbox-group">
+                <label class="checkbox-item"><input type="checkbox" class="year-check" value="2020" checked><span>2020년대</span></label>
+                <label class="checkbox-item"><input type="checkbox" class="year-check" value="2010" checked><span>2010년대</span></label>
+                <label class="checkbox-item"><input type="checkbox" class="year-check" value="2000"><span>2000년대</span></label>
+                <label class="checkbox-item"><input type="checkbox" class="year-check" value="1990"><span>1990년대</span></label>
+                <label class="checkbox-item"><input type="checkbox" class="year-check" value="1980"><span>1980년대</span></label>
+            </div>
+        </div>
+
+        <div class="setting-card">
+            <label class="section-label">마스터 볼륨</label>
+            <div class="volume-container">
+                <input type="range" id="lobby-volume" min="0" max="1" step="0.01" value="0.5" oninput="syncVolume(this.value)">
+            </div>
+        </div>
+        <button class="btn btn-main" onclick="initGameFlow(true)">게임 시작하기</button>
+    </div>
+
+    <div id="game">
+        <div class="game-header">
+            <span id="display-info" class="current-info">Music</span>
+            <input type="range" id="game-volume" style="width: 70px;" min="0" max="1" step="0.01" value="0.5" oninput="syncVolume(this.value)">
+            <button class="btn btn-sub" onclick="goBackToLobby()">로비</button>
+        </div>
+        <div class="stage-indicator">
+            <div class="stage-dot active"></div><div class="stage-dot"></div><div class="stage-dot"></div><div class="stage-dot"></div>
+        </div>
+        
+        <div class="hint-box">
+            <div id="hint-1" class="hint-text">1단계: 가수 정보</div>
+            <div id="hint-2" class="hint-text" style="letter-spacing: 2px; color: #94a3b8;">제목 힌트</div>
+            <div class="audio-group">
+                <button id="btn-1s" class="btn btn-audio active" onclick="playAudio(1000)">🔊 1초듣기</button>
+                <button id="btn-2s" class="btn btn-audio" onclick="playAudio(2000)">🔊 2초듣기</button>
+                <button id="btn-3s" class="btn btn-audio" onclick="playAudio(3000)">🔊 3초듣기</button>
+            </div>
+        </div>
+
+        <button id="next-hint-btn" class="btn btn-sub" style="width:100%; margin-bottom: 10px;" onclick="nextHint()">다음 힌트 열기</button>
+
+        <div>
+            <input type="text" id="user-answer" placeholder="정답 입력">
+            <button id="submit-btn" class="btn btn-submit" onclick="checkAnswer()">정답 제출</button>
+        </div>
+        <div id="result-msg" style="margin-top: 15px; font-weight: bold; font-size: 1.1rem;"></div>
+        <button id="next-song-btn" class="btn btn-next" onclick="initGameFlow(false)">다음 문제 ▶</button>
+    </div>
+    
+    <audio id="music-player"></audio>
+</div>
+
+<script>
+    let songPool = []; 
+    let playedSongIds = new Set(); 
+    let currentSong = null; 
+    let stage = 1; 
+    let isFinished = false;
+    const audioPlayer = document.getElementById('music-player');
+
+    // 볼륨 동기화 로직
+    function syncVolume(val) { 
+        audioPlayer.volume = val; 
+        document.getElementById('lobby-volume').value = val; 
+        document.getElementById('game-volume').value = val; 
     }
 
-    // 풀(Pool)에서 이미 플레이하지 않은 곡 선택
-    currentSong = songPool.find(s => !playedSongIds.has(s.trackId)) || songPool[0];
-    playedSongIds.add(currentSong.trackId);
-    prepareGameContent();
-    loading.style.display = 'none';
-}
+    // 현재 연도를 자동으로 추출 (2026년 최신 데이터 대응용)
+    const CURRENT_YEAR = new Date().getFullYear();
 
-function prepareGameContent() {
-    const year = new Date(currentSong.releaseDate).getFullYear();
-    document.getElementById('display-info').innerText = currentSong.primaryGenreName;
-    document.getElementById('hint-1').innerText = `${currentSong.artistName} (${year}년 발매)`;
-    document.getElementById('hint-1').classList.add('visible');
-    
-    document.getElementById('hint-2').innerText = currentSong.trackName.split('').map(c => {
-        if (Hangul.isHangul(c)) return Hangul.disassemble(c)[0];
-        if (/[a-zA-Z\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(c)) return Math.random() < 0.3 ? c : '_';
-        return c;
-    }).join('');
-    audioPlayer.src = currentSong.previewUrl;
-}
+    async function initGameFlow(isNewSetting) {
+        const loading = document.getElementById('loading');
+        const selectedDecades = Array.from(document.querySelectorAll('.year-check:checked')).map(cb => parseInt(cb.value));
+        const genre = document.getElementById('genre-select').value;
+        
+        if (selectedDecades.length === 0) { alert("최소 하나 이상의 시대를 선택해주세요!"); return; }
 
-function nextHint() {
-    if (stage >= 4) return;
-    stage++;
-    document.querySelectorAll('.stage-dot')[stage-1].classList.add('active');
-    if (stage === 2) document.getElementById('hint-2').classList.add('visible');
-    else if (stage === 3) document.getElementById('btn-2s').classList.add('active');
-    else if (stage === 4) { document.getElementById('btn-3s').classList.add('active'); document.getElementById('next-hint-btn').style.display = 'none'; }
-}
+        loading.style.display = 'flex';
+        if (isNewSetting) {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            playedSongIds.clear(); 
+            songPool = [];
+        }
 
-function playAudio(ms) { audioPlayer.currentTime = 0; audioPlayer.play(); setTimeout(() => { if(!isFinished) audioPlayer.pause(); }, ms); }
+        resetGameState();
 
-function checkAnswer() {
-    if (isFinished) return;
-    isFinished = true;
-    const userVal = document.getElementById('user-answer').value.replace(/\s/g, '').toLowerCase();
-    const correctVal = currentSong.trackName.replace(/\s/g, '').toLowerCase();
-    
-    document.getElementById('user-answer').disabled = true;
-    document.getElementById('submit-btn').disabled = true;
-    document.getElementById('next-hint-btn').style.display = 'none';
-    
-    const isCorrect = userVal === correctVal;
-    document.getElementById('result-msg').innerHTML = isCorrect ? `<span style="color:var(--success)">정답! 🎉</span>` : `<span style="color:var(--error)">오답 😢 (정답: ${currentSong.trackName})</span>`;
-    
-    document.getElementById('hint-2').innerText = currentSong.trackName;
-    document.getElementById('hint-2').classList.add('visible');
-    document.getElementById('hint-2').style.color = "var(--success)";
-    audioPlayer.currentTime = 0; audioPlayer.play();
-    document.getElementById('next-song-btn').style.display = 'block';
-}
+        // 곡 마스터 풀(Pool)이 비어있을 때 개별 연도 루프를 돌며 정밀 Top 100 데이터 빌드
+        if (songPool.length === 0) {
+            try {
+                let allYearsPromises = [];
 
-function resetGameState() {
-    stage = 1; isFinished = false; document.getElementById('result-msg').innerHTML = "";
-    document.getElementById('user-answer').value = ""; document.getElementById('user-answer').disabled = false;
-    document.getElementById('submit-btn').disabled = false; document.getElementById('next-song-btn').style.display = 'none';
-    document.getElementById('next-hint-btn').style.display = 'block';
-    document.querySelectorAll('.btn-audio').forEach((b, i) => i === 0 ? b.classList.add('active') : b.classList.remove('active'));
-    document.querySelectorAll('.hint-text').forEach(t => t.classList.remove('visible'));
-    document.querySelectorAll('.stage-dot').forEach((d, i) => i === 0 ? d.classList.add('active') : d.classList.remove('active'));
-}
+                selectedDecades.forEach(decade => {
+                    const startYear = decade;
+                    // 예: 2020년대 선택 시 현재 연도(2026)까지만 상한선 조절
+                    const endYear = Math.min(decade + 9, CURRENT_YEAR);
 
-function goBackToLobby() { audioPlayer.pause(); document.getElementById('game').style.display = 'none'; document.getElementById('lobby').style.display = 'block'; }
+                    for (let year = startYear; year <= endYear; year++) {
+                        let term = '';
+                        // 대세 검색 최적화 키워드 맵핑
+                        if (genre === 'kpop') {
+                            term = `${year} K-Pop`;
+                        } else if (genre === 'pop') {
+                            term = `${year} Pop`;
+                        } else {
+                            term = `${year} ${genre}`;
+                        }
+
+                        // 연도별로 가장 핵심적인 데이터 100개씩 개별 호출
+                        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&country=kr&entity=song&limit=100&sort=recent`;
+                        
+                        const fetchPromise = fetch(url)
+                            .then(r => r.json())
+                            .then(data => {
+                                // 정확히 매칭되는 발매 연도 데이터만 1차 정제
+                                return data.results.filter(song => {
+                                    if (!song.releaseDate) return false;
+                                    return new Date(song.releaseDate).getFullYear() === year;
+                                });
+                            })
+                            .catch(err => {
+                                console.error(`${year}년 데이터 수집 실패:`, err);
+                                return [];
+                            });
+                        
+                        allYearsPromises.push(fetchPromise);
+                    }
+                });
+
+                document.getElementById('load-text').innerText = "각 연도별 TOP 100 차트 정밀 분석 중...";
+                const resultsPerYear = await Promise.all(allYearsPromises);
+                
+                let tempPool = [];
+                resultsPerYear.forEach(songs => {
+                    tempPool.push(...songs);
+                });
+
+                // 중복 고유 ID 정리 및 랜덤 셔플
+                songPool = Array.from(new Map(tempPool.map(s => [s.trackId, s])).values()).sort(() => Math.random() - 0.5);
+
+                if (songPool.length === 0) {
+                    alert("선택하신 조건의 연도별 차트 데이터를 충분히 가져오지 못했습니다. 장르를 조정해주세요.");
+                    goBackToLobby(); return;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("음악 통합 데이터베이스를 빌드하는 데 실패했습니다."); goBackToLobby(); return;
+            }
+        }
+
+        // 플레이 안 한 신선한 최신 신곡 우선 선정
+        currentSong = songPool.find(s => !playedSongIds.has(s.trackId)) || songPool[0];
+        playedSongIds.add(currentSong.trackId);
+        prepareGameContent();
+        loading.style.display = 'none';
+    }
+
+    // 문제 힌트 세팅 및 한글 자음 파싱
+    function prepareGameContent() {
+        const year = new Date(currentSong.releaseDate).getFullYear();
+        document.getElementById('display-info').innerText = currentSong.primaryGenreName;
+        document.getElementById('hint-1').innerText = `${currentSong.artistName} (${year}년 발매)`;
+        document.getElementById('hint-1').classList.add('visible');
+        
+        // hangul-js를 활용한 완벽한 자음 초성 동적 마스킹
+        document.getElementById('hint-2').innerText = currentSong.trackName.split('').map(c => {
+            if (Hangul.isHangul(c)) return Hangul.disassemble(c)[0];
+            if (/[a-zA-Z\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(c)) return Math.random() < 0.3 ? c : '_';
+            return c;
+        }).join('');
+        audioPlayer.src = currentSong.previewUrl;
+    }
+
+    // 점진적 힌트 스택 확장
+    function nextHint() {
+        if (stage >= 4) return;
+        stage++;
+        document.querySelectorAll('.stage-dot')[stage-1].classList.add('active');
+        if (stage === 2) document.getElementById('hint-2').classList.add('visible');
+        else if (stage === 3) document.getElementById('btn-2s').classList.add('active');
+        else if (stage === 4) { document.getElementById('btn-3s').classList.add('active'); document.getElementById('next-hint-btn').style.display = 'none'; }
+    }
+
+    // 설정된 시간(ms) 만큼 재생 제어
+    function playAudio(ms) { 
+        audioPlayer.currentTime = 0; 
+        audioPlayer.play(); 
+        setTimeout(() => { if(!isFinished) audioPlayer.pause(); }, ms); 
+    }
+
+    // 채점 및 결과 보정 로직
+    function checkAnswer() {
+        if (isFinished) return;
+        isFinished = true;
+        
+        const userVal = document.getElementById('user-answer').value.replace(/\s/g, '').toLowerCase();
+        const correctVal = currentSong.trackName.replace(/\s/g, '').toLowerCase();
+        
+        document.getElementById('user-answer').disabled = true;
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('next-hint-btn').style.display = 'none';
+        
+        const isCorrect = userVal === correctVal;
+        document.getElementById('result-msg').innerHTML = isCorrect ? 
+            `<span style="color:var(--success)">정답입니다! 🎉 완벽해요!</span>` : 
+            `<span style="color:var(--error)">틀렸습니다 😢 (정답: ${currentSong.trackName})</span>`;
+        
+        // 정답 공개 시 텍스트 스타일 변경 및 전체 프리뷰 감상 활성화
+        document.getElementById('hint-2').innerText = currentSong.trackName;
+        document.getElementById('hint-2').classList.add('visible');
+        document.getElementById('hint-2').style.color = "var(--success)";
+        
+        audioPlayer.currentTime = 0; 
+        audioPlayer.play();
+        document.getElementById('next-song-btn').style.display = 'block';
+    }
+
+    // 상태 리셋 초기화
+    function resetGameState() {
+        stage = 1; 
+        isFinished = false; 
+        document.getElementById('result-msg').innerHTML = "";
+        document.getElementById('user-answer').value = ""; 
+        document.getElementById('user-answer').disabled = false;
+        document.getElementById('submit-btn').disabled = false; 
+        document.getElementById('next-song-btn').style.display = 'none';
+        document.getElementById('next-hint-btn').style.display = 'block';
+        document.querySelectorAll('.btn-audio').forEach((b, i) => i === 0 ? b.classList.add('active') : b.classList.remove('active'));
+        document.querySelectorAll('.hint-text').forEach(t => t.classList.remove('visible'));
+        document.querySelectorAll('.stage-dot').forEach((d, i) => i === 0 ? d.classList.add('active') : d.classList.remove('active'));
+    }
+
+    function goBackToLobby() { 
+        audioPlayer.pause(); 
+        document.getElementById('game').style.display = 'none'; 
+        document.getElementById('lobby').style.display = 'block'; 
+    }
+</script>
+
+</body>
+</html>
