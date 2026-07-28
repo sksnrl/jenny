@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제니의 소라고동</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            font-family: 'Malgun Gothic', sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.65);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        p.subtitle {
+            font-size: 1rem;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+
+        .conch-image {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            text-align: center;
+        }
+
+        button {
+            background-color: #ffd700;
+            color: #333;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #ffc107;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answer {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            word-break: keep-all;
+        }
+
+        .answer.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>제니의 소라고동</h1>
+        <p class="subtitle">"방구석 인생들의 운명을 결정할 소라고동님"</p>
+        
+        <div class="conch-image">🐚</div>
+        
+        <div class="input-group">
+            <input type="text" id="questionInput" placeholder="여기에 질문을 입력하세요.">
+            <button onclick="askConch()">물어보기</button>
+        </div>
+
+        <div class="result-box">
+            <div id="answerText" class="answer">질문을 입력해주세요.</div>
+        </div>
+    </div>
+
+    <script>
+        // SOOP 라이브 방송 맞춤형 200가지 답변 대공개!
+        const answers = [
+            // 원작 감성 & 단호박
+            "가만히 있어.", "아니.", "다시 한번 물어봐.", "그럼.", "안 돼.", "조금도.", "당장 그만둬.", "때가 아니다.", "물론이지.", "아마도?", "절대 안 돼.", "좋은 생각이야.",
+            // 방송 시청자(개추/별풍선 등) 저격
+            "별풍선 쏘고 물어봐라.", "팬가입부터 해라.", "구독자 전용 질문이다.", "시청자 수가 묻고 있다.", "방장 지금 뇌정지 왔다.", "방장 멘탈 터지기 직전.", "채팅창 닫아라.", "밴 당하고 싶냐?", "지금 도네 타이밍이다.", "매니저 권한 압수.",
+            "엑셀 방송 나가라.", "열혈팬이 말리신다.", "시청자 수밍아웃 금지.", "시청자 10명 늘어난다.", "욕 먹어도 싸다.", "채팅창 속도 실화냐?", "이건 매니저도 못 구한다.", "강퇴 버튼 마렵다.", "클립 따서 밈으로 써라.", "다시보기 삭제해라.",
+            // 방송 각 / 컨텐츠 관련
+            "오늘 컨텐츠는 망했다.", "레전드 방송 각이다.", "핵노잼 확정.", "내일 공지 쓰고 휴방해라.", "방종 버튼이 눈앞에 있다.", "합방 신청 거절당한다.", "게스트가 도망간다.", "캠 끄고 목소리만 해라.", "도둑키보드 꺼내와라.", "손투리 자제해라.",
+            "텐션 팍 죽여라.", "텐션 더 올려라 바보야.", "오디오 겹친다 조용히 해.", "마이크 음소거되어 있다.", "노래 부르면 강퇴다.", "춤추면 100개 준다더라.", "트월킹 10초 ㄱㄱ.", "오늘 야방 절대 안 됨.", "방장이 제일 못한다.", "버스 타지 마라.",
+            // 팩폭 & 뼈때리기
+            "네 얼굴 거울 봐라.", "살쪘다 밥 줄여라.", "오늘 수입 0원 예상.", "손흥민이 너보다 축구 잘함.", "그 외모로 무슨 방송?", "목소리 좀 깔지 마라.", "침이나 닦아라.", "어림도 없지 암.", "꿈 깨라 현실이다.", "정신 차려 이 친구야.",
+            "그 나이 먹고 그러고 싶냐?", "엄마가 너 방에 들어온다.", "불 끄고 자라.", "숙제나 해라.", "내일 월요일이다.", "통장 잔고 0원.", "인생 그렇게 살지 마라.", "답정너 그만해라.", "뻔뻔하기가 그지없다.", "뻔한 질문 좀 하지 마.",
+            // 무책임 & 회피형
+            "그걸 나한테 왜 물어?", "내 알 바 아니다.", "알아서 해라 인생은 실전이다.", "하늘에 맡겨라.", "그냥 자라.", "게임 삭제해라.", "컴퓨터 전원 뽑아라.", "내일로 미뤄라.", "모르는 게 약이다.", "비밀이다.",
+            "며칠 뒤에 알게 된다.", "운명에 맡겨라.", "네 마음이 가는 대로(근데 망함).", "상상에 맡긴다.", "귀신이 곡할 노릇이다.", "대답하기 귀찮다.", "나도 모른다.", "바람처럼 사라져라.", "물어본 걸 후회할 것이다.", "오늘은 날이 아니다.",
+            // 긍정 & 희망고문
+            "로또 사러 가라.", "오늘 운수 대통이다.", "합격이다 기분 좋아라.", "사랑이 이루어진다.", "맛집 발견한다.", "원하는 대로 다 된다.", "치킨 시켜 먹어라.", "오늘 네 날이다.", "천국이 따로 없다.", "박수 쳐라.",
+            "기적의 아이콘 등극.", "오늘 주인공은 너야.", "웃음이 끊이지 않는다.", "복권 당첨 꿈 꿔라.", "대박 행진 시작이다.", "우주가 널 돕는다.", "피자 두 판 먹어라.", "기분 좋은 하루.", "눈 감고 골라라.", "축하한다 대박이다.",
+            // 기괴 & 엉뚱한 대답
+            "외계인이 구경 중이다.", "바다 건너 전해 들었다.", "소라고동의 기분이 뾰족하다.", "물결에 휩쓸려 사라져라.", "조개구이 먹고 싶다.", "미역이나 뜯어먹어라.", "상어한테 물려봐야 정신 차리지.", "해삼의 뜻이다.", "소금에 절여라.", "고동 맛 좀 볼래?",
+            "파도 소리를 들어라.", "모래사장에 파묻혀라.", "조개껍데기 묶어두기.", "문어가 부럽냐?", "바닷속으로 잠수해라.", "불가사리가 웃는다.", "인어공주 소환 중.", "해적선에 타라.", "보물을 찾을 것이다.", "방장이 고동이다.",
+            // 미니 드립들
+            "아오 열받아.", "킹받네.", "인정하기 싫겠지만 정답.", "킹리적 가증심.", "레전드 갱신.", "오히려 좋아.", "살짝 억까인데?", "합리적 의심.", "근들갑 떨지 마라.", "역대급 대참사.",
+            "나락 가기 딱 좋다.", "폼 미쳤다.", "폼 다 떨어졌다.", "국밥 한 그릇 때려라.", "아이스 아메리카노 마셔라.", "잠이나 자자.", "내일의 너에게 맡긴다.", "오늘만 사는 남자.", "폭탄 돌리기 시작.", "타이밍 기가 막히네.",
+            "더 물어보면 밴이다.", "질문 수준 처참하다.", "침착맨급 무반응 시전.", "영혼 없는 대답이다.", "AI가 이겼다.", "사람 이길 생각 마라.", "데이터 아깝다.", "배터리 3% 남았다.", "라우터 뽑아라.", "무선랜 카드 부숴라.",
+            "에잇 퉤!", "몰라레기.", "어쩔티비.", "저쩔세탁기.", "뇌절하지 마라.", "손절 타이밍.", "입구컷 당한다.", "합격 목걸이 증정.", "불합격 통보.", "끝."
+        ];
+
+        function speakText(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.pitch = 0.6; // 묵직한 소라고동 톤
+            utterance.rate = 0.95; 
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function askConch() {
+            const input = document.getElementById('questionInput');
+            const answerDiv = document.getElementById('answerText');
+            
+            if (input.value.trim() === "") {
+                alert("질문을 입력해주세요!");
+                input.focus();
+                return;
+            }
+
+            answerDiv.classList.remove('show');
+
+            setTimeout(() => {
+                const randomIndex = Math.floor(Math.random() * answers.length);
+                const selectedAnswer = answers[randomIndex];
+
+                answerDiv.textContent = selectedAnswer;
+                answerDiv.classList.add('show');
+                speakText(selectedAnswer);
+            }, 300);
+        }
+
+        document.getElementById('questionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askConch();
+            }
+        });
+    </script>
+
+</body>
+</html>
