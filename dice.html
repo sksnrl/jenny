@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Royal 3D Physics Dice Game - Real Sound Effects</title>
+  <style>
+    body {
+      background: radial-gradient(circle, #1a1a24 0%, #08080c 100%);
+      color: #d4af37;
+      font-family: 'Segoe UI', serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    h1 {
+      letter-spacing: 2px;
+      text-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+      margin: 10px 0 5px 0;
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 30px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid #d4af37;
+      padding: 10px 25px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+    }
+
+    .score-item { text-align: center; }
+    .score-item .label { font-size: 12px; color: #aaa; margin-bottom: 2px; }
+    .score-item .value { font-size: 24px; font-weight: bold; color: #f3e5ab; }
+
+    .controls {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    select, button {
+      background: #111;
+      color: #d4af37;
+      border: 1px solid #d4af37;
+      padding: 8px 16px;
+      font-size: 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #d4af37;
+      color: #111;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: #555;
+      color: #777;
+    }
+
+    .choice-btn { width: 65px; }
+    .choice-btn.selected {
+      background: #d4af37;
+      color: #111;
+      font-weight: bold;
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    }
+
+    .stop-btn { border-color: #ff4444; color: #ff4444; }
+    .stop-btn:hover:not(:disabled) {
+      background: #ff4444 !important;
+      color: #fff !important;
+      box-shadow: 0 0 15px rgba(255, 68, 68, 0.5) !important;
+    }
+
+    .result-message {
+      height: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+      text-align: center;
+      z-index: 10;
+    }
+    .win { color: #4caf50; }
+    .lose { color: #f44336; }
+
+    .camera-hint {
+      font-size: 13px;
+      color: #ffd700;
+      background: rgba(0,0,0,0.5);
+      padding: 5px 15px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      margin-bottom: 8px;
+    }
+
+    #canvas-container {
+      width: 720px;
+      height: 440px;
+      border-radius: 15px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #d4af37;
+      cursor: grab;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+</head>
+<body>
+
+  <h1>Dopamine JENNIE Dice</h1>
+
+  <div class="scoreboard">
+    <div class="score-item">
+      <div class="label">연승</div>
+      <div class="value" id="currentStreak">0</div>
+    </div>
+    <div class="score-item">
+      <div class="label">최고 기록</div>
+      <div class="value" id="bestStreak">0</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label for="diceCount">개수:</label>
+    <select id="diceCount">
+      <option value="1">1개</option>
+      <option value="2" selected>2개</option>
+      <option value="3">3개</option>
+      <option value="4">4개</option>
+    </select>
+
+    <button class="choice-btn selected" id="btnOdd" onclick="selectPrediction('odd')">홀</button>
+    <button class="choice-btn" id="btnEven" onclick="selectPrediction('even')">짝</button>
+
+    <button id="rollBtn" onclick="throwDice()">던지기</button>
+    <button class="stop-btn" id="stopBtn" onclick="stopGame()">그만</button>
+  </div>
+
+  <div class="result-message" id="resultMsg">제니의 도파민 주사위, 홀짝 맞추기</div>
+  <div class="camera-hint"<b>마우스 드래그로 360도 뷰 조절</div>
+
+  <div id="canvas-container"></div>
+
+  <script>
+    let currentPrediction = 'odd';
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let isRolling = false;
+
+    const winMessages = [
+      "첫 승 달성! 퀵플! 🍀",
+      "2연승 성공! 랜덤 시댄, 하지만 계속 가볼까요? 🔥",
+      "3연승 달성! 한장 방셀, 여기서 멈출건가요? ⚡",
+      "4연승 성공! 역팬 50! 이걸로 만족 못해 🎯",
+      "5연승 달성! 배고파요? 👑",
+      "6연승 성공! 정성 방셀! 이제 멈출까요? 🚀",
+      "7연승 달성! 움짤 방셀! 만족하는게 좋을걸? 💎",
+      "8연승 성공! 풍족한 야식이 기다려요 🌟",
+      "9연승 달성! 카톡 확보! 다음 도전은 커데 🔥",
+      "10연승 우리 커피 한잔 해요? 🏆"
+    ];
+
+    let scene, camera, renderer, world, controls;
+    let diceMeshes = [], diceBodies = [];
+    const diceSize = 1.2;
+
+    // --- Web Audio API 사운드 합성 오디오 시스템 ---
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // 충돌음 합성 함수 (나무/플라스틱 재질 특성 반영)
+    function playHitSound(impactVelocity) {
+      if (!audioCtx) return;
+
+      const volume = Math.min(impactVelocity / 15, 1.0);
+      if (volume < 0.05) return; // 미세한 떨림은 무시
+
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      // 충돌음 주파수 설정 (탄성 있는 목재 둔탁음)
+      const freq = 160 + Math.random() * 120;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.08);
+
+      gainNode.gain.setValueAtTime(volume * 0.7, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    // 구르는 마찰음 합성 함수
+    function playRollSound(speed) {
+      if (!audioCtx || speed < 0.5) return;
+
+      const bufferSize = audioCtx.sampleRate * 0.03;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(300 + Math.random() * 200, audioCtx.currentTime);
+
+      const gain = audioCtx.createGain();
+      const vol = Math.min(speed / 20, 0.15);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      whiteNoise.start();
+    }
+
+    function init3D() {
+      const container = document.getElementById('canvas-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+      camera.position.set(0, 16, 12);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(width, height);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.enablePan = false;
+      controls.minPolarAngle = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 - 0.01;
+      controls.minDistance = 5;
+      controls.maxDistance = 30;
+      controls.target.set(0, 0, 0);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+      dirLight.position.set(6, 20, 6);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      scene.add(dirLight);
+
+      world = new CANNON.World();
+      world.gravity.set(0, -25, 0);
+      world.broadphase = new CANNON.NaiveBroadphase();
+
+      const physicsMaterial = new CANNON.Material('physics');
+      const physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
+        friction: 0.12,
+        restitution: 0.65
+      });
+      world.addContactMaterial(physicsContactMaterial);
+
+      createTray(physicsMaterial);
+      animate();
+    }
+
+    function createTray(material) {
+      const floorGeo = new THREE.PlaneGeometry(14, 9);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f4220, roughness: 0.7 });
+      const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      scene.add(floorMesh);
+
+      const floorBody = new CANNON.Body({ mass: 0, material: material });
+      floorBody.addShape(new CANNON.Plane());
+      floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+      world.addBody(floorBody);
+
+      const wallThickness = 0.5;
+      const wallHeight = 5;
+      const walls = [
+        { w: 14, h: wallHeight, d: wallThickness, x: 0, y: wallHeight/2, z: -4.5 },
+        { w: 14, h: wallHeight, d: wallThickness, x: 0, y: wallHeight/2, z: 4.5 },
+        { w: wallThickness, h: wallHeight, d: 9, x: -7, y: wallHeight/2, z: 0 },
+        { w: wallThickness, h: wallHeight, d: 9, x: 7, y: wallHeight/2, z: 0 }
+      ];
+
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x4a2e1b, roughness: 0.4 });
+
+      walls.forEach(w => {
+        const wallGeo = new THREE.BoxGeometry(w.w, w.h, w.d);
+        const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+        wallMesh.position.set(w.x, w.y, w.z);
+        wallMesh.castShadow = true;
+        wallMesh.receiveShadow = true;
+        scene.add(wallMesh);
+
+        const wallBody = new CANNON.Body({ mass: 0, material: material });
+        wallBody.addShape(new CANNON.Box(new CANNON.Vec3(w.w / 2, w.h / 2, w.d / 2)));
+        wallBody.position.set(w.x, w.y, w.z);
+        world.addBody(wallBody);
+      });
+    }
+
+    function createDiceMaterials() {
+      const faceMap = [
+        { num: 3, label: 'Right' },
+        { num: 4, label: 'Left' },
+        { num: 5, label: 'Top' },
+        { num: 2, label: 'Bottom' },
+        { num: 1, label: 'Front' },
+        { num: 6, label: 'Back' }
+      ];
+
+      return faceMap.map(face => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 128, 128);
+        grad.addColorStop(0, '#f5d77f');
+        grad.addColorStop(0.5, '#b88d2a');
+        grad.addColorStop(1, '#523a07');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 128);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(4, 4, 120, 120);
+
+        ctx.fillStyle = '#0a0a0a';
+        const drawPip = (x, y) => {
+          ctx.beginPath();
+          ctx.arc(x, y, 11, 0, Math.PI * 2);
+          ctx.fill();
+        };
+
+        const num = face.num;
+        const center = 64, left = 32, right = 96, top = 32, bottom = 96;
+        if (num === 1) drawPip(center, center);
+        if (num === 2) { drawPip(left, top); drawPip(right, bottom); }
+        if (num === 3) { drawPip(left, top); drawPip(center, center); drawPip(right, bottom); }
+        if (num === 4) { drawPip(left, top); drawPip(right, top); drawPip(left, bottom); drawPip(right, bottom); }
+        if (num === 5) { drawPip(left, top); drawPip(right, top); drawPip(center, center); drawPip(left, bottom); drawPip(right, bottom); }
+        if (num === 6) { drawPip(left, top); drawPip(right, top); drawPip(left, center); drawPip(right, center); drawPip(left, bottom); drawPip(right, bottom); }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        return new THREE.MeshStandardMaterial({ map: texture, roughness: 0.15, metalness: 0.4 });
+      });
+    }
+
+    function throwDice() {
+      if (isRolling) return;
+      initAudio(); // 오디오 엔진 활성화
+      isRolling = true;
+      setInputsDisabled(true);
+
+      document.getElementById('resultMsg').textContent = "두근두근 도르르르...";
+      document.getElementById('resultMsg').className = "result-message";
+
+      diceMeshes.forEach(mesh => scene.remove(mesh));
+      diceBodies.forEach(body => world.remove(body));
+      diceMeshes = [];
+      diceBodies = [];
+
+      const count = parseInt(document.getElementById('diceCount').value);
+      const diceMaterials = createDiceMaterials();
+      const diceGeo = new THREE.BoxGeometry(diceSize, diceSize, diceSize);
+
+      for (let i = 0; i < count; i++) {
+        const mesh = new THREE.Mesh(diceGeo, diceMaterials);
+        mesh.castShadow = true;
+        scene.add(mesh);
+        diceMeshes.push(mesh);
+
+        const shape = new CANNON.Box(new CANNON.Vec3(diceSize / 2, diceSize / 2, diceSize / 2));
+        const body = new CANNON.Body({ mass: 1.2 });
+        body.addShape(shape);
+
+        const startX = (Math.random() - 0.5) * 3;
+        const startY = 7 + i * 1.2;
+        const startZ = 3.2;
+
+        body.position.set(startX, startY, startZ);
+
+        body.velocity.set(
+          (Math.random() - 0.5) * 6,
+          -10 - Math.random() * 4,
+          -9 - Math.random() * 4
+        );
+
+        body.angularVelocity.set(
+          Math.random() * 26 - 13,
+          Math.random() * 26 - 13,
+          Math.random() * 26 - 13
+        );
+
+        // 충돌 이벤트 감지 및 사운드 발생 연결
+        body.addEventListener('collide', (e) => {
+          const relativeVelocity = e.contact.getImpactVelocityAlongNormal();
+          playHitSound(relativeVelocity);
+        });
+
+        world.addBody(body);
+        diceBodies.push(body);
+      }
+
+      checkDiceStopped();
+    }
+
+    function checkDiceStopped() {
+      let checkInterval = setInterval(() => {
+        let allStopped = true;
+
+        diceBodies.forEach(body => {
+          const speed = body.velocity.norm();
+          const angSpeed = body.angularVelocity.norm();
+
+          if (speed > 0.08 || angSpeed > 0.08) {
+            allStopped = false;
+            // 바닥 접촉 상태에서 구르는 소리
+            if (body.position.y < diceSize && speed > 0.8) {
+              playRollSound(speed);
+            }
+          }
+        });
+
+        if (allStopped) {
+          clearInterval(checkInterval);
+          evaluateResult();
+        }
+      }, 150);
+    }
+
+    function getDiceValue(mesh) {
+      const faceVectors = [
+        { vec: new THREE.Vector3(1, 0, 0), val: 3 },
+        { vec: new THREE.Vector3(-1, 0, 0), val: 4 },
+        { vec: new THREE.Vector3(0, 1, 0), val: 5 },
+        { vec: new THREE.Vector3(0, -1, 0), val: 2 },
+        { vec: new THREE.Vector3(0, 0, 1), val: 1 },
+        { vec: new THREE.Vector3(0, 0, -1), val: 6 }
+      ];
+
+      let maxDot = -Infinity;
+      let topVal = 1;
+      const upVector = new THREE.Vector3(0, 1, 0);
+
+      faceVectors.forEach(face => {
+        const worldFaceVec = face.vec.clone().applyQuaternion(mesh.quaternion);
+        const dot = worldFaceVec.dot(upVector);
+
+        if (dot > maxDot) {
+          maxDot = dot;
+          topVal = face.val;
+        }
+      });
+
+      return topVal;
+    }
+
+    function evaluateResult() {
+      let sum = 0;
+      for (let i = 0; i < diceMeshes.length; i++) {
+        sum += getDiceValue(diceMeshes[i]);
+      }
+
+      const isSumOdd = sum % 2 !== 0;
+      const actualResult = isSumOdd ? 'odd' : 'even';
+      const isWin = currentPrediction === actualResult;
+
+      if (isWin) {
+        currentStreak++;
+        if (currentStreak > bestStreak) bestStreak = currentStreak;
+
+        const msgIndex = Math.min(currentStreak - 1, winMessages.length - 1);
+        const congratsMsg = winMessages[msgIndex];
+
+        document.getElementById('resultMsg').textContent = `[총합: ${sum} (${isSumOdd ? '홀' : '짝'})] ${congratsMsg}`;
+        document.getElementById('resultMsg').className = "result-message win";
+      } else {
+        const finalRecord = currentStreak;
+        currentStreak = 0;
+        document.getElementById('resultMsg').textContent = `💥 [총합: ${sum} (${isSumOdd ? '홀' : '짝'})] 실패! 이게 너의 실력!`;
+        document.getElementById('resultMsg').className = "result-message lose";
+      }
+
+      updateScoreboard();
+      isRolling = false;
+      setInputsDisabled(false);
+    }
+
+    function selectPrediction(choice) {
+      if (isRolling) return;
+      currentPrediction = choice;
+      document.getElementById('btnOdd').classList.toggle('selected', choice === 'odd');
+      document.getElementById('btnEven').classList.toggle('selected', choice === 'even');
+    }
+
+    function stopGame() {
+      if (isRolling) return;
+      const record = currentStreak;
+      currentStreak = 0;
+      updateScoreboard();
+
+      document.getElementById('resultMsg').textContent = `🛑 축하해요! 최종 기록: ${record}연승 (초기화됨)`;
+      document.getElementById('resultMsg').className = "result-message lose";
+    }
+
+    function updateScoreboard() {
+      document.getElementById('currentStreak').textContent = currentStreak;
+      document.getElementById('bestStreak').textContent = bestStreak;
+    }
+
+    function setInputsDisabled(disabled) {
+      document.getElementById('rollBtn').disabled = disabled;
+      document.getElementById('stopBtn').disabled = disabled;
+      document.getElementById('diceCount').disabled = disabled;
+      document.getElementById('btnOdd').disabled = disabled;
+      document.getElementById('btnEven').disabled = disabled;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      world.step(1 / 60);
+
+      if (controls) controls.update();
+
+      for (let i = 0; i < diceMeshes.length; i++) {
+        diceMeshes[i].position.copy(diceBodies[i].position);
+        diceMeshes[i].quaternion.copy(diceBodies[i].quaternion);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.onload = init3D;
+  </script>
+
+</body>
+</html>
