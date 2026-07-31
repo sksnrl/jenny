@@ -316,13 +316,13 @@
       scene.add(dirLight);
 
       world = new CANNON.World();
-      world.gravity.set(0, -25, 0);
+      world.gravity.set(0, -1.5, 0);
       world.broadphase = new CANNON.NaiveBroadphase();
 
       const physicsMaterial = new CANNON.Material('physics');
       const physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
         friction: 0.12,
-        restitution: 0.65
+        restitution: 0.50
       });
       world.addContactMaterial(physicsContactMaterial);
 
