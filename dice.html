@@ -2,14 +2,13 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Royal 3D Physics Dice Game - Real Sound Effects</title>
-<!-- 웹 폰트(Noto Sans KR) 불러오기 -->
+  <title>Royal 3D Physics Dice Game - Dynamic Tray Shake</title>
+  <!-- 웹 폰트(Noto Sans KR) 불러오기 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 
   <style>
-    /* 全 폰트 가독성 최적화 설정 */
     * {
       font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       box-sizing: border-box;
@@ -26,7 +25,7 @@
       margin: 0;
       user-select: none;
       overflow: hidden;
-      -webkit-font-smoothing: antialiased; /* 웹킷 폰트 부드럽게 감싸기 */
+      -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
@@ -101,6 +100,16 @@
       box-shadow: 0 0 12px rgba(212, 175, 55, 0.8);
     }
 
+    .shake-btn {
+      border-color: #ff9800;
+      color: #ff9800;
+    }
+    .shake-btn:hover:not(:disabled) {
+      background: #ff9800 !important;
+      color: #111 !important;
+      box-shadow: 0 0 15px rgba(255, 152, 0, 0.5) !important;
+    }
+
     .stop-btn { border-color: #ff4444; color: #ff4444; }
     .stop-btn:hover:not(:disabled) {
       background: #ff4444 !important;
@@ -132,8 +141,8 @@
     }
 
     #canvas-container {
-      width: 720px;
-      height: 440px;
+      width: 880px;
+      height: 520px;
       border-radius: 15px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.8);
       position: relative;
@@ -178,11 +187,12 @@
     <button class="choice-btn" id="btnEven" onclick="selectPrediction('even')">짝</button>
 
     <button id="rollBtn" onclick="throwDice()">던지기</button>
+    <button class="shake-btn" id="shakeBtn" onclick="shakeTray()">흔들기</button>
     <button class="stop-btn" id="stopBtn" onclick="stopGame()">그만</button>
   </div>
 
   <div class="result-message" id="resultMsg">제니의 도파민 주사위, 홀짝 맞추기</div>
-  <div class="camera-hint"<b>마우스 드래그로 360도 뷰 조절</div>
+  <div class="camera-hint">마우스 드래그로 360도 뷰 조절</div>
 
   <div id="canvas-container"></div>
 
@@ -207,6 +217,8 @@
 
     let scene, camera, renderer, world, controls;
     let diceMeshes = [], diceBodies = [];
+    let trayGroup; // 판 흔들기 애니메이션용 그룹
+    let shakeIntensity = 0; // 판 흔들림 강도
     const diceSize = 1.2;
 
     // --- Web Audio API 사운드 합성 오디오 시스템 ---
@@ -222,37 +234,34 @@
       }
     }
 
-    // 충돌음 합성 함수 (나무/플라스틱 재질 특성 반영)
     function playHitSound(impactVelocity) {
       if (!audioCtx) return;
 
-      const volume = Math.min(impactVelocity / 15, 1.0);
-      if (volume < 0.05) return; // 미세한 떨림은 무시
+      const volume = Math.min(impactVelocity / 20, 1.0);
+      if (volume < 0.05) return;
 
       const osc = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
-      // 충돌음 주파수 설정 (탄성 있는 목재 둔탁음)
-      const freq = 160 + Math.random() * 120;
+      const freq = 180 + Math.random() * 150;
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.08);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.06);
 
       gainNode.gain.setValueAtTime(volume * 0.7, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
 
       osc.connect(gainNode);
       gainNode.connect(audioCtx.destination);
 
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.08);
+      osc.stop(audioCtx.currentTime + 0.06);
     }
 
-    // 구르는 마찰음 합성 함수
     function playRollSound(speed) {
-      if (!audioCtx || speed < 0.5) return;
+      if (!audioCtx || speed < 0.8) return;
 
-      const bufferSize = audioCtx.sampleRate * 0.03;
+      const bufferSize = audioCtx.sampleRate * 0.02;
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const output = buffer.getChannelData(0);
 
@@ -265,12 +274,12 @@
 
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(300 + Math.random() * 200, audioCtx.currentTime);
+      filter.frequency.setValueAtTime(400 + Math.random() * 300, audioCtx.currentTime);
 
       const gain = audioCtx.createGain();
-      const vol = Math.min(speed / 20, 0.15);
+      const vol = Math.min(speed / 25, 0.2);
       gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
 
       whiteNoise.connect(filter);
       filter.connect(gain);
@@ -287,7 +296,7 @@
       scene = new THREE.Scene();
 
       camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-      camera.position.set(0, 16, 12);
+      camera.position.set(0, 18, 16); // 뷰 각도를 낮추어 확 트인 시야 확보
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(width, height);
@@ -301,28 +310,28 @@
       controls.enablePan = false;
       controls.minPolarAngle = 0.05;
       controls.maxPolarAngle = Math.PI / 2 - 0.01;
-      controls.minDistance = 5;
-      controls.maxDistance = 30;
+      controls.minDistance = 8;
+      controls.maxDistance = 45;
       controls.target.set(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
       scene.add(ambientLight);
 
       const dirLight = new THREE.DirectionalLight(0xffeedd, 1.0);
-      dirLight.position.set(6, 20, 6);
+      dirLight.position.set(10, 30, 10);
       dirLight.castShadow = true;
       dirLight.shadow.mapSize.width = 1024;
       dirLight.shadow.mapSize.height = 1024;
       scene.add(dirLight);
 
       world = new CANNON.World();
-      world.gravity.set(0, -1.5, 0);
+      world.gravity.set(0, -9.8, 0);
       world.broadphase = new CANNON.NaiveBroadphase();
 
       const physicsMaterial = new CANNON.Material('physics');
       const physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
-        friction: 0.12,
-        restitution: 0.50
+        friction: 0.25,
+        restitution: 0.35
       });
       world.addContactMaterial(physicsContactMaterial);
 
@@ -330,41 +339,55 @@
       animate();
     }
 
+    // 시각적 낮은 테두리 + 투명 높은 물리 벽 시스템 구현
     function createTray(material) {
-      const floorGeo = new THREE.PlaneGeometry(14, 9);
+      trayGroup = new THREE.Group();
+      scene.add(trayGroup);
+
+      const trayWidth = 22;
+      const trayDepth = 16;
+      const visualWallHeight = 1.5; // 보기 편하게 낮은 예쁜 나무 테두리
+      const physicsWallHeight = 12;  // 주사위 이탈 방지용 투명 물리 벽 높이
+      const wallThickness = 0.8;
+
+      // 바닥
+      const floorGeo = new THREE.PlaneGeometry(trayWidth, trayDepth);
       const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f4220, roughness: 0.7 });
       const floorMesh = new THREE.Mesh(floorGeo, floorMat);
       floorMesh.rotation.x = -Math.PI / 2;
       floorMesh.receiveShadow = true;
-      scene.add(floorMesh);
+      trayGroup.add(floorMesh);
 
       const floorBody = new CANNON.Body({ mass: 0, material: material });
       floorBody.addShape(new CANNON.Plane());
       floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
       world.addBody(floorBody);
 
-      const wallThickness = 0.5;
-      const wallHeight = 5;
+      const halfW = trayWidth / 2;
+      const halfD = trayDepth / 2;
+
       const walls = [
-        { w: 14, h: wallHeight, d: wallThickness, x: 0, y: wallHeight/2, z: -4.5 },
-        { w: 14, h: wallHeight, d: wallThickness, x: 0, y: wallHeight/2, z: 4.5 },
-        { w: wallThickness, h: wallHeight, d: 9, x: -7, y: wallHeight/2, z: 0 },
-        { w: wallThickness, h: wallHeight, d: 9, x: 7, y: wallHeight/2, z: 0 }
+        { w: trayWidth, d: wallThickness, x: 0, z: -halfD },
+        { w: trayWidth, d: wallThickness, x: 0, z: halfD },
+        { w: wallThickness, d: trayDepth, x: -halfW, z: 0 },
+        { w: wallThickness, d: trayDepth, x: halfW, z: 0 }
       ];
 
       const wallMat = new THREE.MeshStandardMaterial({ color: 0x4a2e1b, roughness: 0.4 });
 
       walls.forEach(w => {
-        const wallGeo = new THREE.BoxGeometry(w.w, w.h, w.d);
+        // 1. 눈에 보이는 낮은 나무 테두리
+        const wallGeo = new THREE.BoxGeometry(w.w, visualWallHeight, w.d);
         const wallMesh = new THREE.Mesh(wallGeo, wallMat);
-        wallMesh.position.set(w.x, w.y, w.z);
+        wallMesh.position.set(w.x, visualWallHeight / 2, w.z);
         wallMesh.castShadow = true;
         wallMesh.receiveShadow = true;
-        scene.add(wallMesh);
+        trayGroup.add(wallMesh);
 
+        // 2. 물리용 높은 투명 벽 (물리 엔진 충돌체)
         const wallBody = new CANNON.Body({ mass: 0, material: material });
-        wallBody.addShape(new CANNON.Box(new CANNON.Vec3(w.w / 2, w.h / 2, w.d / 2)));
-        wallBody.position.set(w.x, w.y, w.z);
+        wallBody.addShape(new CANNON.Box(new CANNON.Vec3(w.w / 2, physicsWallHeight / 2, w.d / 2)));
+        wallBody.position.set(w.x, physicsWallHeight / 2, w.z);
         world.addBody(wallBody);
       });
     }
@@ -419,11 +442,11 @@
 
     function throwDice() {
       if (isRolling) return;
-      initAudio(); // 오디오 엔진 활성화
+      initAudio();
       isRolling = true;
       setInputsDisabled(true);
 
-      document.getElementById('resultMsg').textContent = "두근두근 도르르르...";
+      document.getElementById('resultMsg').textContent = "홀짝홀짝홀짝홀짝!";
       document.getElementById('resultMsg').className = "result-message";
 
       diceMeshes.forEach(mesh => scene.remove(mesh));
@@ -442,28 +465,27 @@
         diceMeshes.push(mesh);
 
         const shape = new CANNON.Box(new CANNON.Vec3(diceSize / 2, diceSize / 2, diceSize / 2));
-        const body = new CANNON.Body({ mass: 1.2 });
+        const body = new CANNON.Body({ mass: 2.0 });
         body.addShape(shape);
 
-        const startX = (Math.random() - 0.5) * 3;
-        const startY = 7 + i * 1.2;
-        const startZ = 3.2;
+        const startX = (Math.random() - 0.5) * 6;
+        const startY = 6 + i * 1.5;
+        const startZ = 6;
 
         body.position.set(startX, startY, startZ);
 
         body.velocity.set(
-          (Math.random() - 0.5) * 6,
-          -10 - Math.random() * 4,
-          -9 - Math.random() * 4
+          (Math.random() - 0.5) * 14,
+          -15 - Math.random() * 8,
+          -18 - Math.random() * 8
         );
 
         body.angularVelocity.set(
-          Math.random() * 26 - 13,
-          Math.random() * 26 - 13,
-          Math.random() * 26 - 13
+          Math.random() * 40 - 20,
+          Math.random() * 40 - 20,
+          Math.random() * 40 - 20
         );
 
-        // 충돌 이벤트 감지 및 사운드 발생 연결
         body.addEventListener('collide', (e) => {
           const relativeVelocity = e.contact.getImpactVelocityAlongNormal();
           playHitSound(relativeVelocity);
@@ -476,6 +498,40 @@
       checkDiceStopped();
     }
 
+    // --- 시각적 판 흔들림 연출 포함 흔들기 ---
+    function shakeTray() {
+      if (isRolling || diceBodies.length === 0) return;
+      initAudio();
+      isRolling = true;
+      setInputsDisabled(true);
+
+      document.getElementById('resultMsg').textContent = "흔들어흔들어";
+      document.getElementById('resultMsg').className = "result-message";
+
+      // 트레이 3D 흔들림 효과 시작
+      shakeIntensity = 1.0;
+      playHitSound(12); // 판 흔들리는 강한 충돌 효과음 발생
+
+      diceBodies.forEach(body => {
+        const impulseX = (Math.random() - 0.5) * 22;
+        const impulseY = 10 + Math.random() * 6;
+        const impulseZ = (Math.random() - 0.5) * 22;
+
+        body.applyImpulse(
+          new CANNON.Vec3(impulseX, impulseY, impulseZ),
+          body.position
+        );
+
+        body.angularVelocity.set(
+          Math.random() * 36 - 18,
+          Math.random() * 36 - 18,
+          Math.random() * 36 - 18
+        );
+      });
+
+      checkDiceStopped();
+    }
+
     function checkDiceStopped() {
       let checkInterval = setInterval(() => {
         let allStopped = true;
@@ -484,10 +540,9 @@
           const speed = body.velocity.norm();
           const angSpeed = body.angularVelocity.norm();
 
-          if (speed > 0.08 || angSpeed > 0.08) {
+          if (speed > 0.15 || angSpeed > 0.15) {
             allStopped = false;
-            // 바닥 접촉 상태에서 구르는 소리
-            if (body.position.y < diceSize && speed > 0.8) {
+            if (body.position.y < diceSize && speed > 1.2) {
               playRollSound(speed);
             }
           }
@@ -497,7 +552,7 @@
           clearInterval(checkInterval);
           evaluateResult();
         }
-      }, 150);
+      }, 100);
     }
 
     function getDiceValue(mesh) {
@@ -547,7 +602,6 @@
         document.getElementById('resultMsg').textContent = `[총합: ${sum} (${isSumOdd ? '홀' : '짝'})] ${congratsMsg}`;
         document.getElementById('resultMsg').className = "result-message win";
       } else {
-        const finalRecord = currentStreak;
         currentStreak = 0;
         document.getElementById('resultMsg').textContent = `💥 [총합: ${sum} (${isSumOdd ? '홀' : '짝'})] 실패! 이게 너의 실력!`;
         document.getElementById('resultMsg').className = "result-message lose";
@@ -582,6 +636,7 @@
 
     function setInputsDisabled(disabled) {
       document.getElementById('rollBtn').disabled = disabled;
+      document.getElementById('shakeBtn').disabled = disabled;
       document.getElementById('stopBtn').disabled = disabled;
       document.getElementById('diceCount').disabled = disabled;
       document.getElementById('btnOdd').disabled = disabled;
@@ -594,6 +649,19 @@
       world.step(1 / 60);
 
       if (controls) controls.update();
+
+      // 판 흔들기 3D 애니메이션 연출 감쇄 처리
+      if (shakeIntensity > 0.01) {
+        trayGroup.position.x = (Math.random() - 0.5) * 0.8 * shakeIntensity;
+        trayGroup.position.y = (Math.random() - 0.5) * 0.5 * shakeIntensity;
+        trayGroup.position.z = (Math.random() - 0.5) * 0.8 * shakeIntensity;
+        trayGroup.rotation.z = (Math.random() - 0.5) * 0.08 * shakeIntensity;
+        shakeIntensity *= 0.88; // 빠르게 감쇄
+      } else {
+        trayGroup.position.set(0, 0, 0);
+        trayGroup.rotation.set(0, 0, 0);
+        shakeIntensity = 0;
+      }
 
       for (let i = 0; i < diceMeshes.length; i++) {
         diceMeshes[i].position.copy(diceBodies[i].position);
