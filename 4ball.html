@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>가을 제니의 4구 실력 당구 뽑기</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Jua', 'Noto Sans KR', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      background: radial-gradient(circle at 50% 20%, #FFF8EE 0%, #F5E5D0 45%, #E6CEB3 100%);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Claymorphism UI Styles */
+    .clay-card {
+      background: #FFFDF9;
+      border-radius: 28px;
+      box-shadow: 
+        10px 16px 32px rgba(175, 130, 95, 0.25),
+        -6px -6px 20px rgba(255, 255, 255, 0.95),
+        inset 4px 4px 8px rgba(255, 255, 255, 0.8),
+        inset -4px -6px 12px rgba(190, 145, 105, 0.15);
+    }
+
+    .clay-btn {
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+    .clay-btn:active {
+      transform: scale(0.92) translateY(2px);
+    }
+
+    .clay-btn-reset {
+      background: linear-gradient(135deg, #9FA8DA, #5C6BC0);
+      box-shadow: 
+        4px 6px 14px rgba(92, 107, 192, 0.35),
+        -2px -2px 6px rgba(230, 235, 255, 0.8),
+        inset 3px 3px 5px rgba(255, 255, 255, 0.6),
+        inset -3px -4px 8px rgba(40, 50, 120, 0.35);
+      color: white;
+    }
+
+    .clay-btn-green {
+      background: linear-gradient(135deg, #8FC472, #558E38);
+      box-shadow: 
+        4px 6px 14px rgba(85, 142, 56, 0.35),
+        -2px -2px 6px rgba(215, 245, 200, 0.8),
+        inset 3px 3px 5px rgba(255, 255, 255, 0.6),
+        inset -3px -4px 8px rgba(45, 80, 20, 0.35);
+      color: white;
+    }
+
+    .clay-badge {
+      background: #FFF7EC;
+      border-radius: 18px;
+      box-shadow: 
+        3px 5px 12px rgba(180, 135, 95, 0.18),
+        -2px -2px 6px rgba(255, 255, 255, 0.95),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.9),
+        inset -2px -2px 5px rgba(190, 145, 105, 0.12);
+    }
+
+    /* Billiards Table Wood Cushion Clay Frame */
+    .billiards-table-frame {
+      background: linear-gradient(135deg, #B5784C 0%, #8A4B23 50%, #683412 100%);
+      border-radius: 36px;
+      box-shadow: 
+        16px 24px 44px rgba(110, 60, 25, 0.4),
+        -8px -8px 24px rgba(255, 220, 190, 0.6),
+        inset 6px 6px 12px rgba(255, 255, 255, 0.4),
+        inset -8px -10px 20px rgba(60, 25, 5, 0.7);
+      padding: 18px;
+    }
+
+    /* Felt Inner Surface (Autumn Velvet Moss Green) */
+    .felt-surface {
+      background: radial-gradient(circle at 50% 50%, #2A6E48 0%, #1D5436 70%, #143D26 100%);
+      border-radius: 22px;
+      box-shadow: 
+        inset 6px 8px 18px rgba(0, 0, 0, 0.65),
+        inset -4px -4px 14px rgba(255, 255, 255, 0.15),
+        0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    /* Moon & Floating Leaves */
+    .clay-moon {
+      background: radial-gradient(circle at 35% 35%, #FFFCE6 0%, #FEE88C 60%, #E8BE3B 100%);
+      box-shadow: 0 0 50px rgba(255, 225, 110, 0.5), inset 8px 8px 20px rgba(255, 255, 255, 0.9), inset -10px -10px 24px rgba(190, 145, 25, 0.4);
+      border-radius: 50%;
+    }
+
+    @keyframes leafDrift {
+      0% { transform: translateY(-30px) rotate(0deg) translateX(0); opacity: 0; }
+      15% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(105vh) rotate(360deg) translateX(80px); opacity: 0; }
+    }
+    .floating-leaf {
+      position: fixed;
+      pointer-events: none;
+      z-index: 1;
+      animation: leafDrift linear infinite;
+    }
+
+    .clay-modal-bg {
+      background: rgba(60, 40, 20, 0.45);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="relative flex flex-col items-center justify-between p-3 sm:p-5 min-h-screen text-stone-800">
+
+  <!-- Background Moon & Leaves -->
+  <div class="fixed -top-12 -right-12 w-48 h-48 sm:w-60 sm:h-60 clay-moon pointer-events-none opacity-80 z-0"></div>
+  <div id="leaves-container" class="fixed inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+  <!-- Header Section -->
+  <header class="relative z-10 w-full max-w-xl flex flex-col items-center">
+    <div class="text-center mt-1 mb-2">
+      <div class="inline-flex items-center gap-1.5 px-3.5 py-1 clay-badge mb-1">
+        <span class="text-base">🍂</span>
+        <span class="text-xs sm:text-sm font-bold text-amber-900 tracking-wider">가을 EVENT 제니의 실력 4구 당구</span>
+        <span class="text-base">🎱</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-amber-950 tracking-tight flex items-center justify-center gap-2">
+        실력으로 뽑는 4구 당구
+      </h1>
+      <p class="text-stone-600 text-xs sm:text-sm mt-0.5">
+        내 공(⚪하얀제니)을 당겨 <strong>빨간 적구 2개</strong>를 모두 맞추면 경품 득점!
+      </p>
+    </div>
+
+    <!-- Status Bar & Controls -->
+    <div class="w-full flex items-center justify-between px-3.5 py-2.5 clay-card mb-3 gap-2">
+      <!-- Lucky Pouches (3 Chances) -->
+      <div class="flex items-center gap-1.5 bg-amber-100/70 px-2.5 py-1 rounded-2xl border border-amber-200/80 shadow-inner">
+        <div id="coin-pouches" class="flex gap-1"></div>
+        <div class="text-sm sm:text-base font-black text-amber-950 ml-1">
+          <span id="coin-count">3</span> / 3
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-1.5">
+        <button id="btn-shuffle" class="clay-btn px-2.5 py-1.5 rounded-xl clay-badge text-amber-950 font-bold text-xs flex items-center gap-1 hover:bg-amber-100" title="공들의 위치를 무작위로 섞습니다">
+          🔀 <span>공 섞기</span>
+        </button>
+        <button id="btn-reset" class="clay-btn px-2.5 py-1.5 rounded-xl clay-btn-reset font-bold text-xs flex items-center gap-1 shadow-sm">
+          🔄 <span>새 게임</span>
+        </button>
+        <button id="btn-history" class="clay-btn px-2.5 py-1.5 rounded-xl clay-badge text-stone-700 font-bold text-xs flex items-center gap-1">
+          📜 <span>내역</span>
+        </button>
+        <button id="btn-settings" class="clay-btn px-2 py-1.5 rounded-xl clay-badge text-stone-700 font-bold text-xs flex items-center gap-1">
+          ⚙️
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Billiards Arena Container -->
+  <main class="relative z-10 w-full max-w-xl flex flex-col items-center justify-center my-auto">
+    <!-- Table Clay Frame -->
+    <div class="billiards-table-frame w-full max-w-[540px]">
+      <!-- Felt Surface & Canvas Wrapper -->
+      <div class="relative felt-surface w-full aspect-[4/3] flex items-center justify-center overflow-hidden">
+        
+        <!-- Interactive Canvas for Billiards Physics & Rendering -->
+        <canvas id="billiards-canvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+        <!-- Dynamic Cue Ball Hint Overlay -->
+        <div id="drag-hint" class="absolute pointer-events-none text-white/90 bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold transition-opacity duration-300">
+          ⚪ 하얀제니를 뒤로 당겨 샷을 쏘세요!
+        </div>
+
+        <!-- In-canvas Shuffle Floating Button -->
+        <button id="btn-canvas-shuffle" class="absolute top-2.5 right-2.5 bg-black/40 hover:bg-black/60 text-white/90 px-2.5 py-1 rounded-full text-[11px] font-bold backdrop-blur-sm transition-all border border-white/20 flex items-center gap-1 shadow-md">
+          🔀 배치 섞기
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Hit Indicator Bar -->
+    <div class="w-full max-w-[540px] flex items-center justify-between mt-2.5 px-3 py-1.5 clay-card text-xs font-bold text-stone-700">
+      <div class="flex items-center gap-2">
+        <span class="text-stone-500">목표 적구:</span>
+        <div id="indicator-red1" class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 text-stone-400 border border-stone-200">
+          🍎 적구1 <span class="state-icon">○</span>
+        </div>
+        <div id="indicator-red2" class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 text-stone-400 border border-stone-200">
+          🍎 적구2 <span class="state-icon">○</span>
+        </div>
+      </div>
+      <div id="indicator-yellow" class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+        💛 노란공: <span>세이프</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Controls -->
+  <footer class="relative z-10 w-full max-w-xl flex items-center justify-between py-2 text-stone-600 text-xs">
+    <button id="btn-sound" class="clay-btn px-3 py-1 rounded-full clay-badge text-stone-700 flex items-center gap-1 font-bold">
+      <span id="sound-icon">🔊</span> <span id="sound-text">효과음 켜짐</span>
+    </button>
+    <div class="text-stone-500 font-semibold flex items-center gap-1">
+      <span>🟡 4구 룰: 빨간공 2개 동시 타격 시 경품 획득!</span>
+    </div>
+  </footer>
+
+  <!-- Modal: Shot Result -->
+  <div id="modal-result" class="fixed inset-0 clay-modal-bg hidden flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-sm clay-card p-6 text-center transform transition-all scale-95 duration-200" id="result-box">
+      <div class="w-20 h-20 mx-auto mb-3 flex items-center justify-center text-4xl clay-badge p-2" id="result-icon">
+        🎁
+      </div>
+
+      <div class="text-xs font-bold text-amber-800 uppercase tracking-widest mb-1" id="result-badge-text">
+        4구 샷 결과
+      </div>
+
+      <div class="py-3 px-4 bg-amber-50 rounded-2xl border border-amber-200/80 mb-2" id="result-title-box">
+        <h2 class="text-2xl sm:text-3xl font-black text-amber-950 tracking-tight" id="result-title">
+          카롬 성공!
+        </h2>
+      </div>
+
+      <p class="text-xs sm:text-sm text-stone-500 mb-5 leading-relaxed" id="result-desc">
+        두 적구를 모두 정확히 맞췄습니다! 경품을 획득합니다 🎉
+      </p>
+
+      <button id="btn-close-result" class="w-full py-3 clay-btn clay-btn-green rounded-2xl font-bold text-base shadow-md">
+        확인하고 계속하기 (새로운 공 배치 🔀)
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: History -->
+  <div id="modal-history" class="fixed inset-0 clay-modal-bg hidden flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md clay-card p-6 flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📜</span>
+          <h3 class="text-lg sm:text-xl font-extrabold text-stone-900">당첨 & 경기 내역</h3>
+        </div>
+        <button onclick="toggleModal('modal-history', false)" class="text-stone-400 hover:text-stone-600 text-2xl font-bold">&times;</button>
+      </div>
+
+      <div id="history-list" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
+
+      <div class="pt-4 mt-2 border-t border-stone-200 flex justify-between items-center">
+        <button onclick="clearHistory()" class="text-xs text-red-500 font-bold hover:underline">
+          내역 초기화
+        </button>
+        <button onclick="toggleModal('modal-history', false)" class="px-5 py-2.5 clay-btn clay-badge text-stone-800 font-bold text-sm rounded-xl">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Settings / Prize Table -->
+  <div id="modal-settings" class="fixed inset-0 clay-modal-bg hidden flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-md clay-card p-6 flex flex-col max-h-[88vh]">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-200 mb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚙️</span>
+          <h3 class="text-lg sm:text-xl font-extrabold text-stone-900">성공 시 당첨 경품 확률</h3>
+        </div>
+        <button onclick="toggleModal('modal-settings', false)" class="text-stone-400 hover:text-stone-600 text-2xl font-bold">&times;</button>
+      </div>
+
+      <p class="text-xs text-stone-500 mb-3">
+        4구 득점 성공 시 지급되는 경품 가중치입니다. (역1 &gt; 랜덤시댄 &gt; ... &gt; 예쁜방셀)
+      </p>
+
+      <div id="prizes-table" class="overflow-y-auto space-y-2 flex-1 pr-1"></div>
+
+      <div class="pt-3 mt-2 border-t border-stone-200 flex items-center justify-between">
+        <button onclick="resetDefaultPrizes()" class="text-xs text-amber-800 font-bold hover:underline">
+          기본 설정 복원
+        </button>
+        <button onclick="saveCustomPrizes()" class="px-4 py-2 clay-btn clay-btn-green font-bold text-sm rounded-xl">
+          저장 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Web Audio Sound Synthesizer */
+    const AudioEngine = {
+      ctx: null,
+      enabled: true,
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      // 공과 공 충돌 딱! 소리
+      playBallHit(velocity = 1) {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800 + Math.random() * 200, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.05);
+
+          const vol = Math.min(0.6, Math.max(0.08, velocity * 0.07));
+          gain.gain.setValueAtTime(vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } catch (e) {}
+      },
+
+      // 쿠션 퉁 부딪히는 둔탁한 소리
+      playCushion() {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(60, now + 0.09);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } catch (e) {}
+      },
+
+      // 큐대로 타격하는 경쾌한 딱 소리
+      playCueShot() {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(620, now);
+          osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.09);
+        } catch (e) {}
+      },
+
+      // 공 섞기 / 셔플 효과음
+      playShuffle() {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          [0, 0.06, 0.12, 0.18].forEach((delay, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(650 - idx * 80, now + delay);
+            gain.gain.setValueAtTime(0.2, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.05);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.06);
+          });
+        } catch (e) {}
+      },
+
+      playWin() {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const chords = [523.25, 659.25, 783.99, 1046.50];
+          chords.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const start = this.ctx.currentTime + idx * 0.09;
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.25, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.46);
+          });
+        } catch (e) {}
+      },
+
+      playFoul() {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(240, now);
+          osc.frequency.linearRampToValueAtTime(130, now + 0.35);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.36);
+        } catch (e) {}
+      }
+    };
+
+    /* 9 Designated Prizes with Correct Inverse Weights */
+    const DEFAULT_PRIZES = [
+      { id: 1, name: '역1', weight: 36, icon: '🔥' },
+      { id: 2, name: '랜덤시댄', weight: 25, icon: '💃' },
+      { id: 3, name: '노래한곡', weight: 16, icon: '🎤' },
+      { id: 4, name: '뽑기1장', weight: 10, icon: '🎟️' },
+      { id: 5, name: '스쿼트20', weight: 6, icon: '🏋️' },
+      { id: 6, name: '셀카', weight: 4, icon: '🤳' },
+      { id: 7, name: '한장방셀', weight: 2.5, icon: '📸' },
+      { id: 8, name: '1000사다리', weight: 1.5, icon: '🪜' },
+      { id: 9, name: '예쁜방셀', weight: 0.5, icon: '🌸' }
+    ];
+
+    const MAX_COINS = 3;
+    let coins = MAX_COINS;
+    let prizes = JSON.parse(localStorage.getItem('jennie_billiards_prizes_v1')) || DEFAULT_PRIZES;
+    let history = JSON.parse(localStorage.getItem('jennie_billiards_history_v1')) || [];
+
+    /* Billiards Engine Variables */
+    const canvas = document.getElementById('billiards-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = 600;
+    let height = 450;
+    const BALL_RADIUS = 18;
+    const FRICTION = 0.987;
+    const RESTITUTION = 0.88;
+
+    // 4 Balls: 내 수구(White), 상대 수구(Yellow), 적구1(Red1), 적구2(Red2)
+    let balls = [
+      { id: 'white', name: '하얀제니 (내 공)', type: 'cue', color: '#FFFFFF', x: 140, y: 225, vx: 0, vy: 0, r: BALL_RADIUS },
+      { id: 'yellow', name: '단호박 (상대 공)', type: 'opponent', color: '#F6B144', x: 440, y: 150, vx: 0, vy: 0, r: BALL_RADIUS },
+      { id: 'red1', name: '사과1 (적구)', type: 'target', color: '#E84545', x: 380, y: 225, vx: 0, vy: 0, r: BALL_RADIUS },
+      { id: 'red2', name: '사과2 (적구)', type: 'target', color: '#E84545', x: 440, y: 300, vx: 0, vy: 0, r: BALL_RADIUS }
+    ];
+
+    // Interaction State
+    let isAiming = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+    let isMoving = false;
+    let hitTargets = new Set();
+    let hitOpponent = false;
+    let pendingResult = false;
+
+    // Background leaves
+    function createFallingLeaves() {
+      const container = document.getElementById('leaves-container');
+      const emojis = ['🍁', '🍂', '🌾', '🌰', '🍃'];
+      for (let i = 0; i < 12; i++) {
+        const leaf = document.createElement('div');
+        leaf.className = 'floating-leaf';
+        leaf.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        leaf.style.left = `${Math.random() * 95}%`;
+        leaf.style.fontSize = `${16 + Math.random() * 16}px`;
+        leaf.style.animationDuration = `${8 + Math.random() * 8}s`;
+        leaf.style.animationDelay = `${Math.random() * 6}s`;
+        leaf.style.opacity = '0';
+        container.appendChild(leaf);
+      }
+    }
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      width = canvas.width = rect.width * window.devicePixelRatio;
+      height = canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      width = rect.width;
+      height = rect.height;
+    }
+
+    /* 겹치지 않는 스마트 랜덤 공 배치 알고리즘 */
+    function randomizeBallPositions(animateEffect = true) {
+      const margin = BALL_RADIUS * 2.8;
+      const minDistance = BALL_RADIUS * 3.2; // 공 사이 최소 간격 보장
+
+      const placedPositions = [];
+
+      balls.forEach((ball) => {
+        let placed = false;
+        let attempts = 0;
+        let testX, testY;
+
+        while (!placed && attempts < 150) {
+          attempts++;
+          testX = margin + Math.random() * (width - margin * 2);
+          testY = margin + Math.random() * (height - margin * 2);
+
+          // 하얀제니(내 공)는 샷 치기 편하게 가급적 왼쪽 절반에 우대 배치
+          if (ball.id === 'white' && attempts < 60) {
+            testX = margin + Math.random() * (width * 0.45 - margin);
+          }
+
+          let collision = false;
+          for (const pos of placedPositions) {
+            const dist = Math.hypot(testX - pos.x, testY - pos.y);
+            if (dist < minDistance) {
+              collision = true;
+              break;
+            }
+          }
+
+          if (!collision) {
+            placed = true;
+          }
+        }
+
+        ball.x = testX;
+        ball.y = testY;
+        ball.vx = 0;
+        ball.vy = 0;
+        placedPositions.push({ x: testX, y: testY });
+      });
+
+      if (animateEffect) {
+        AudioEngine.playShuffle();
+        showToast('🔀 공들이 무작위 위치로 새로 배치되었습니다!');
+      }
+
+      resetTurnStatus();
+    }
+
+    function resetTurnStatus() {
+      hitTargets.clear();
+      hitOpponent = false;
+      updateHitIndicators();
+    }
+
+    function updateHitIndicators() {
+      const ind1 = document.getElementById('indicator-red1');
+      const ind2 = document.getElementById('indicator-red2');
+      const indY = document.getElementById('indicator-yellow');
+
+      if (hitTargets.has('red1')) {
+        ind1.className = 'flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300 font-extrabold';
+        ind1.querySelector('.state-icon').innerText = '●';
+      } else {
+        ind1.className = 'flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 text-stone-400 border border-stone-200';
+        ind1.querySelector('.state-icon').innerText = '○';
+      }
+
+      if (hitTargets.has('red2')) {
+        ind2.className = 'flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300 font-extrabold';
+        ind2.querySelector('.state-icon').innerText = '●';
+      } else {
+        ind2.className = 'flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 text-stone-400 border border-stone-200';
+        ind2.querySelector('.state-icon').innerText = '○';
+      }
+
+      if (hitOpponent) {
+        indY.className = 'flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-200 text-rose-900 border border-rose-400 font-extrabold animate-pulse';
+        indY.innerHTML = '💛 노란공: <span>파울(꽝)!</span>';
+      } else {
+        indY.className = 'flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200';
+        indY.innerHTML = '💛 노란공: <span>세이프</span>';
+      }
+    }
+
+    function updateCoinUI() {
+      const coinCountEl = document.getElementById('coin-count');
+      const pouchesEl = document.getElementById('coin-pouches');
+      coinCountEl.innerText = coins;
+
+      pouchesEl.innerHTML = '';
+      for (let i = 0; i < MAX_COINS; i++) {
+        const span = document.createElement('span');
+        span.className = 'text-base sm:text-lg transition-all duration-300';
+        if (i < coins) {
+          span.innerText = '💰';
+          span.style.filter = 'drop-shadow(0 2px 4px rgba(210,130,20,0.4))';
+        } else {
+          span.innerText = '👝';
+          span.style.opacity = '0.35';
+          span.style.filter = 'grayscale(1)';
+        }
+        pouchesEl.appendChild(span);
+      }
+    }
+
+    function pickRandomPrize() {
+      const totalWeight = prizes.reduce((sum, p) => sum + Number(p.weight), 0);
+      let rand = Math.random() * totalWeight;
+
+      for (const item of prizes) {
+        if (rand < item.weight) {
+          return item;
+        }
+        rand -= item.weight;
+      }
+      return prizes[0];
+    }
+
+    /* Physics Loop & Collision Resolution */
+    function updatePhysics() {
+      let anyBallMoving = false;
+
+      // 1. Move & Wall Cushion Collision
+      balls.forEach(b => {
+        b.x += b.vx;
+        b.y += b.vy;
+        b.vx *= FRICTION;
+        b.vy *= FRICTION;
+
+        if (Math.hypot(b.vx, b.vy) < 0.05) {
+          b.vx = 0;
+          b.vy = 0;
+        } else {
+          anyBallMoving = true;
+        }
+
+        // Left / Right Cushion
+        if (b.x - b.r < 0) {
+          b.x = b.r;
+          b.vx = -b.vx * RESTITUTION;
+          AudioEngine.playCushion();
+        } else if (b.x + b.r > width) {
+          b.x = width - b.r;
+          b.vx = -b.vx * RESTITUTION;
+          AudioEngine.playCushion();
+        }
+
+        // Top / Bottom Cushion
+        if (b.y - b.r < 0) {
+          b.y = b.r;
+          b.vy = -b.vy * RESTITUTION;
+          AudioEngine.playCushion();
+        } else if (b.y + b.r > height) {
+          b.y = height - b.r;
+          b.vy = -b.vy * RESTITUTION;
+          AudioEngine.playCushion();
+        }
+      });
+
+      // 2. Ball vs Ball Elastic Collision
+      for (let i = 0; i < balls.length; i++) {
+        for (let j = i + 1; j < balls.length; j++) {
+          const b1 = balls[i];
+          const b2 = balls[j];
+
+          const dx = b2.x - b1.x;
+          const dy = b2.y - b1.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < b1.r + b2.r && dist > 0) {
+            // Overlap Separation
+            const overlap = (b1.r + b2.r) - dist;
+            const nx = dx / dist;
+            const ny = dy / dist;
+
+            b1.x -= nx * overlap * 0.5;
+            b1.y -= ny * overlap * 0.5;
+            b2.x += nx * overlap * 0.5;
+            b2.y += ny * overlap * 0.5;
+
+            // Elastic Collision Response
+            const kx = b1.vx - b2.vx;
+            const ky = b1.vy - b2.vy;
+            const p = 2 * (nx * kx + ny * ky) / 2; // Equal mass = 1
+
+            b1.vx -= p * nx * RESTITUTION;
+            b1.vy -= p * ny * RESTITUTION;
+            b2.vx += p * nx * RESTITUTION;
+            b2.vy += p * ny * RESTITUTION;
+
+            const relativeVel = Math.hypot(kx, ky);
+            AudioEngine.playBallHit(relativeVel);
+
+            // Check 4-Ball Game Rules (Cue ball hits)
+            if (b1.id === 'white' || b2.id === 'white') {
+              const target = (b1.id === 'white') ? b2 : b1;
+              if (target.id === 'yellow') {
+                hitOpponent = true;
+              } else if (target.id === 'red1' || target.id === 'red2') {
+                hitTargets.add(target.id);
+              }
+              updateHitIndicators();
+            }
+          }
+        }
+      }
+
+      // 3. Check Turn End
+      if (isMoving && !anyBallMoving) {
+        isMoving = false;
+        if (pendingResult) {
+          evaluateShotResult();
+          pendingResult = false;
+        }
+      }
+    }
+
+    function evaluateShotResult() {
+      const isCaromSuccess = !hitOpponent && hitTargets.has('red1') && hitTargets.has('red2');
+
+      const titleBox = document.getElementById('result-title-box');
+      const titleEl = document.getElementById('result-title');
+      const descEl = document.getElementById('result-desc');
+      const iconEl = document.getElementById('result-icon');
+      const badgeTextEl = document.getElementById('result-badge-text');
+
+      if (isCaromSuccess) {
+        const prize = pickRandomPrize();
+        AudioEngine.playWin();
+        if (window.confetti) {
+          confetti({
+            particleCount: 75,
+            spread: 60,
+            origin: { y: 0.65 },
+            colors: ['#FFE47F', '#F6B144', '#E8748A', '#8FC472', '#C292D6']
+          });
+        }
+
+        badgeTextEl.innerText = '🎯 4구 카롬 대성공!';
+        iconEl.innerText = prize.icon;
+        titleBox.className = 'py-3 px-4 bg-amber-50 rounded-2xl border border-amber-300 mb-2';
+        titleEl.innerText = `${prize.name} 당첨!`;
+        descEl.innerHTML = `정확한 두께와 각도로 적구 2개를 모두 맞췄습니다!<br><strong>[${prize.name}]</strong> 경품을 획득했습니다 🎉`;
+
+        const record = {
+          date: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          type: '성공',
+          prize: prize.name,
+          icon: prize.icon
+        };
+        history.unshift(record);
+        localStorage.setItem('jennie_billiards_history_v1', JSON.stringify(history));
+
+      } else {
+        AudioEngine.playFoul();
+        badgeTextEl.innerText = '🍂 아쉬운 샷... (꽝)';
+        iconEl.innerText = hitOpponent ? '💥' : '💨';
+        titleBox.className = 'py-3 px-4 bg-stone-100 rounded-2xl border border-stone-200 mb-2';
+
+        if (hitOpponent) {
+          titleEl.innerText = '노란공 파울 (꽝)';
+          descEl.innerHTML = '상대방 수구(노란공)를 맞춰 파울이 되었습니다.<br>노란공을 피해 빨간공 2개만 노려보세요!';
+        } else {
+          titleEl.innerText = '득점 실패 (꽝)';
+          descEl.innerHTML = `적구 ${hitTargets.size}/2개만 맞췄습니다.<br>쿠션이나 각도를 이용해 두 적구를 모두 맞춰보세요!`;
+        }
+
+        const record = {
+          date: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          type: '실패',
+          prize: hitOpponent ? '노란공 파울' : '적구 미달',
+          icon: '🍂'
+        };
+        history.unshift(record);
+        localStorage.setItem('jennie_billiards_history_v1', JSON.stringify(history));
+      }
+
+      toggleModal('modal-result', true);
+    }
+
+    /* Clay Visual Rendering */
+    function render() {
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Table Diamond Inlays (Cushion points)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      const pointsX = [width * 0.25, width * 0.5, width * 0.75];
+      pointsX.forEach(px => {
+        drawDiamond(px, 5, 4);
+        drawDiamond(px, height - 5, 4);
+      });
+      const pointsY = [height * 0.33, height * 0.66];
+      pointsY.forEach(py => {
+        drawDiamond(5, py, 4);
+        drawDiamond(width - 5, py, 4);
+      });
+
+      // 2. Draw Aiming Cue & Trajectory Guideline
+      const cueBall = balls[0];
+      if (isAiming && !isMoving) {
+        const pullDx = dragStart.x - dragCurrent.x;
+        const pullDy = dragStart.y - dragCurrent.y;
+        const pullDist = Math.hypot(pullDx, pullDy);
+
+        if (pullDist > 5) {
+          const aimAngle = Math.atan2(pullDy, pullDx);
+          const power = Math.min(pullDist, 130);
+
+          // Forward Trajectory Dotted Guideline
+          ctx.beginPath();
+          ctx.setLineDash([6, 6]);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.lineWidth = 2.5;
+          ctx.moveTo(cueBall.x, cueBall.y);
+          ctx.lineTo(cueBall.x + Math.cos(aimAngle) * (power * 2.2), cueBall.y + Math.sin(aimAngle) * (power * 2.2));
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Clay Cue Stick (Wooden texture with clay shadow)
+          const cueOffset = cueBall.r + 14 + (power * 0.35);
+          const cueLen = 170;
+          const cueStartX = cueBall.x - Math.cos(aimAngle) * (cueOffset + cueLen);
+          const cueStartY = cueBall.y - Math.sin(aimAngle) * (cueOffset + cueLen);
+          const cueEndX = cueBall.x - Math.cos(aimAngle) * cueOffset;
+          const cueEndY = cueBall.y - Math.sin(aimAngle) * cueOffset;
+
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+          ctx.lineWidth = 7;
+          ctx.lineCap = 'round';
+          ctx.moveTo(cueStartX + 3, cueStartY + 5);
+          ctx.lineTo(cueEndX + 3, cueEndY + 5);
+          ctx.stroke();
+
+          // Cue shaft
+          const cueGrad = ctx.createLinearGradient(cueStartX, cueStartY, cueEndX, cueEndY);
+          cueGrad.addColorStop(0, '#5C381E');
+          cueGrad.addColorStop(0.7, '#D79E6A');
+          cueGrad.addColorStop(1, '#FFF5EA');
+
+          ctx.beginPath();
+          ctx.strokeStyle = cueGrad;
+          ctx.lineWidth = 6;
+          ctx.moveTo(cueStartX, cueStartY);
+          ctx.lineTo(cueEndX, cueEndY);
+          ctx.stroke();
+        }
+      }
+
+      // 3. Draw Clay 3D Balls with Cute Faces
+      balls.forEach(b => {
+        drawClayBall(b);
+      });
+    }
+
+    function drawDiamond(x, y, size) {
+      ctx.beginPath();
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x + size, y);
+      ctx.lineTo(x, y + size);
+      ctx.lineTo(x - size, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawClayBall(b) {
+      // Ambient Clay Shadow
+      ctx.beginPath();
+      ctx.arc(b.x + 3, b.y + 4, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fill();
+
+      // 3D Sphere Radial Gradient
+      const grad = ctx.createRadialGradient(
+        b.x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.1,
+        b.x, b.y, b.r
+      );
+
+      if (b.id === 'white') { // White Cue Ball (하얀제니)
+        grad.addColorStop(0, '#FFFFFF');
+        grad.addColorStop(0.65, '#EBE4DB');
+        grad.addColorStop(1, '#BDB3A6');
+      } else if (b.id === 'yellow') { // Opponent (단호박 Yellow)
+        grad.addColorStop(0, '#FFE885');
+        grad.addColorStop(0.7, '#F6B144');
+        grad.addColorStop(1, '#BF7213');
+      } else { // Red Target Balls (적구 Red)
+        grad.addColorStop(0, '#FFA3A3');
+        grad.addColorStop(0.65, '#E83434');
+        grad.addColorStop(1, '#8C1212');
+      }
+
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Clay Highlight Reflection
+      ctx.beginPath();
+      ctx.ellipse(b.x - b.r * 0.32, b.y - b.r * 0.32, b.r * 0.35, b.r * 0.18, -Math.PI / 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.fill();
+
+      // Cute Little Clay Faces
+      ctx.save();
+      ctx.translate(b.x, b.y);
+
+      if (b.id === 'white') {
+        // 하얀제니 눈 & 볼터치 & 미소
+        ctx.fillStyle = '#3D291F';
+        ctx.beginPath();
+        ctx.arc(-5, -1, 1.8, 0, Math.PI * 2);
+        ctx.arc(5, -1, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        // 볼터치
+        ctx.fillStyle = '#FF8BA7';
+        ctx.beginPath();
+        ctx.arc(-7, 3, 2.5, 0, Math.PI * 2);
+        ctx.arc(7, 3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        // 스마일
+        ctx.strokeStyle = '#B85D43';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(0, 2, 3, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+
+      } else if (b.id === 'yellow') {
+        // 단호박 윙크 표정
+        ctx.strokeStyle = '#3D291F';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(-5, -1, 2.5, 1.1 * Math.PI, 1.9 * Math.PI); // 윙크
+        ctx.stroke();
+        ctx.fillStyle = '#3D291F';
+        ctx.beginPath();
+        ctx.arc(5, -1, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        // 볼터치
+        ctx.fillStyle = '#FF9A68';
+        ctx.beginPath();
+        ctx.arc(-7, 3, 2.3, 0, Math.PI * 2);
+        ctx.arc(7, 3, 2.3, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else {
+        // 빨간 사과공 초롱초롱 눈
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(-5, -2, 2.2, 0, Math.PI * 2);
+        ctx.arc(5, -2, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#222';
+        ctx.beginPath();
+        ctx.arc(-4.5, -2, 1.3, 0, Math.PI * 2);
+        ctx.arc(5.5, -2, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+        // 미소
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, 1.5, 2.5, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function gameLoop() {
+      updatePhysics();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    /* Input Handling (Slingshot Drag) */
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startAim(pos) {
+      if (isMoving) return;
+      if (coins <= 0) {
+        showToast('남은 복주머니가 없습니다. [새 게임]을 눌러주세요!');
+        return;
+      }
+
+      const cueBall = balls[0];
+      const dist = Math.hypot(pos.x - cueBall.x, pos.y - cueBall.y);
+
+      // Cue ball 클릭 또는 주변 터치 시 조준 개시
+      if (dist < cueBall.r * 2.2) {
+        isAiming = true;
+        dragStart = { x: cueBall.x, y: cueBall.y };
+        dragCurrent = pos;
+        document.getElementById('drag-hint').style.opacity = '0';
+      }
+    }
+
+    function moveAim(pos) {
+      if (!isAiming) return;
+      dragCurrent = pos;
+    }
+
+    function shoot() {
+      if (!isAiming) return;
+      isAiming = false;
+
+      const cueBall = balls[0];
+      const pullDx = dragStart.x - dragCurrent.x;
+      const pullDy = dragStart.y - dragCurrent.y;
+      const pullDist = Math.hypot(pullDx, pullDy);
+
+      if (pullDist > 12) {
+        // Shoot Cue Ball
+        const angle = Math.atan2(pullDy, pullDx);
+        const power = Math.min(pullDist, 130) * 0.145;
+
+        cueBall.vx = Math.cos(angle) * power;
+        cueBall.vy = Math.sin(angle) * power;
+
+        isMoving = true;
+        pendingResult = true;
+        coins -= 1;
+        updateCoinUI();
+        resetTurnStatus();
+        AudioEngine.playCueShot();
+      }
+    }
+
+    // Touch & Mouse Events
+    canvas.addEventListener('mousedown', e => startAim(getPointerPos(e)));
+    window.addEventListener('mousemove', e => moveAim(getPointerPos(e)));
+    window.addEventListener('mouseup', shoot);
+
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      startAim(getPointerPos(e));
+    }, { passive: false });
+
+    window.addEventListener('touchmove', e => {
+      if (isAiming) {
+        moveAim(getPointerPos(e));
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchend', shoot);
+
+    /* Modal & UI Controls */
+    function toggleModal(modalId, show) {
+      const modal = document.getElementById(modalId);
+      if (show) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function showToast(message) {
+      const existing = document.getElementById('active-toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'active-toast';
+      toast.className = 'fixed bottom-16 z-50 bg-stone-900/90 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs sm:text-sm font-bold text-center';
+      toast.innerText = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (toast) toast.remove();
+      }, 2100);
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('history-list');
+      container.innerHTML = '';
+
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 text-stone-400 text-xs sm:text-sm font-medium">
+            아직 샷 기록이 없습니다.<br>하얀제니를 당겨 4구 샷을 날려보세요!
+          </div>
+        `;
+        return;
+      }
+
+      history.forEach(item => {
+        const isSuccess = item.type === '성공';
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between p-2.5 rounded-xl border ${isSuccess ? 'bg-amber-50/80 border-amber-200' : 'bg-stone-50 border-stone-200'}`;
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">${item.icon}</span>
+            <div>
+              <div class="text-xs sm:text-sm font-black ${isSuccess ? 'text-amber-950' : 'text-stone-600'}">${item.prize}</div>
+              <div class="text-[11px] text-stone-500">${item.type}</div>
+            </div>
+          </div>
+          <span class="text-[10px] text-stone-400 font-semibold">${item.date}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function clearHistory() {
+      history = [];
+      localStorage.removeItem('jennie_billiards_history_v1');
+      renderHistory();
+      showToast('내역이 초기화되었습니다.');
+    }
+
+    function renderSettings() {
+      const table = document.getElementById('prizes-table');
+      table.innerHTML = '';
+
+      prizes.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2 p-2 bg-amber-50/70 rounded-xl border border-amber-200/60';
+        row.innerHTML = `
+          <span class="text-lg w-7 text-center">${p.icon}</span>
+          <input type="text" class="prize-name-input flex-1 bg-white border border-stone-200 rounded-lg px-2 py-1 text-xs text-stone-800 font-bold focus:outline-none" value="${p.name}" data-idx="${idx}" />
+          <div class="flex items-center gap-1">
+            <span class="text-[11px] text-stone-500 font-medium">가중치</span>
+            <input type="number" step="0.1" min="0.1" max="1000" class="prize-weight-input w-14 bg-white border border-stone-200 rounded-lg px-1 py-1 text-xs text-center font-bold focus:outline-none" value="${p.weight}" data-idx="${idx}" />
+          </div>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    function saveCustomPrizes() {
+      const nameInputs = document.querySelectorAll('.prize-name-input');
+      const weightInputs = document.querySelectorAll('.prize-weight-input');
+
+      nameInputs.forEach((input, i) => {
+        prizes[i].name = input.value.trim() || prizes[i].name;
+      });
+      weightInputs.forEach((input, i) => {
+        prizes[i].weight = Math.max(0.1, parseFloat(input.value) || 1);
+      });
+
+      localStorage.setItem('jennie_billiards_prizes_v1', JSON.stringify(prizes));
+      toggleModal('modal-settings', false);
+      showToast('✨ 경품 설정이 저장되었습니다!');
+    }
+
+    function resetDefaultPrizes() {
+      prizes = JSON.parse(JSON.stringify(DEFAULT_PRIZES));
+      localStorage.setItem('jennie_billiards_prizes_v1', JSON.stringify(prizes));
+      renderSettings();
+      showToast('기본 경품 및 가중치로 복원되었습니다.');
+    }
+
+    function startNewGame() {
+      coins = MAX_COINS;
+      updateCoinUI();
+      randomizeBallPositions(false);
+      AudioEngine.playShuffle();
+      showToast('🔄 새로운 당구 게임이 시작되었습니다! (코인 3개 충전)');
+    }
+
+    /* Initialize Game */
+    document.addEventListener('DOMContentLoaded', () => {
+      createFallingLeaves();
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      updateCoinUI();
+      randomizeBallPositions(false);
+      requestAnimationFrame(gameLoop);
+
+      // Buttons
+      document.getElementById('btn-shuffle').addEventListener('click', () => {
+        if (!isMoving) randomizeBallPositions(true);
+      });
+      document.getElementById('btn-canvas-shuffle').addEventListener('click', () => {
+        if (!isMoving) randomizeBallPositions(true);
+      });
+
+      document.getElementById('btn-reset').addEventListener('click', startNewGame);
+
+      document.getElementById('btn-history').addEventListener('click', () => {
+        renderHistory();
+        toggleModal('modal-history', true);
+      });
+
+      document.getElementById('btn-settings').addEventListener('click', () => {
+        renderSettings();
+        toggleModal('modal-settings', true);
+      });
+
+      // 샷 결과 모달 닫을 때 다음 샷을 위한 무작위 공 배치 자동 셔플!
+      document.getElementById('btn-close-result').addEventListener('click', () => {
+        toggleModal('modal-result', false);
+        if (coins > 0) {
+          setTimeout(() => {
+            randomizeBallPositions(true);
+          }, 150);
+        }
+      });
+
+      document.getElementById('btn-sound').addEventListener('click', () => {
+        AudioEngine.enabled = !AudioEngine.enabled;
+        const icon = document.getElementById('sound-icon');
+        const text = document.getElementById('sound-text');
+        if (AudioEngine.enabled) {
+          icon.innerText = '🔊';
+          text.innerText = '효과음 켜짐';
+          AudioEngine.playCueShot();
+        } else {
+          icon.innerText = '🔇';
+          text.innerText = '음소거';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
