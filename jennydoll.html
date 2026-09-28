@@ -34,7 +34,7 @@
         inset -4px -6px 12px rgba(190, 145, 105, 0.18);
     }
 
-    .clay-plate {
+    .clay-plate-outer {
       background: radial-gradient(circle at 38% 32%, #FFFFFF 0%, #FBF6EF 65%, #E6D7C3 100%);
       border-radius: 50%;
       box-shadow: 
@@ -42,6 +42,12 @@
         -12px -12px 30px rgba(255, 255, 255, 0.95),
         inset 6px 8px 16px rgba(255, 255, 255, 0.95),
         inset -12px -14px 24px rgba(170, 130, 95, 0.25);
+    }
+
+    /* 회전하는 내부 접시 레이어 */
+    #spinning-plate {
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.3, 1);
+      transform-origin: center center;
     }
 
     /* Clay Buttons */
@@ -103,55 +109,43 @@
       border-radius: 50%;
     }
 
-    /* Clay Doll Base Styles & Center Anchor Bug Fix */
+    /* 제니 캐릭터 공통 스타일 & 역회전(얼굴 바로세우기) 세팅 */
     .doll-clay {
       transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
       cursor: pointer;
     }
-    .doll-clay:hover:not(.opened) {
-      transform: translateY(-8px) scale(1.08);
+    .doll-inner {
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.3, 1);
+      transform-origin: center center;
     }
-    .doll-clay:active:not(.opened) {
-      transform: scale(0.92);
+    .doll-clay:hover:not(.opened) .doll-inner {
+      transform: translateY(-8px) scale(1.08) rotate(var(--counter-rot, 0deg));
+    }
+    .doll-clay:active:not(.opened) .doll-inner {
+      transform: scale(0.92) rotate(var(--counter-rot, 0deg));
     }
     .doll-clay.opened {
       cursor: default;
       filter: grayscale(0.35) saturate(0.7);
-      transform: scale(0.95);
+    }
+    .doll-clay.opened .doll-inner {
+      transform: scale(0.95) rotate(var(--counter-rot, 0deg));
     }
 
-    /* Specifically fix center item hover position anchor */
+    /* 가운데 백설제니 전용 고정 앵커 */
     #sp-3 {
       transform: translate(-50%, -50%);
     }
-    #sp-3:hover:not(.opened) {
-      transform: translate(-50%, calc(-50% - 8px)) scale(1.08) !important;
-    }
-    #sp-3:active:not(.opened) {
-      transform: translate(-50%, -50%) scale(0.92) !important;
-    }
-    #sp-3.opened {
-      transform: translate(-50%, -50%) scale(0.95) !important;
-    }
 
-    /* Squish & Pop Animation */
+    /* 팝핑 애니메이션 */
     @keyframes dollPop {
       0% { transform: scale(1); }
       35% { transform: scale(1.25, 0.75) translateY(8px); }
       65% { transform: scale(0.85, 1.2) translateY(-12px) rotate(-5deg); }
       100% { transform: scale(0.95) translateY(0); }
     }
-    @keyframes centerDollPop {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      35% { transform: translate(-50%, -50%) scale(1.25, 0.75) translateY(8px); }
-      65% { transform: translate(-50%, -50%) scale(0.85, 1.2) translateY(-12px) rotate(-5deg); }
-      100% { transform: translate(-50%, -50%) scale(0.95); }
-    }
-    .anim-pop {
+    .anim-pop .doll-inner {
       animation: dollPop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    }
-    #sp-3.anim-pop {
-      animation: centerDollPop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
     /* Falling Leaves */
@@ -185,14 +179,14 @@
     <div class="text-center mt-2 mb-3">
       <div class="inline-flex items-center gap-1.5 px-4 py-1 clay-badge mb-1.5">
         <span class="text-lg">🍂</span>
-        <span class="text-xs sm:text-sm font-bold text-amber-900 tracking-wider">가을 EVENT 귀여운 제니 뽑기</span>
+        <span class="text-xs sm:text-sm font-bold text-amber-900 tracking-wider">가을 EVENT 룰렛 제니 뽑기</span>
         <span class="text-lg">🌾</span>
       </div>
       <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-950 tracking-tight drop-shadow-sm flex items-center justify-center gap-2">
         철지난 랜덤 송편 뽑기
       </h1>
       <p class="text-stone-600 text-xs sm:text-sm mt-1">
-        제니 인형을 콕 찔러 골라보세요! (기본 기회: 3회)
+        제니를 고를 때마다 원판이 돌아가 위치가 재배치됩니다! (기회: 3회)
       </p>
     </div>
 
@@ -224,177 +218,160 @@
   </div>
 
   <main class="relative z-10 w-full max-w-xl flex flex-col items-center justify-center my-auto">
-    <!-- Dish Plate Container -->
-    <div class="relative w-80 h-80 sm:w-[420px] sm:h-[420px] clay-plate flex items-center justify-center p-6">
+    <!-- Outer Dish Plate Container -->
+    <div class="relative w-80 h-80 sm:w-[420px] sm:h-[420px] clay-plate-outer flex items-center justify-center p-6 overflow-hidden">
       
-      <!-- Clay Decorative Leaves on Plate -->
-      <div class="absolute w-20 h-2 top-14 left-20 bg-emerald-600/60 rounded-full rotate-45 shadow-sm"></div>
-      <div class="absolute w-24 h-2 bottom-16 right-20 bg-amber-700/50 rounded-full -rotate-30 shadow-sm"></div>
-      <div class="absolute w-28 h-28 rounded-full bg-amber-900/10 pointer-events-none blur-md"></div>
+      <!-- 빙글빙글 돌아가는 내부 회전 접시 -->
+      <div id="spinning-plate" class="relative w-full h-full rounded-full flex items-center justify-center">
+        
+        <!-- 접시 위 솔잎/단풍 데코 -->
+        <div class="absolute w-20 h-2 top-14 left-20 bg-emerald-600/60 rounded-full rotate-45 shadow-sm pointer-events-none"></div>
+        <div class="absolute w-24 h-2 bottom-16 right-20 bg-amber-700/50 rounded-full -rotate-30 shadow-sm pointer-events-none"></div>
+        <div class="absolute w-28 h-28 rounded-full bg-amber-900/10 pointer-events-none blur-md"></div>
 
-      <!-- Clay Doll 1: Top-Left (쑥제니) -->
-      <div id="sp-1" class="absolute top-8 sm:top-10 left-10 sm:left-12 doll-clay flex flex-col items-center" data-name="쑥제니" onclick="pickItem('sp-1')">
-        <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
-          <defs>
-            <radialGradient id="grad-hair-green" cx="40%" cy="30%" r="70%">
-              <stop offset="0%" stop-color="#93C174"/>
-              <stop offset="60%" stop-color="#5B873D"/>
-              <stop offset="100%" stop-color="#3C5C26"/>
-            </radialGradient>
-            <radialGradient id="grad-face" cx="35%" cy="35%" r="65%">
-              <stop offset="0%" stop-color="#FFF5EA"/>
-              <stop offset="70%" stop-color="#FDE5D0"/>
-              <stop offset="100%" stop-color="#ECC6A7"/>
-            </radialGradient>
-          </defs>
-          <!-- Hair buns -->
-          <circle cx="22" cy="30" r="16" fill="url(#grad-hair-green)"/>
-          <circle cx="78" cy="30" r="16" fill="url(#grad-hair-green)"/>
-          <!-- Face -->
-          <ellipse cx="50" cy="54" rx="34" ry="32" fill="url(#grad-face)"/>
-          <!-- Bangs -->
-          <path d="M 22 45 C 32 30, 48 34, 50 40 C 52 34, 68 30, 78 45 C 68 32, 32 32, 22 45 Z" fill="url(#grad-hair-green)"/>
-          <!-- Eyes -->
-          <ellipse cx="38" cy="53" rx="3.5" ry="5.5" fill="#3D291F"/>
-          <ellipse cx="62" cy="53" rx="3.5" ry="5.5" fill="#3D291F"/>
-          <circle cx="39.5" cy="51.5" r="1.5" fill="#FFFFFF"/>
-          <circle cx="63.5" cy="51.5" r="1.5" fill="#FFFFFF"/>
-          <!-- Blush -->
-          <ellipse cx="32" cy="61" rx="6" ry="3.5" fill="#FF8BA7" opacity="0.6"/>
-          <ellipse cx="68" cy="61" rx="6" ry="3.5" fill="#FF8BA7" opacity="0.6"/>
-          <!-- Smile -->
-          <path d="M 45 62 Q 50 67 55 62" stroke="#B85D43" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">쑥제니</span>
-      </div>
+        <!-- 1: Top-Left (쑥제니) -->
+        <div id="sp-1" class="absolute top-6 sm:top-8 left-8 sm:left-10 doll-clay flex flex-col items-center" data-name="쑥제니" onclick="pickItem('sp-1')">
+          <div class="doll-inner flex flex-col items-center">
+            <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="grad-hair-green" cx="40%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#93C174"/>
+                  <stop offset="60%" stop-color="#5B873D"/>
+                  <stop offset="100%" stop-color="#3C5C26"/>
+                </radialGradient>
+                <radialGradient id="grad-face" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#FFF5EA"/>
+                  <stop offset="70%" stop-color="#FDE5D0"/>
+                  <stop offset="100%" stop-color="#ECC6A7"/>
+                </radialGradient>
+              </defs>
+              <circle cx="22" cy="30" r="16" fill="url(#grad-hair-green)"/>
+              <circle cx="78" cy="30" r="16" fill="url(#grad-hair-green)"/>
+              <ellipse cx="50" cy="54" rx="34" ry="32" fill="url(#grad-face)"/>
+              <path d="M 22 45 C 32 30, 48 34, 50 40 C 52 34, 68 30, 78 45 C 68 32, 32 32, 22 45 Z" fill="url(#grad-hair-green)"/>
+              <ellipse cx="38" cy="53" rx="3.5" ry="5.5" fill="#3D291F"/>
+              <ellipse cx="62" cy="53" rx="3.5" ry="5.5" fill="#3D291F"/>
+              <circle cx="39.5" cy="51.5" r="1.5" fill="#FFFFFF"/>
+              <circle cx="63.5" cy="51.5" r="1.5" fill="#FFFFFF"/>
+              <ellipse cx="32" cy="61" rx="6" ry="3.5" fill="#FF8BA7" opacity="0.6"/>
+              <ellipse cx="68" cy="61" rx="6" ry="3.5" fill="#FF8BA7" opacity="0.6"/>
+              <path d="M 45 62 Q 50 67 55 62" stroke="#B85D43" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">쑥제니</span>
+          </div>
+        </div>
 
-      <!-- Clay Doll 2: Top-Right (호박제니) -->
-      <div id="sp-2" class="absolute top-8 sm:top-10 right-10 sm:right-12 doll-clay flex flex-col items-center" data-name="호박제니" onclick="pickItem('sp-2')">
-        <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
-          <defs>
-            <radialGradient id="grad-hair-yellow" cx="40%" cy="30%" r="70%">
-              <stop offset="0%" stop-color="#FFE885"/>
-              <stop offset="60%" stop-color="#F6B144"/>
-              <stop offset="100%" stop-color="#C77D16"/>
-            </radialGradient>
-          </defs>
-          <!-- Side ponytails -->
-          <ellipse cx="18" cy="46" rx="10" ry="16" fill="url(#grad-hair-yellow)" transform="rotate(-20 18 46)"/>
-          <ellipse cx="82" cy="46" rx="10" ry="16" fill="url(#grad-hair-yellow)" transform="rotate(20 82 46)"/>
-          <!-- Face -->
-          <ellipse cx="50" cy="54" rx="34" ry="32" fill="url(#grad-face)"/>
-          <!-- Bangs -->
-          <path d="M 22 46 Q 50 32 78 46 Q 66 32 50 34 Q 34 32 22 46 Z" fill="url(#grad-hair-yellow)"/>
-          <!-- Ribbon on hair -->
-          <path d="M 44 26 L 56 26 L 50 32 Z" fill="#E85D34"/>
-          <!-- Winking Eyes -->
-          <path d="M 34 54 Q 39 49 44 54" stroke="#3D291F" stroke-width="3" stroke-linecap="round" fill="none"/>
-          <ellipse cx="62" cy="53" rx="3.5" ry="5.5" fill="#3D291F"/>
-          <circle cx="63.5" cy="51.5" r="1.5" fill="#FFFFFF"/>
-          <!-- Blush -->
-          <ellipse cx="32" cy="61" rx="6" ry="3.5" fill="#FFA685" opacity="0.75"/>
-          <ellipse cx="68" cy="61" rx="6" ry="3.5" fill="#FFA685" opacity="0.75"/>
-          <!-- Smile -->
-          <path d="M 46 62 Q 50 67 54 62" stroke="#B85D43" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">호박제니</span>
-      </div>
+        <!-- 2: Top-Right (호박제니) -->
+        <div id="sp-2" class="absolute top-6 sm:top-8 right-8 sm:right-10 doll-clay flex flex-col items-center" data-name="호박제니" onclick="pickItem('sp-2')">
+          <div class="doll-inner flex flex-col items-center">
+            <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="grad-hair-yellow" cx="40%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#FFE885"/>
+                  <stop offset="60%" stop-color="#F6B144"/>
+                  <stop offset="100%" stop-color="#C77D16"/>
+                </radialGradient>
+              </defs>
+              <ellipse cx="18" cy="46" rx="10" ry="16" fill="url(#grad-hair-yellow)" transform="rotate(-20 18 46)"/>
+              <ellipse cx="82" cy="46" rx="10" ry="16" fill="url(#grad-hair-yellow)" transform="rotate(20 82 46)"/>
+              <ellipse cx="50" cy="54" rx="34" ry="32" fill="url(#grad-face)"/>
+              <path d="M 22 46 Q 50 32 78 46 Q 66 32 50 34 Q 34 32 22 46 Z" fill="url(#grad-hair-yellow)"/>
+              <path d="M 44 26 L 56 26 L 50 32 Z" fill="#E85D34"/>
+              <path d="M 34 54 Q 39 49 44 54" stroke="#3D291F" stroke-width="3" stroke-linecap="round" fill="none"/>
+              <ellipse cx="62" cy="53" rx="3.5" ry="5.5" fill="#3D291F"/>
+              <circle cx="63.5" cy="51.5" r="1.5" fill="#FFFFFF"/>
+              <ellipse cx="32" cy="61" rx="6" ry="3.5" fill="#FFA685" opacity="0.75"/>
+              <ellipse cx="68" cy="61" rx="6" ry="3.5" fill="#FFA685" opacity="0.75"/>
+              <path d="M 46 62 Q 50 67 54 62" stroke="#B85D43" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">호박제니</span>
+          </div>
+        </div>
 
-      <!-- Clay Doll 3: Center (백설제니) -->
-      <div id="sp-3" class="absolute top-1/2 left-1/2 doll-clay flex flex-col items-center z-20" data-name="백설제니" onclick="pickItem('sp-3')">
-        <svg class="w-22 h-22 sm:w-26 sm:h-26 drop-shadow-xl" viewBox="0 0 100 100">
-          <defs>
-            <radialGradient id="grad-hair-choco" cx="40%" cy="30%" r="70%">
-              <stop offset="0%" stop-color="#6B4F3B"/>
-              <stop offset="70%" stop-color="#4A3425"/>
-              <stop offset="100%" stop-color="#2E1C12"/>
-            </radialGradient>
-          </defs>
-          <!-- Beret hat (Pure White Clay) -->
-          <ellipse cx="50" cy="27" rx="32" ry="15" fill="#FFFFFF" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.15))"/>
-          <circle cx="50" cy="14" r="3.5" fill="#FF8BA7"/>
-          <!-- Face -->
-          <ellipse cx="50" cy="56" rx="35" ry="33" fill="url(#grad-face)"/>
-          <!-- Hair curls -->
-          <path d="M 18 50 Q 14 68 22 72 Q 26 56 22 45 Z" fill="url(#grad-hair-choco)"/>
-          <path d="M 82 50 Q 86 68 78 72 Q 74 56 78 45 Z" fill="url(#grad-hair-choco)"/>
-          <path d="M 23 44 Q 50 38 77 44 Q 60 36 50 37 Q 38 36 23 44 Z" fill="url(#grad-hair-choco)"/>
-          <!-- Sparkling Eyes -->
-          <ellipse cx="37" cy="55" rx="4" ry="6" fill="#3D291F"/>
-          <ellipse cx="63" cy="55" rx="4" ry="6" fill="#3D291F"/>
-          <circle cx="39" cy="53" r="2" fill="#FFFFFF"/>
-          <circle cx="65" cy="53" r="2" fill="#FFFFFF"/>
-          <!-- Blush -->
-          <ellipse cx="31" cy="63" rx="7" ry="4" fill="#FF8BA7" opacity="0.65"/>
-          <ellipse cx="69" cy="63" rx="7" ry="4" fill="#FF8BA7" opacity="0.65"/>
-          <!-- Open Joyful Mouth -->
-          <path d="M 46 64 Q 50 71 54 64 Z" fill="#D34B56"/>
-        </svg>
-        <span class="badge-tag -mt-1 text-center text-xs font-bold text-amber-950 bg-white/95 backdrop-blur-sm rounded-full px-3 py-0.5 shadow-sm">백설제니</span>
-      </div>
+        <!-- 3: Center (백설제니) -->
+        <div id="sp-3" class="absolute top-1/2 left-1/2 doll-clay flex flex-col items-center z-20" data-name="백설제니" onclick="pickItem('sp-3')">
+          <div class="doll-inner flex flex-col items-center">
+            <svg class="w-22 h-22 sm:w-26 sm:h-26 drop-shadow-xl" viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="grad-hair-choco" cx="40%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#6B4F3B"/>
+                  <stop offset="70%" stop-color="#4A3425"/>
+                  <stop offset="100%" stop-color="#2E1C12"/>
+                </radialGradient>
+              </defs>
+              <ellipse cx="50" cy="27" rx="32" ry="15" fill="#FFFFFF" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.15))"/>
+              <circle cx="50" cy="14" r="3.5" fill="#FF8BA7"/>
+              <ellipse cx="50" cy="56" rx="35" ry="33" fill="url(#grad-face)"/>
+              <path d="M 18 50 Q 14 68 22 72 Q 26 56 22 45 Z" fill="url(#grad-hair-choco)"/>
+              <path d="M 82 50 Q 86 68 78 72 Q 74 56 78 45 Z" fill="url(#grad-hair-choco)"/>
+              <path d="M 23 44 Q 50 38 77 44 Q 60 36 50 37 Q 38 36 23 44 Z" fill="url(#grad-hair-choco)"/>
+              <ellipse cx="37" cy="55" rx="4" ry="6" fill="#3D291F"/>
+              <ellipse cx="63" cy="55" rx="4" ry="6" fill="#3D291F"/>
+              <circle cx="39" cy="53" r="2" fill="#FFFFFF"/>
+              <circle cx="65" cy="53" r="2" fill="#FFFFFF"/>
+              <ellipse cx="31" cy="63" rx="7" ry="4" fill="#FF8BA7" opacity="0.65"/>
+              <ellipse cx="69" cy="63" rx="7" ry="4" fill="#FF8BA7" opacity="0.65"/>
+              <path d="M 46 64 Q 50 71 54 64 Z" fill="#D34B56"/>
+            </svg>
+            <span class="badge-tag -mt-1 text-center text-xs font-bold text-amber-950 bg-white/95 backdrop-blur-sm rounded-full px-3 py-0.5 shadow-sm">백설제니</span>
+          </div>
+        </div>
 
-      <!-- Clay Doll 4: Bottom-Left (핑크제니) -->
-      <div id="sp-4" class="absolute bottom-8 sm:bottom-10 left-9 sm:left-11 doll-clay flex flex-col items-center" data-name="핑크제니" onclick="pickItem('sp-4')">
-        <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
-          <defs>
-            <radialGradient id="grad-hair-pink" cx="40%" cy="30%" r="70%">
-              <stop offset="0%" stop-color="#FFA8BA"/>
-              <stop offset="60%" stop-color="#E86E85"/>
-              <stop offset="100%" stop-color="#B83A53"/>
-            </radialGradient>
-          </defs>
-          <!-- Bob Hair -->
-          <ellipse cx="50" cy="52" rx="38" ry="34" fill="url(#grad-hair-pink)"/>
-          <!-- Face -->
-          <ellipse cx="50" cy="55" rx="32" ry="30" fill="url(#grad-face)"/>
-          <!-- Straight Bangs -->
-          <path d="M 23 46 Q 50 42 77 46 Q 64 36 50 37 Q 36 36 23 46 Z" fill="url(#grad-hair-pink)"/>
-          <!-- Flower Hairpin -->
-          <circle cx="70" cy="38" r="6" fill="#FFF" opacity="0.9"/>
-          <circle cx="70" cy="38" r="2.5" fill="#FFE57F"/>
-          <!-- Big Cute Eyes -->
-          <ellipse cx="38" cy="54" rx="3.5" ry="5.5" fill="#3D291F"/>
-          <ellipse cx="62" cy="54" rx="3.5" ry="5.5" fill="#3D291F"/>
-          <circle cx="39.5" cy="52" r="1.5" fill="#FFFFFF"/>
-          <circle cx="63.5" cy="52" r="1.5" fill="#FFFFFF"/>
-          <!-- Blush -->
-          <ellipse cx="32" cy="62" rx="6" ry="3.5" fill="#FF688B" opacity="0.6"/>
-          <ellipse cx="68" cy="62" rx="6" ry="3.5" fill="#FF688B" opacity="0.6"/>
-          <!-- Smile -->
-          <path d="M 46 63 Q 50 67 54 63" stroke="#B85D43" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">핑크제니</span>
-      </div>
+        <!-- 4: Bottom-Left (핑크제니) -->
+        <div id="sp-4" class="absolute bottom-6 sm:bottom-8 left-7 sm:left-9 doll-clay flex flex-col items-center" data-name="핑크제니" onclick="pickItem('sp-4')">
+          <div class="doll-inner flex flex-col items-center">
+            <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="grad-hair-pink" cx="40%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#FFA8BA"/>
+                  <stop offset="60%" stop-color="#E86E85"/>
+                  <stop offset="100%" stop-color="#B83A53"/>
+                </radialGradient>
+              </defs>
+              <ellipse cx="50" cy="52" rx="38" ry="34" fill="url(#grad-hair-pink)"/>
+              <ellipse cx="50" cy="55" rx="32" ry="30" fill="url(#grad-face)"/>
+              <path d="M 23 46 Q 50 42 77 46 Q 64 36 50 37 Q 36 36 23 46 Z" fill="url(#grad-hair-pink)"/>
+              <circle cx="70" cy="38" r="6" fill="#FFF" opacity="0.9"/>
+              <circle cx="70" cy="38" r="2.5" fill="#FFE57F"/>
+              <ellipse cx="38" cy="54" rx="3.5" ry="5.5" fill="#3D291F"/>
+              <ellipse cx="62" cy="54" rx="3.5" ry="5.5" fill="#3D291F"/>
+              <circle cx="39.5" cy="52" r="1.5" fill="#FFFFFF"/>
+              <circle cx="63.5" cy="52" r="1.5" fill="#FFFFFF"/>
+              <ellipse cx="32" cy="62" rx="6" ry="3.5" fill="#FF688B" opacity="0.6"/>
+              <ellipse cx="68" cy="62" rx="3.5" fill="#FF688B" opacity="0.6"/>
+              <path d="M 46 63 Q 50 67 54 63" stroke="#B85D43" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">핑크제니</span>
+          </div>
+        </div>
 
-      <!-- Clay Doll 5: Bottom-Right (포도제니) -->
-      <div id="sp-5" class="absolute bottom-8 sm:bottom-10 right-9 sm:right-11 doll-clay flex flex-col items-center" data-name="포도제니" onclick="pickItem('sp-5')">
-        <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
-          <defs>
-            <radialGradient id="grad-hair-purple" cx="40%" cy="30%" r="70%">
-              <stop offset="0%" stop-color="#C292D6"/>
-              <stop offset="60%" stop-color="#8E52A8"/>
-              <stop offset="100%" stop-color="#5E2674"/>
-            </radialGradient>
-          </defs>
-          <!-- Braids / Twin Tails -->
-          <circle cx="20" cy="56" r="12" fill="url(#grad-hair-purple)"/>
-          <circle cx="80" cy="56" r="12" fill="url(#grad-hair-purple)"/>
-          <!-- Face -->
-          <ellipse cx="50" cy="54" rx="34" ry="32" fill="url(#grad-face)"/>
-          <!-- Bangs -->
-          <path d="M 23 44 C 36 32, 45 42, 50 40 C 55 42, 64 32, 77 44 Q 50 30 23 44 Z" fill="url(#grad-hair-purple)"/>
-          <!-- Cat Eyes Style -->
-          <ellipse cx="38" cy="53" rx="4" ry="5.5" fill="#3D291F" transform="rotate(-6 38 53)"/>
-          <ellipse cx="62" cy="53" rx="4" ry="5.5" fill="#3D291F" transform="rotate(6 62 53)"/>
-          <circle cx="39" cy="51.5" r="1.6" fill="#FFFFFF"/>
-          <circle cx="63" cy="51.5" r="1.6" fill="#FFFFFF"/>
-          <!-- Blush -->
-          <ellipse cx="32" cy="62" rx="6" ry="3.5" fill="#E26DB5" opacity="0.6"/>
-          <ellipse cx="68" cy="62" rx="6" ry="3.5" fill="#E26DB5" opacity="0.6"/>
-          <!-- Cat Mouth / Smile -->
-          <path d="M 43 62 Q 47 65 50 63 Q 53 65 57 62" stroke="#B85D43" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">포도제니</span>
+        <!-- 5: Bottom-Right (포도제니) -->
+        <div id="sp-5" class="absolute bottom-6 sm:bottom-8 right-7 sm:right-9 doll-clay flex flex-col items-center" data-name="포도제니" onclick="pickItem('sp-5')">
+          <div class="doll-inner flex flex-col items-center">
+            <svg class="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="grad-hair-purple" cx="40%" cy="30%" r="70%">
+                  <stop offset="0%" stop-color="#C292D6"/>
+                  <stop offset="60%" stop-color="#8E52A8"/>
+                  <stop offset="100%" stop-color="#5E2674"/>
+                </radialGradient>
+              </defs>
+              <circle cx="20" cy="56" r="12" fill="url(#grad-hair-purple)"/>
+              <circle cx="80" cy="56" r="12" fill="url(#grad-hair-purple)"/>
+              <ellipse cx="50" cy="54" rx="34" ry="32" fill="url(#grad-face)"/>
+              <path d="M 23 44 C 36 32, 45 42, 50 40 C 55 42, 64 32, 77 44 Q 50 30 23 44 Z" fill="url(#grad-hair-purple)"/>
+              <ellipse cx="38" cy="53" rx="4" ry="5.5" fill="#3D291F" transform="rotate(-6 38 53)"/>
+              <ellipse cx="62" cy="53" rx="4" ry="5.5" fill="#3D291F" transform="rotate(6 62 53)"/>
+              <circle cx="39" cy="51.5" r="1.6" fill="#FFFFFF"/>
+              <circle cx="63" cy="51.5" r="1.6" fill="#FFFFFF"/>
+              <ellipse cx="32" cy="62" rx="6" ry="3.5" fill="#E26DB5" opacity="0.6"/>
+              <ellipse cx="68" cy="62" rx="6" ry="3.5" fill="#E26DB5" opacity="0.6"/>
+              <path d="M 43 62 Q 47 65 50 63 Q 53 65 57 62" stroke="#B85D43" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="badge-tag -mt-1 text-center text-[11px] font-bold text-amber-950 bg-white/85 backdrop-blur-sm rounded-full px-2.5 py-0.5 shadow-sm">포도제니</span>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -411,19 +388,19 @@
       <span id="sound-icon">🔊</span> <span id="sound-text">효과음 켜짐</span>
     </button>
     <div class="text-stone-500 font-semibold flex items-center gap-1">
-      <span>🌕 귀여운 가을 제니 뽑기</span>
+      <span>🌕 룰렛 제니 뽑기</span>
     </div>
   </footer>
 
   <!-- Modal: Draw Result -->
   <div id="modal-result" class="fixed inset-0 clay-modal-bg hidden flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm clay-card p-6 text-center transform transition-all scale-95 duration-200" id="result-box">
-      <div class="w-20 h-20 mx-auto mb-3 flex items-center justify-center text-4xl clay-plate p-2" id="result-icon">
+      <div class="w-20 h-20 mx-auto mb-3 flex items-center justify-center text-4xl clay-plate-outer p-2" id="result-icon">
         🎁
       </div>
 
       <div class="text-xs font-bold text-amber-700 uppercase tracking-widest mb-1" id="result-doll-name">
-        쑥제니의 선물!
+        제니의 선물 상자!
       </div>
 
       <!-- Main Result Prize -->
@@ -438,7 +415,7 @@
       </p>
 
       <button id="btn-close-result" class="w-full py-3 clay-btn clay-btn-green rounded-2xl font-bold text-base shadow-md">
-        확인하고 계속하기
+        확인하고 계속하기 (판 돌리기 🌀)
       </button>
     </div>
   </div>
@@ -538,11 +515,39 @@
         }
       },
 
+      // 원판 회전 시 슉~ 돌아가는 바람/롤링 사운드
+      playSpin() {
+        if (!this.enabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(450, now + 0.4);
+          osc.frequency.exponentialRampToValueAtTime(120, now + 1.1);
+
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.25, now + 0.2);
+          gain.gain.linearRampToValueAtTime(0.01, now + 1.15);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 1.2);
+        } catch (e) {
+          console.error(e);
+        }
+      },
+
       playWin() {
         if (!this.enabled) return;
         this.init();
         try {
-          const chords = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+          const chords = [523.25, 659.25, 783.99, 1046.50];
           chords.forEach((freq, idx) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -616,13 +621,6 @@
       }
     };
 
-    /* 
-      정확히 반대로 보정된 확률 가중치:
-      - 꽝 (다음 기회에...): 가중치 200 (전체 약 66.7%로 3개 중 2개꼴)
-      - 당첨 33.3% 안에서:
-        역1 (가장 높음: 36) > 랜덤시댄 (25) > 노래한곡 (16) > 뽑기1장 (10) 
-        > 스쿼트20 (6) > 셀카 (4) > 한장방셀 (2.5) > 1000사다리 (1.5) > 예쁜방셀 (초희귀: 0.5)
-    */
     const DEFAULT_PRIZES = [
       { id: 0, name: '다음 기회에... (꽝)', weight: 200, icon: '🍂', isLose: true },
       { id: 1, name: '역1', weight: 36, icon: '🔥', isLose: false },
@@ -638,11 +636,11 @@
 
     const MAX_COINS = 3;
     let coins = MAX_COINS;
-    // v3 버전 키를 사용하여 새로고침 시에도 즉시 새 가중치가 적용되도록 설정
     let prizes = JSON.parse(localStorage.getItem('jennie_prizes_v3')) || DEFAULT_PRIZES;
     let history = JSON.parse(localStorage.getItem('jennie_history_v3')) || [];
     let openedItems = [];
     let isDrawing = false;
+    let currentPlateRotation = 0; // 누적 회전 각도
 
     function createFallingLeaves() {
       const container = document.getElementById('leaves-container');
@@ -692,6 +690,25 @@
       }
     }
 
+    // 원판 룰렛 회전 & 캐릭터 머리 수직 유지 함수
+    function spinPlate() {
+      // 1~2바퀴 이상의 랜덤 회전각 (450도 ~ 810도 회전)
+      const randomSpin = 360 + Math.floor(Math.random() * 360) + 90;
+      currentPlateRotation += randomSpin;
+
+      const plate = document.getElementById('spinning-plate');
+      plate.style.transform = `rotate(${currentPlateRotation}deg)`;
+
+      // 모든 캐릭터의 내부 컨테이너에 역회전을 주어 얼굴이 뒤집히지 않게 정면 유지
+      const inners = document.querySelectorAll('.doll-inner');
+      inners.forEach(inner => {
+        inner.style.setProperty('--counter-rot', `${-currentPlateRotation}deg`);
+        inner.style.transform = `rotate(${-currentPlateRotation}deg)`;
+      });
+
+      AudioEngine.playSpin();
+    }
+
     function pickRandomPrize() {
       const totalWeight = prizes.reduce((sum, p) => sum + Number(p.weight), 0);
       let rand = Math.random() * totalWeight;
@@ -702,7 +719,7 @@
         }
         rand -= item.weight;
       }
-      return prizes[0]; // fallback
+      return prizes[0];
     }
 
     function pickItem(id) {
@@ -807,9 +824,12 @@
         }
       });
 
+      // 판도 새롭게 한번 셔플 회전
+      spinPlate();
+
       updateCoinUI();
       AudioEngine.playReset();
-      showToast('🔄 제니들이 다시 방긋 웃으며 돌아왔습니다! (코인 3개 충전)');
+      showToast('🔄 제니들이 자리를 섞으며 돌아왔습니다! (코인 3개 충전)');
     }
 
     function toggleModal(modalId, show) {
@@ -921,6 +941,9 @@
       createFallingLeaves();
       updateCoinUI();
 
+      // 시작 시 가볍게 회전 세팅
+      spinPlate();
+
       document.getElementById('btn-reset').addEventListener('click', () => {
         resetGame();
       });
@@ -935,8 +958,14 @@
         toggleModal('modal-settings', true);
       });
 
+      // 결과 모달 닫을 때 원판을 슉~ 회전시켜 다음 뽑기 준비!
       document.getElementById('btn-close-result').addEventListener('click', () => {
         toggleModal('modal-result', false);
+        if (coins > 0) {
+          setTimeout(() => {
+            spinPlate();
+          }, 150);
+        }
       });
 
       document.getElementById('btn-sound').addEventListener('click', () => {
