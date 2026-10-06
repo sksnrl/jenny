@@ -925,7 +925,7 @@
                 ctx.stroke();
 
                 ctx.fillStyle = '#000000';
-                ctx.font = '900 74px "Black Han Sans", sans-serif';
+                ctx.font = '800 110px "Black Han Sans", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(player.name, 256, 90);
@@ -1733,35 +1733,34 @@
             particles.push({ system: pSystem, velocities: velocities, life: 25 });
         }
 
-        // --- 16. 마우스 컨트롤 ---
-        function setupMouseControls() {
-            const container = document.getElementById('canvas-container');
-            container.addEventListener('mousedown', (e) => {
-                if (cameraMode === 'orbit') {
-                    isMouseDown = true;
-                    mouseX = e.clientX;
-                    mouseY = e.clientY;
-                }
-            });
+// --- [기존 setupMouseControls 전체 교체] ---
+function setupMouseControls() {
+    const container = document.getElementById('canvas-container');
+    
+    container.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
 
-            window.addEventListener('mousemove', (e) => {
-                if (!isMouseDown || cameraMode !== 'orbit') return;
-                const deltaX = e.clientX - mouseX;
-                const deltaY = e.clientY - mouseY;
-                mouseX = e.clientX;
-                mouseY = e.clientY;
+    window.addEventListener('mousemove', (e) => {
+        if (!isMouseDown) return;
+        const deltaX = e.clientX - mouseX;
+        const deltaY = e.clientY - mouseY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
 
-                orbitAngleX -= deltaX * 0.008;
-                orbitAngleY = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, orbitAngleY + deltaY * 0.008));
-            });
+        orbitAngleX -= deltaX * 0.008;
+        orbitAngleY = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, orbitAngleY + deltaY * 0.008));
+    });
 
-            window.addEventListener('mouseup', () => { isMouseDown = false; });
-            container.addEventListener('wheel', (e) => {
-                if (cameraMode === 'orbit') {
-                    orbitRadius = Math.max(30, Math.min(360, orbitRadius + e.deltaY * 0.08));
-                }
-            });
-        }
+    window.addEventListener('mouseup', () => { isMouseDown = false; });
+    
+    container.addEventListener('wheel', (e) => {
+        // 모든 뷰에서 휠로 줌인/줌아웃 가능
+        orbitRadius = Math.max(15, Math.min(450, orbitRadius + e.deltaY * 0.08));
+    });
+}
 
         // --- 17. 메인 애니메이션 렌더 루프 ---
         function animate() {
@@ -1795,36 +1794,57 @@
                 }
             }
 
-            if (selectedTargetRacer && trackSpline) {
-                const targetPos = selectedTargetRacer.mesh.position;
-                const { tangent, normal, binormal } = getSurfaceOrientationAt(selectedTargetRacer.progress);
+// --- [animate() 내부의 카메라 위치 계산 부분 교체] ---
+if (selectedTargetRacer && trackSpline) {
+    const targetPos = selectedTargetRacer.mesh.position;
+    const { tangent, normal, binormal } = getSurfaceOrientationAt(selectedTargetRacer.progress);
 
-                let desiredCameraPos = new THREE.Vector3();
+    let desiredCameraPos = new THREE.Vector3();
 
-                if (cameraMode === 'chase') {
-                    desiredCameraPos.copy(targetPos)
-                        .sub(tangent.clone().multiplyScalar(16))
-                        .add(normal.clone().multiplyScalar(7.2));
-                    camera.position.lerp(desiredCameraPos, 0.1);
-                    camera.lookAt(targetPos.clone().add(normal.clone().multiplyScalar(1.5)));
-                } else if (cameraMode === 'action') {
-                    desiredCameraPos.copy(targetPos)
-                        .add(binormal.clone().multiplyScalar(12))
-                        .add(normal.clone().multiplyScalar(4.5));
-                    camera.position.lerp(desiredCameraPos, 0.12);
-                    camera.lookAt(targetPos);
-                } else if (cameraMode === 'drone') {
-                    desiredCameraPos.copy(targetPos).add(new THREE.Vector3(0, 95, -35));
-                    camera.position.lerp(desiredCameraPos, 0.08);
-                    camera.lookAt(targetPos);
-                } else if (cameraMode === 'orbit') {
-                    const cx = targetPos.x + Math.sin(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
-                    const cz = targetPos.z + Math.cos(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
-                    const cy = targetPos.y + Math.sin(orbitAngleY) * orbitRadius;
-                    camera.position.set(cx, cy, cz);
-                    camera.lookAt(targetPos);
-                }
-            }
+    if (cameraMode === 'chase') {
+        // [추격 뷰] 뒤쪽 기본 위치를 기준으로 마우스 회전/거리 오프셋 결합
+        const baseOffset = tangent.clone().multiplyScalar(-orbitRadius * 0.15)
+            .add(normal.clone().multiplyScalar(orbitRadius * 0.06));
+        
+        // 횡방향(좌우) 및 수직(상하) 마우스 회전 반영
+        const rotatedOffset = baseOffset.clone()
+            .add(binormal.clone().multiplyScalar(Math.sin(orbitAngleX) * (orbitRadius * 0.2)))
+            .add(normal.clone().multiplyScalar((orbitAngleY - Math.PI / 4) * (orbitRadius * 0.25)));
+
+        desiredCameraPos.copy(targetPos).add(rotatedOffset);
+        camera.position.lerp(desiredCameraPos, 0.12);
+        camera.lookAt(targetPos.clone().add(normal.clone().multiplyScalar(1.5)));
+
+    } else if (cameraMode === 'action') {
+        // [다이내믹 캠] 측면 위치를 기준으로 마우스 조작 결합
+        const baseOffset = binormal.clone().multiplyScalar(Math.cos(orbitAngleX) * (orbitRadius * 0.15))
+            .add(tangent.clone().multiplyScalar(Math.sin(orbitAngleX) * (orbitRadius * 0.15)))
+            .add(normal.clone().multiplyScalar(Math.sin(orbitAngleY) * (orbitRadius * 0.12)));
+
+        desiredCameraPos.copy(targetPos).add(baseOffset);
+        camera.position.lerp(desiredCameraPos, 0.12);
+        camera.lookAt(targetPos);
+
+    } else if (cameraMode === 'drone') {
+        // [탑 드론] 상공에서 내려다보는 상태에서 마우스로 각도/고도 조절
+        const droneHeight = Math.sin(orbitAngleY) * (orbitRadius * 0.8) + 20;
+        const droneDist = Math.cos(orbitAngleY) * (orbitRadius * 0.8);
+        
+        desiredCameraPos.copy(targetPos)
+            .add(new THREE.Vector3(Math.sin(orbitAngleX) * droneDist, droneHeight, Math.cos(orbitAngleX) * droneDist));
+
+        camera.position.lerp(desiredCameraPos, 0.09);
+        camera.lookAt(targetPos);
+
+    } else if (cameraMode === 'orbit') {
+        // [자유 조작] 360도 완전 구면 좌표계 회전
+        const cx = targetPos.x + Math.sin(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
+        const cz = targetPos.z + Math.cos(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
+        const cy = targetPos.y + Math.sin(orbitAngleY) * orbitRadius;
+        camera.position.set(cx, cy, cz);
+        camera.lookAt(targetPos);
+    }
+}
 
             if (screenShakeIntensity > 0) {
                 camera.position.x += (Math.random() - 0.5) * screenShakeIntensity;
