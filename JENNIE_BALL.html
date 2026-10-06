@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제니 볼 레이스</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030308;
+            color: #ffffff;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        .cinematic-font {
+            font-family: 'Black Han Sans', sans-serif;
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.4); }
+        ::-webkit-scrollbar-thumb { background: rgba(236, 72, 153, 0.6); border-radius: 4px; }
+    </style>
+</head>
+<body class="relative w-screen h-screen select-none">
+
+    <!-- Three.js Canvas -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Screen Vignette -->
+    <div class="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/15 to-black/85"></div>
+
+    <!-- UI Overlay Layer -->
+    <div class="absolute inset-0 z-20 flex flex-col justify-between p-4 md:p-6 pointer-events-none">
+        
+        <!-- Header Controls -->
+        <header class="flex flex-wrap justify-between items-center gap-3 pointer-events-auto">
+            <div class="bg-black/75 backdrop-blur-md border border-pink-500/40 px-4 py-2 rounded-2xl shadow-xl flex items-center space-x-3">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span>
+                </span>
+                <div>
+                    <h1 class="cinematic-font text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-yellow-300 to-cyan-400">
+                        제니 볼 레이스
+                    </h1>
+                    <p class="text-[9px] text-white/60 font-mono tracking-widest uppercase">JENNIE  BALL</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 bg-black/80 backdrop-blur-md border border-white/10 p-2 rounded-2xl shadow-2xl">
+                <!-- Map Selector -->
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-flag-checkered absolute left-3 text-cyan-400 text-xs pointer-events-none"></i>
+                    <select id="map-select" onchange="onSelectMap(this.value)" class="bg-white/10 border border-white/20 text-white text-xs font-bold rounded-xl pl-8 pr-3 py-2 outline-none focus:border-pink-500 cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                        <option value="metropolis" class="bg-gray-900 text-white">제니 동산</option>
+                        <option value="spiral" class="bg-gray-900 text-white">제니 공원</option>
+                        <option value="chasm" class="bg-gray-900 text-white">구름 제니</option>
+                        <option value="switchback" class="bg-gray-900 text-white">골든 제니</option>
+                        <option value="drop" class="bg-gray-900 text-white">언덕 제니</option>
+                    </select>
+                </div>
+
+                <!-- Custom Players Button -->
+                <button id="btn-player-modal" onclick="openPlayerModal()" class="px-3 py-2 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 text-purple-200 rounded-xl font-bold text-xs transition-all flex items-center space-x-1.5 disabled:opacity-40 disabled:cursor-not-allowed" title="참가자 설정">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span class="hidden sm:inline">참가자 설정</span>
+                </button>
+
+                <!-- Race Start Button -->
+                <button id="btn-start" onclick="startRace()" class="px-4 py-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 rounded-xl font-bold text-xs tracking-wider flex items-center space-x-1.5 shadow-lg shadow-pink-600/30 transition-all active:scale-95">
+                    <i class="fa-solid fa-play"></i>
+                    <span>레이스 스타트</span>
+                </button>
+
+                <!-- Pause / Resume Button -->
+                <button id="btn-pause" onclick="togglePauseRace()" disabled class="px-3 py-2 bg-yellow-600/30 hover:bg-yellow-600/50 border border-yellow-500/40 text-yellow-300 rounded-xl font-bold text-xs transition-all flex items-center space-x-1 disabled:opacity-40 disabled:cursor-not-allowed" title="일시 중지">
+                    <i id="pause-icon" class="fa-solid fa-pause"></i>
+                    <span id="pause-text" class="hidden sm:inline">일시중지</span>
+                </button>
+
+                <!-- Reset Button -->
+                <button onclick="resetRace()" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold transition-all text-gray-300 hover:text-white" title="처음 상태로 리셋">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Big Subtitle Notification Center -->
+        <div class="w-full flex justify-center px-4 my-auto">
+            <div id="cinematic-subtitle" class="bg-black/90 backdrop-blur-lg border-2 border-pink-500/70 px-8 py-4 rounded-2xl shadow-2xl opacity-0 transform translate-y-4 transition-all duration-300 text-center max-w-2xl">
+                <span class="cinematic-font text-xl md:text-2xl text-yellow-300 tracking-wider drop-shadow-[0_2px_10px_rgba(253,224,71,0.6)]"></span>
+            </div>
+        </div>
+
+        <!-- Bottom Layout -->
+        <div class="flex flex-col md:flex-row justify-between items-end gap-4 pointer-events-none">
+            
+            <!-- Left HUD: Leaderboard & Minimap -->
+            <div class="w-80 bg-black/85 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 shadow-2xl pointer-events-auto flex flex-col gap-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                    <h3 class="cinematic-font text-xs text-pink-400 tracking-wider flex items-center space-x-1.5">
+                        <i class="fa-solid fa-trophy"></i>
+                        <span>실시간 순위</span>
+                    </h3>
+                    <span id="race-status-badge" class="text-[10px] px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded font-mono font-bold">READY</span>
+                </div>
+
+                <div id="leaderboard-list" class="space-y-1 max-h-36 overflow-y-auto pr-1"></div>
+
+                <div class="pt-2 border-t border-white/10">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-bold text-cyan-400 flex items-center space-x-1">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            <span>실시간 서킷 레이더</span>
+                        </span>
+                        <span class="text-[9px] text-yellow-400 font-mono">CHROME MARBLE</span>
+                    </div>
+                    <div class="relative w-full h-28 bg-black/95 rounded-xl border border-cyan-500/30 overflow-hidden shadow-inner flex items-center justify-center">
+                        <canvas id="minimap-canvas" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Angles -->
+            <div class="bg-black/80 backdrop-blur-md border border-white/10 p-2 rounded-2xl flex flex-row md:flex-col gap-1.5 shadow-2xl pointer-events-auto">
+                <button onclick="setCameraMode('chase')" id="cam-chase" class="px-3 py-1.5 bg-pink-600 rounded-xl text-xs font-bold text-white shadow-lg transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-video w-3.5"></i>
+                    <span class="hidden md:inline">추격 뷰</span>
+                </button>
+                <button onclick="setCameraMode('action')" id="cam-action" class="px-3 py-1.5 bg-white/10 hover:bg-pink-600 rounded-xl text-xs font-bold transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-film w-3.5"></i>
+                    <span class="hidden md:inline">다이내믹 캠</span>
+                </button>
+                <button onclick="setCameraMode('drone')" id="cam-drone" class="px-3 py-1.5 bg-white/10 hover:bg-pink-600 rounded-xl text-xs font-bold transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-satellite w-3.5"></i>
+                    <span class="hidden md:inline">탑 드론</span>
+                </button>
+                <button onclick="setCameraMode('orbit')" id="cam-orbit" class="px-3 py-1.5 bg-white/10 hover:bg-pink-600 rounded-xl text-xs font-bold transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-earth-asia w-3.5"></i>
+                    <span class="hidden md:inline">자유 조작</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Customize Modal -->
+    <div id="player-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-gradient-to-b from-gray-900 to-black border border-purple-500/40 w-11/12 max-w-xl rounded-3xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-white/10 mb-4">
+                <h2 class="cinematic-font text-lg text-purple-400 flex items-center space-x-2">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>참가자 직접 배치 및 편집</span>
+                </h2>
+                <button onclick="closePlayerModal()" class="text-white/60 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <p class="text-xs text-white/60 mb-3">참가자 이름을 등록하세요. 쉼표(,)로 구분해 여러 구슬을 한 번에 추가할 수 있습니다.</p>
+
+            <div class="flex gap-2 mb-4">
+                <input id="bulk-player-input" type="text" placeholder="예: JENNIE, 리사, 로제, 지수" class="flex-1 bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500">
+                <button onclick="applyBulkPlayers()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-bold text-white transition-all whitespace-nowrap">
+                    일괄 적용
+                </button>
+            </div>
+
+            <div id="player-edit-list" class="space-y-2 max-h-56 overflow-y-auto pr-1 mb-4"></div>
+
+            <div class="flex justify-between items-center gap-2 pt-3 border-t border-white/10">
+                <button onclick="addNewPlayerSlot()" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold text-white transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>구슬 추가</span>
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="resetDefaultPlayers()" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs transition-all">기본값(제니)</button>
+                    <button onclick="saveAndApplyPlayers()" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-purple-600/30">저장 및 배치</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Result Modal -->
+    <div id="result-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-lg flex items-center justify-center hidden opacity-0 transition-opacity duration-500">
+        <div class="bg-gradient-to-b from-gray-900 via-black to-gray-950 border border-pink-500/40 w-11/12 max-w-lg rounded-3xl p-6 shadow-2xl text-center relative overflow-hidden">
+            <i class="fa-solid fa-crown text-4xl text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] mb-2"></i>
+            <h2 class="cinematic-font text-2xl md:text-3xl text-white tracking-widest uppercase mb-1">레이스 종료!</h2>
+            <p id="winner-tagline" class="text-sm text-pink-400 font-bold mb-5 tracking-wide"></p>
+
+            <div id="podium-container" class="flex justify-center items-end gap-3 mb-6"></div>
+            <div id="modal-ranking-list" class="space-y-1.5 max-h-40 overflow-y-auto mb-6 pr-1 text-left text-xs"></div>
+
+            <button onclick="resetRace()" class="w-full py-3 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 rounded-xl font-black text-sm tracking-wider shadow-lg shadow-pink-600/40 transition-all active:scale-95">
+                다음 레이스 준비하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 기본 참가자 단일 배치 (JENNIE) ---
+        let currentPlayers = [
+            { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '빛나는 황금빛 크롬 스틸볼!' }
+        ];
+
+        // --- 2. Track Profiles ---
+        const trackPresets = {
+            metropolis: {
+                name: '네온 메트로폴리스',
+                ambient: 0x050414,
+                fog: 0x08061e,
+                roadColor: 0x161426,
+                glowColor: 0xff007f,
+                decorType: 'city',
+                jumpZones: [],
+                points: [
+                    new THREE.Vector3(-220, 0, -280),
+                    new THREE.Vector3(-120, 20, -180),
+                    new THREE.Vector3(0, 45, -60),
+                    new THREE.Vector3(140, 15, 60),
+                    new THREE.Vector3(200, 0, 180),
+                    new THREE.Vector3(120, -10, 260),
+                    new THREE.Vector3(0, 10, 160),
+                    new THREE.Vector3(-140, 40, 80),
+                    new THREE.Vector3(-160, 70, -20),
+                    new THREE.Vector3(-110, 25, -110),
+                    new THREE.Vector3(0, 0, -200),
+                    new THREE.Vector3(100, 5, -280),
+                    new THREE.Vector3(180, 0, -360)
+                ]
+            },
+            spiral: {
+                name: '볼텍스 타워',
+                ambient: 0x020f18,
+                fog: 0x031422,
+                roadColor: 0x0d2130,
+                glowColor: 0x00e5ff,
+                decorType: 'tower',
+                jumpZones: [],
+                points: [
+                    new THREE.Vector3(-260, 0, -220),
+                    new THREE.Vector3(-160, 15, -160),
+                    new THREE.Vector3(-80, 35, -80),
+                    new THREE.Vector3(80, 60, -80),
+                    new THREE.Vector3(90, 85, 80),
+                    new THREE.Vector3(-80, 110, 90),
+                    new THREE.Vector3(-90, 135, -90),
+                    new THREE.Vector3(85, 160, -85),
+                    new THREE.Vector3(90, 185, 85),
+                    new THREE.Vector3(0, 80, 200),
+                    new THREE.Vector3(-110, 15, 280),
+                    new THREE.Vector3(0, 0, 380),
+                    new THREE.Vector3(150, 0, 440)
+                ]
+            },
+            chasm: {
+                name: '스카이 캐즘',
+                ambient: 0x140510,
+                fog: 0x1a0615,
+                roadColor: 0x22131e,
+                glowColor: 0xff0055,
+                decorType: 'islands',
+                jumpZones: [{ start: 0.38, peak: 0.45, end: 0.52, height: 42 }],
+                points: [
+                    new THREE.Vector3(-240, 0, -300),
+                    new THREE.Vector3(-130, 10, -210),
+                    new THREE.Vector3(-45, 20, -140),
+                    new THREE.Vector3(25, 55, -65),
+                    new THREE.Vector3(55, 68, 20),
+                    new THREE.Vector3(85, 42, 110),
+                    new THREE.Vector3(110, 15, 190),
+                    new THREE.Vector3(45, -10, 280),
+                    new THREE.Vector3(-55, 5, 360),
+                    new THREE.Vector3(25, 0, 440)
+                ]
+            },
+            switchback: {
+                name: '지그재그 캐니언',
+                ambient: 0x140d04,
+                fog: 0x1a1106,
+                roadColor: 0x2a1f14,
+                glowColor: 0xf59e0b,
+                decorType: 'canyon',
+                jumpZones: [],
+                points: [
+                    new THREE.Vector3(-260, 0, -300),
+                    new THREE.Vector3(-150, 25, -300),
+                    new THREE.Vector3(-85, 35, -210),
+                    new THREE.Vector3(-190, 55, -140),
+                    new THREE.Vector3(-65, 40, -65),
+                    new THREE.Vector3(-210, 20, 15),
+                    new THREE.Vector3(0, 50, 90),
+                    new THREE.Vector3(190, 30, 150),
+                    new THREE.Vector3(85, 10, 250),
+                    new THREE.Vector3(200, 0, 340),
+                    new THREE.Vector3(110, 0, 420)
+                ]
+            },
+            drop: {
+                name: '하이퍼 코스터',
+                ambient: 0x060614,
+                fog: 0x0a0a20,
+                roadColor: 0x15152a,
+                glowColor: 0x7c3aed,
+                decorType: 'coaster',
+                jumpZones: [],
+                points: [
+                    new THREE.Vector3(-240, 0, -340),
+                    new THREE.Vector3(-170, 30, -250),
+                    new THREE.Vector3(-110, 75, -170),
+                    new THREE.Vector3(-45, 120, -85),
+                    new THREE.Vector3(15, 35, -25),
+                    new THREE.Vector3(65, -12, 45),
+                    new THREE.Vector3(120, 40, 120),
+                    new THREE.Vector3(160, 10, 200),
+                    new THREE.Vector3(95, 25, 290),
+                    new THREE.Vector3(0, 5, 360),
+                    new THREE.Vector3(0, 0, 440)
+                ]
+            }
+        };
+
+        // --- 3. Engine Variables ---
+        let scene, camera, renderer;
+        let racers = [];
+        let trackSpline = null;
+        let trackMeshes = [];
+        let sceneryMeshes = [];
+        let activeMapKey = 'metropolis';
+
+        const SEGMENTS_COUNT = 500;
+        let surfaceFrames = [];
+        const BALL_RADIUS = 1.6; // 쇠구슬 물리 반지름 (3.2m 직경)
+
+        let trackItems = [];
+        let trackTraps = [];
+
+        let raceStarted = false;
+        let racePaused = false;
+        let raceEnded = false;
+        let raceTime = 0;
+        let finishedCount = 0;
+
+        let cameraMode = 'chase';
+        let selectedTargetRacer = null;
+        let particles = [];
+        let screenShakeIntensity = 0;
+
+        let isMouseDown = false;
+        let mouseX = 0, mouseY = 0;
+        let orbitAngleX = 0, orbitAngleY = Math.PI / 4, orbitRadius = 140;
+
+        const ROAD_WIDTH = 26.0;
+
+        // --- 4. WebGL Environment Setup ---
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.5, 4500);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.4;
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2.2);
+            dirLight.position.set(100, 250, 100);
+            scene.add(dirLight);
+
+            setupMouseControls();
+            buildTrack(activeMapKey);
+            createRacers();
+            updateLeaderboardUI();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // --- 5. Robust Surface Normal Calculation ---
+        function computeRobustSurfaceFrames() {
+            surfaceFrames = [];
+            let prevNormal = new THREE.Vector3(0, 1, 0);
+
+            for (let i = 0; i <= SEGMENTS_COUNT; i++) {
+                const t = i / SEGMENTS_COUNT;
+                const point = trackSpline.getPointAt(t);
+                const tangent = trackSpline.getTangentAt(t).normalize();
+
+                let binormal = new THREE.Vector3().crossVectors(tangent, prevNormal).normalize();
+                if (binormal.lengthSq() < 0.001) {
+                    binormal = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 0, 1)).normalize();
+                }
+
+                let normal = new THREE.Vector3().crossVectors(binormal, tangent).normalize();
+                if (normal.y < -0.3 && prevNormal.y > 0) {
+                    normal.negate();
+                    binormal.negate();
+                }
+                prevNormal = normal.clone();
+
+                surfaceFrames.push({ point, tangent, normal, binormal });
+            }
+        }
+
+        function getSurfaceOrientationAt(progress) {
+            const safeT = Math.min(0.9999, Math.max(0.0001, progress));
+            const floatIdx = safeT * SEGMENTS_COUNT;
+            const idx1 = Math.floor(floatIdx);
+            const idx2 = Math.min(SEGMENTS_COUNT, idx1 + 1);
+            const alpha = floatIdx - idx1;
+
+            const f1 = surfaceFrames[idx1];
+            const f2 = surfaceFrames[idx2];
+
+            const point = trackSpline.getPointAt(safeT);
+            const tangent = trackSpline.getTangentAt(safeT).normalize();
+            const normal = f1.normal.clone().lerp(f2.normal, alpha).normalize();
+            const binormal = f1.binormal.clone().lerp(f2.binormal, alpha).normalize();
+
+            return { point, tangent, normal, binormal };
+        }
+
+        // --- 6. Road Mesh Construction ---
+        function buildTrack(mapKey) {
+            trackMeshes.forEach(mesh => scene.remove(mesh));
+            trackMeshes = [];
+            sceneryMeshes.forEach(mesh => scene.remove(mesh));
+            sceneryMeshes = [];
+            
+            trackItems.forEach(i => scene.remove(i.mesh));
+            trackItems = [];
+            trackTraps.forEach(t => scene.remove(t.mesh));
+            trackTraps = [];
+
+            const mapData = trackPresets[mapKey];
+            scene.background = new THREE.Color(mapData.ambient);
+            scene.fog = new THREE.FogExp2(mapData.fog, 0.0035);
+
+            trackSpline = new THREE.CatmullRomCurve3(mapData.points);
+            trackSpline.closed = false;
+
+            computeRobustSurfaceFrames();
+
+            const vertices = [];
+            const uvs = [];
+            const indices = [];
+            const leftEdgePts = [];
+            const rightEdgePts = [];
+
+            const isChasm = (t) => {
+                if (!mapData.jumpZones || mapData.jumpZones.length === 0) return false;
+                const zone = mapData.jumpZones[0];
+                return (t > zone.start + 0.02 && t < zone.end - 0.02);
+            };
+
+            for (let i = 0; i <= SEGMENTS_COUNT; i++) {
+                const t = i / SEGMENTS_COUNT;
+                const { point, normal, binormal } = surfaceFrames[i];
+
+                const leftPoint = point.clone().add(binormal.clone().multiplyScalar(-ROAD_WIDTH / 2));
+                const rightPoint = point.clone().add(binormal.clone().multiplyScalar(ROAD_WIDTH / 2));
+
+                leftEdgePts.push(leftPoint.clone().add(normal.clone().multiplyScalar(0.5)));
+                rightEdgePts.push(rightPoint.clone().add(normal.clone().multiplyScalar(0.5)));
+
+                vertices.push(leftPoint.x, leftPoint.y, leftPoint.z);
+                vertices.push(rightPoint.x, rightPoint.y, rightPoint.z);
+
+                uvs.push(0, t * 60);
+                uvs.push(1, t * 60);
+
+                if (i < SEGMENTS_COUNT) {
+                    const nextT = (i + 1) / SEGMENTS_COUNT;
+                    if (!isChasm(t) && !isChasm(nextT)) {
+                        const base = i * 2;
+                        indices.push(base, base + 1, base + 2);
+                        indices.push(base + 1, base + 3, base + 2);
+                    }
+                }
+            }
+
+            const roadGeometry = new THREE.BufferGeometry();
+            roadGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            roadGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            roadGeometry.setIndex(indices);
+            roadGeometry.computeVertexNormals();
+
+            const roadMaterial = new THREE.MeshStandardMaterial({
+                color: mapData.roadColor,
+                roughness: 0.35,
+                metalness: 0.7,
+                side: THREE.DoubleSide
+            });
+
+            const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
+            scene.add(roadMesh);
+            trackMeshes.push(roadMesh);
+
+            const railGeoL = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(leftEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
+            const railGeoR = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rightEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
+            const railMat = new THREE.MeshBasicMaterial({ color: mapData.glowColor });
+
+            const railL = new THREE.Mesh(railGeoL, railMat);
+            const railR = new THREE.Mesh(railGeoR, railMat);
+            scene.add(railL, railR);
+            trackMeshes.push(railL, railR);
+
+            createSurfaceAlignedGate(0, 0x00e5ff, 'START LINE');
+            createSurfaceAlignedGate(1, 0xff0055, 'FINISH LINE');
+
+            if (mapData.jumpZones && mapData.jumpZones.length > 0) {
+                mapData.jumpZones.forEach(zone => {
+                    createSurfaceAlignedGate(zone.start, 0xffeb3b, 'AIR JUMP');
+                });
+            }
+
+            spawnTrackEntities();
+            buildThemedDecorations(mapData.decorType, mapData.glowColor);
+        }
+
+        function createSurfaceAlignedGate(t, color, text) {
+            const { point, tangent, normal, binormal } = getSurfaceOrientationAt(t);
+
+            const group = new THREE.Group();
+            const gateGeo = new THREE.TorusGeometry(15, 0.9, 8, 24, Math.PI);
+            const gateMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.9, roughness: 0.2 });
+            const arch = new THREE.Mesh(gateGeo, gateMat);
+            group.add(arch);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, 512, 128);
+            ctx.strokeStyle = '#' + color.toString(16).padStart(6, '0');
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 504, 120);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 50px "Black Han Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const bannerMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            const bannerMesh = new THREE.Mesh(new THREE.PlaneGeometry(18, 4), bannerMat);
+            bannerMesh.position.y = 8.5;
+            group.add(bannerMesh);
+
+            const rotMatrix = new THREE.Matrix4();
+            rotMatrix.makeBasis(binormal, normal, tangent);
+            group.quaternion.setFromRotationMatrix(rotMatrix);
+            group.position.copy(point);
+
+            scene.add(group);
+            trackMeshes.push(group);
+        }
+
+        // --- 7. Spawn Items & Traps ---
+        function spawnTrackEntities() {
+            const itemBoxGeo = new THREE.BoxGeometry(2.8, 2.8, 2.8);
+            const itemBoxMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffea00,
+                metalness: 0.2,
+                roughness: 0.1,
+                transmission: 0.5,
+                transparent: true,
+                opacity: 0.95,
+                emissive: 0xffaa00,
+                emissiveIntensity: 0.8
+            });
+
+            const ringGeo = new THREE.TorusGeometry(2.4, 0.15, 8, 24);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+
+            const itemCheckpoints = [0.12, 0.22, 0.34, 0.46, 0.58, 0.70, 0.82, 0.92];
+            itemCheckpoints.forEach(t => {
+                [-7.0, 0, 7.0].forEach(offset => {
+                    const group = new THREE.Group();
+                    const cube = new THREE.Mesh(itemBoxGeo, itemBoxMat.clone());
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    group.add(cube);
+                    group.add(ring);
+                    scene.add(group);
+
+                    trackItems.push({
+                        mesh: group,
+                        progress: t,
+                        laneOffset: offset,
+                        active: true,
+                        respawnTimer: 0
+                    });
+                });
+            });
+
+            const bananaGeo = new THREE.TorusGeometry(1.4, 0.6, 8, 16, Math.PI);
+            const bananaMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffaa00, emissiveIntensity: 0.5 });
+
+            const boostGeo = new THREE.BoxGeometry(6.5, 0.3, 4.5);
+            const boostMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8 });
+
+            const hazardCheckpoints = [0.18, 0.28, 0.42, 0.64, 0.76, 0.86];
+            hazardCheckpoints.forEach((t, idx) => {
+                const isBoost = idx % 2 === 0;
+                const offset = (Math.random() - 0.5) * 14;
+                const mesh = new THREE.Mesh(isBoost ? boostGeo : bananaGeo, isBoost ? boostMat : bananaMat);
+                scene.add(mesh);
+
+                trackTraps.push({
+                    mesh: mesh,
+                    type: isBoost ? 'boost' : 'banana',
+                    progress: t,
+                    laneOffset: offset,
+                    active: true
+                });
+            });
+
+            alignTrackEntities();
+        }
+
+        function alignTrackEntities() {
+            if (!trackSpline || surfaceFrames.length === 0) return;
+
+            trackItems.forEach(item => {
+                const { point, normal, binormal } = getSurfaceOrientationAt(item.progress);
+                item.mesh.position.copy(point)
+                    .add(binormal.clone().multiplyScalar(item.laneOffset))
+                    .add(normal.clone().multiplyScalar(3.2));
+            });
+
+            trackTraps.forEach(trap => {
+                const { point, tangent, normal, binormal } = getSurfaceOrientationAt(trap.progress);
+                const rotMatrix = new THREE.Matrix4();
+                rotMatrix.makeBasis(binormal, normal, tangent);
+                trap.mesh.quaternion.setFromRotationMatrix(rotMatrix);
+                trap.mesh.position.copy(point)
+                    .add(binormal.clone().multiplyScalar(trap.laneOffset))
+                    .add(normal.clone().multiplyScalar(0.7));
+            });
+        }
+
+        function buildThemedDecorations(decorType, glowColor) {
+            if (decorType === 'city') {
+                const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+                for (let i = 0; i < 40; i++) {
+                    const h = 50 + Math.random() * 100;
+                    const w = 20 + Math.random() * 30;
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: 0x080816,
+                        emissive: (i % 3 === 0) ? glowColor : 0x0a0a24,
+                        emissiveIntensity: 0.35
+                    });
+                    const bldg = new THREE.Mesh(boxGeo, mat);
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 160 + Math.random() * 260;
+                    bldg.scale.set(w, h, w);
+                    bldg.position.set(Math.cos(angle) * dist, h / 2 - 30, Math.sin(angle) * dist);
+                    scene.add(bldg);
+                    sceneryMeshes.push(bldg);
+                }
+            } else if (decorType === 'tower') {
+                const coreGeo = new THREE.CylinderGeometry(18, 40, 320, 16);
+                const coreMat = new THREE.MeshStandardMaterial({ color: 0x071b28, wireframe: true, emissive: 0x00e5ff, emissiveIntensity: 0.6 });
+                const core = new THREE.Mesh(coreGeo, coreMat);
+                core.position.set(0, 120, 0);
+                scene.add(core);
+                sceneryMeshes.push(core);
+            } else if (decorType === 'islands') {
+                const islandGeo = new THREE.DodecahedronGeometry(22, 1);
+                for (let i = 0; i < 25; i++) {
+                    const mat = new THREE.MeshStandardMaterial({ color: 0x1f1422, roughness: 0.8 });
+                    const island = new THREE.Mesh(islandGeo, mat);
+                    island.position.set((Math.random() - 0.5) * 550, Math.random() * 90 - 20, (Math.random() - 0.5) * 550);
+                    island.scale.set(1.2 + Math.random() * 2, 0.8 + Math.random(), 1.2 + Math.random() * 2);
+                    scene.add(island);
+                    sceneryMeshes.push(island);
+                }
+            } else if (decorType === 'canyon') {
+                const rockGeo = new THREE.BoxGeometry(35, 170, 35);
+                const rockMat = new THREE.MeshStandardMaterial({ color: 0x332314, roughness: 0.9 });
+                for (let i = 0; i < 30; i++) {
+                    const rock = new THREE.Mesh(rockGeo, rockMat);
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 150 + Math.random() * 280;
+                    rock.position.set(Math.cos(angle) * dist, 60, Math.sin(angle) * dist);
+                    scene.add(rock);
+                    sceneryMeshes.push(rock);
+                }
+            } else if (decorType === 'coaster') {
+                for (let i = 0; i < 22; i++) {
+                    const t = (i + 1) / 24;
+                    const pt = trackSpline.getPoint(t);
+                    if (pt.y > 10) {
+                        const poleGeo = new THREE.CylinderGeometry(1.0, 1.4, pt.y + 45, 6);
+                        const poleMat = new THREE.MeshStandardMaterial({ color: 0x7c3aed, metalness: 0.8 });
+                        const pole = new THREE.Mesh(poleGeo, poleMat);
+                        pole.position.set(pt.x, (pt.y - 45) / 2, pt.z);
+                        scene.add(pole);
+                        sceneryMeshes.push(pole);
+                    }
+                }
+            }
+
+            const gridHelper = new THREE.GridHelper(1000, 50, glowColor, 0x111122);
+            gridHelper.position.y = -35;
+            scene.add(gridHelper);
+            sceneryMeshes.push(gridHelper);
+        }
+
+        // --- 8. [리얼리티 강화] 크롬 쇠구슬(Chrome Steel Ball) 및 대형 네임택 생성 ---
+        function createRacers() {
+            racers.forEach(r => scene.remove(r.mesh));
+            racers = [];
+
+            racers = currentPlayers.map((player, index) => {
+                const group = new THREE.Group();
+                const colorHex = parseInt(player.color.replace('#', '0x'));
+
+                // 구슬 롤링 회전을 전담할 내부 피벗 메시
+                const marbleMesh = new THREE.Group();
+
+                // 1. 고광택 크롬 메탈릭 쇠구슬 본체 (PBR Chrome Sphere)
+                const sphereGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+                const chromeMat = new THREE.MeshStandardMaterial({
+                    color: 0xeeeeee,
+                    metalness: 0.96,
+                    roughness: 0.08,
+                    emissive: colorHex,
+                    emissiveIntensity: 0.22
+                });
+                const sphere = new THREE.Mesh(sphereGeo, chromeMat);
+                marbleMesh.add(sphere);
+
+                // 2. 쇠구슬 적도선 레이저 라인 & 코어 패턴 (회전 감각을 극대화)
+                const ringGeo = new THREE.TorusGeometry(BALL_RADIUS * 1.005, 0.06, 8, 32);
+                const ringMat = new THREE.MeshBasicMaterial({ color: colorHex });
+                const equatorRing1 = new THREE.Mesh(ringGeo, ringMat);
+                const equatorRing2 = new THREE.Mesh(ringGeo, ringMat);
+                equatorRing2.rotation.x = Math.PI / 2;
+                marbleMesh.add(equatorRing1, equatorRing2);
+
+                group.add(marbleMesh);
+
+                // 3. 접지면 네온 글로우 링 (바닥에 닿는 곳을 밝혀주는 네온 라이트)
+                const glowGeo = new THREE.RingGeometry(BALL_RADIUS * 0.4, BALL_RADIUS * 1.5, 24);
+                const glowMat = new THREE.MeshBasicMaterial({
+                    color: colorHex,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.65
+                });
+                const groundGlow = new THREE.Mesh(glowGeo, glowMat);
+                groundGlow.rotation.x = Math.PI / 2;
+                groundGlow.position.y = -BALL_RADIUS + 0.1;
+                group.add(groundGlow);
+
+                // 4. 황금/네온 보호막 실드
+                const shieldGeo = new THREE.SphereGeometry(BALL_RADIUS * 1.45, 24, 24);
+                const shieldMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0 });
+                const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+                group.add(shieldMesh);
+
+                // 5. 수직 홀로그램 라이트 비콘 (원거리 시인성)
+                const beaconGeo = new THREE.CylinderGeometry(0.12, 0.12, 18, 8);
+                const beaconMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.5 });
+                const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+                beacon.position.y = 9.5;
+                group.add(beacon);
+
+                // 6. [대폭 확대] 플레이어 이름 텍스트 네임택 (512x180 고해상도 캔버스)
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 180;
+                const ctx = canvas.getContext('2d');
+                
+                // 배경 둥근 배지
+                ctx.fillStyle = player.color;
+                ctx.beginPath();
+                ctx.roundRect(10, 10, 492, 160, 30);
+                ctx.fill();
+                ctx.lineWidth = 10;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+                // 대형 폰트 볼드 텍스트
+                ctx.fillStyle = '#000000';
+                ctx.font = '900 76px "Black Han Sans", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(player.name, 256, 90);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.scale.set(6.2, 2.5, 1); // 대형 스케일
+                sprite.position.set(0, 5.2, 0); // 구슬 위 높은 곳에 띄움
+                group.add(sprite);
+
+                scene.add(group);
+
+                const startProgress = Math.max(0, 0.008 - (index * 0.0007));
+                const laneSpread = ((index % 5) - 2) * 4.5;
+
+                return {
+                    id: player.id,
+                    name: player.name,
+                    color: colorHex,
+                    colorStr: player.color,
+                    desc: player.desc || '제니 볼!',
+                    mesh: group,
+                    marbleMesh: marbleMesh,
+                    shieldMesh: shieldMesh,
+                    beacon: beacon,
+                    progress: startProgress,
+                    laneOffset: laneSpread,
+                    targetLaneOffset: laneSpread,
+                    laneChangeSpeed: 0.04 + Math.random() * 0.04,
+                    baseSpeed: 0.00065,
+                    speedMultiplier: 1.0,
+                    rollAngle: 0,
+                    currentItem: null,
+                    spinAngle: 0,
+                    spinTimer: 0,
+                    hasShield: false,
+                    shieldTimer: 0,
+                    isAirborne: false,
+                    finished: false,
+                    finishTime: 0,
+                    rank: index + 1
+                };
+            });
+
+            selectedTargetRacer = racers[0];
+            alignRacersToTrack();
+        }
+
+        // --- 9. Dynamic Simulation & Rubberband ---
+        function updatePhysicsAndItems() {
+            const ranked = [...racers].sort((a, b) => b.progress - a.progress);
+            ranked.forEach((r, idx) => {
+                r.rank = idx + 1;
+                if (r.rank === 1 || r.id === selectedTargetRacer?.id) {
+                    r.beacon.material.opacity = 0.85;
+                } else {
+                    r.beacon.material.opacity = 0.25;
+                }
+            });
+
+            trackItems.forEach(item => {
+                if (item.active) {
+                    item.mesh.rotation.y += 0.04;
+                    item.mesh.children[1].rotation.x += 0.03;
+                } else {
+                    item.respawnTimer -= 0.016;
+                    if (item.respawnTimer <= 0) {
+                        item.active = true;
+                        item.mesh.visible = true;
+                    }
+                }
+            });
+
+            racers.forEach(r => {
+                if (r.finished) return;
+
+                let rubberbandFactor = 1.0;
+                if (r.rank >= 8) rubberbandFactor = 1.45;
+                else if (r.rank >= 5) rubberbandFactor = 1.25;
+                else if (r.rank === 1) rubberbandFactor = 0.90;
+
+                if (r.spinTimer > 0) {
+                    r.spinTimer -= 0.016;
+                    r.spinAngle += 0.35;
+                    r.speedMultiplier = 0.35;
+                } else {
+                    r.spinAngle = 0;
+                    r.speedMultiplier += (1.0 - r.speedMultiplier) * 0.03;
+                }
+
+                if (r.hasShield) {
+                    r.shieldTimer -= 0.016;
+                    r.shieldMesh.material.opacity = 0.6;
+                    r.shieldMesh.rotation.y += 0.05;
+                    if (r.shieldTimer <= 0) {
+                        r.hasShield = false;
+                        r.shieldMesh.material.opacity = 0;
+                    }
+                }
+
+                // 차선 변경
+                if (Math.random() < 0.02) {
+                    r.targetLaneOffset = (Math.random() - 0.5) * (ROAD_WIDTH - 6);
+                }
+                const laneDiff = (r.targetLaneOffset - r.laneOffset);
+                r.laneOffset += laneDiff * r.laneChangeSpeed;
+
+                const currentMoveSpeed = r.baseSpeed * rubberbandFactor * r.speedMultiplier;
+                r.progress += currentMoveSpeed;
+
+                // [쇠구슬 물리 회전 연산] 이동 거리에 따른 롤링 각속도
+                const forwardDistance = currentMoveSpeed * 1000.0;
+                const angularDelta = forwardDistance / BALL_RADIUS;
+                r.rollAngle += angularDelta;
+
+                // 구슬 마찰 접지 스파크 (빠르게 구를 때 지면에서 방출)
+                if (r.speedMultiplier > 1.3 && Math.random() < 0.4) {
+                    createSparks(r.mesh.position, r.color);
+                }
+
+                // 아이템 박스 충돌
+                trackItems.forEach(item => {
+                    if (item.active && Math.abs(r.progress - item.progress) < 0.0035 && Math.abs(r.laneOffset - item.laneOffset) < 3.8) {
+                        item.active = false;
+                        item.mesh.visible = false;
+                        item.respawnTimer = 4.0;
+                        triggerRandomItem(r);
+                    }
+                });
+
+                // 함정 충돌
+                trackTraps.forEach(trap => {
+                    if (trap.active && Math.abs(r.progress - trap.progress) < 0.003 && Math.abs(r.laneOffset - trap.laneOffset) < 3.4) {
+                        if (trap.type === 'banana') {
+                            if (r.hasShield) {
+                                r.hasShield = false;
+                                r.shieldMesh.material.opacity = 0;
+                                showCinematicSubtitle(`🛡️ [${r.name}] 쉴드로 바나나 방어 완료!`);
+                            } else {
+                                r.spinTimer = 1.2;
+                                createSparks(r.mesh.position, 0xffea00);
+                                showCinematicSubtitle(`🍌 [${r.name}] 바나나를 밟고 미끄러짐 발생!`);
+                                if (r.id === selectedTargetRacer?.id) screenShakeIntensity = 0.6;
+                            }
+                        } else if (trap.type === 'boost') {
+                            r.speedMultiplier = 2.2;
+                            createSparks(r.mesh.position, 0x00ffcc);
+                            showCinematicSubtitle(`⚡ [${r.name}] 부스터 패드 밟고 폭풍 가속!`);
+                        }
+                    }
+                });
+
+                // 골인 판정
+                if (r.progress >= 1.0) {
+                    r.progress = 1.0;
+                    r.finished = true;
+                    r.finishTime = raceTime;
+                    finishedCount++;
+
+                    createSparks(r.mesh.position, 0xffffff);
+                    showCinematicSubtitle(`🏁 [${r.name}] 결승선 통과! (${finishedCount}위)`);
+
+                    if (finishedCount === 1) screenShakeIntensity = 0.8;
+                    if (finishedCount >= racers.length) finishRace();
+                }
+            });
+        }
+
+        function triggerRandomItem(racer) {
+            const isBackMarker = racer.rank >= 5;
+            const items = isBackMarker ? 
+                ['booster', 'thunder', 'magnet', 'booster', 'shield'] : 
+                ['shield', 'banana', 'booster', 'banana'];
+
+            const chosen = items[Math.floor(Math.random() * items.length)];
+
+            if (chosen === 'booster') {
+                racer.currentItem = '🚀';
+                racer.speedMultiplier = 2.6;
+                createSparks(racer.mesh.position, 0xff4500);
+                showCinematicSubtitle(`🚀 [${racer.name}] 로켓 부스터 점화! 초고속 롤링 질주!`);
+            } else if (chosen === 'thunder') {
+                racer.currentItem = '⚡';
+                const leaders = racers.filter(r => r.rank <= 2 && r.id !== racer.id && !r.finished);
+                leaders.forEach(target => {
+                    if (target.hasShield) {
+                        target.hasShield = false;
+                        target.shieldMesh.material.opacity = 0;
+                        showCinematicSubtitle(`🛡 [${target.name}] 쉴드로 번개 방어!`);
+                    } else {
+                        target.spinTimer = 1.5;
+                        createSparks(target.mesh.position, 0x00ffff);
+                        showCinematicSubtitle(`⚡ [${racer.name}]의 번개 저격! [${target.name}] 감전 스핀!`);
+                    }
+                });
+                screenShakeIntensity = 0.8;
+            } else if (chosen === 'magnet') {
+                racer.currentItem = '🧲';
+                const frontRacer = racers.find(r => r.rank === racer.rank - 1);
+                if (frontRacer) {
+                    racer.progress = Math.min(frontRacer.progress - 0.005, racer.progress + 0.035);
+                    racer.speedMultiplier = 1.8;
+                    createSparks(racer.mesh.position, 0xff00ff);
+                    showCinematicSubtitle(`🧲 [${racer.name}] 자석 흡착! [${frontRacer.name}] 뒤로 급속 흡입!`);
+                }
+            } else if (chosen === 'shield') {
+                racer.currentItem = '🛡️';
+                racer.hasShield = true;
+                racer.shieldTimer = 5.0;
+                showCinematicSubtitle(`🛡️ [${racer.name}] 황금 쉴드 전개! 모든 공격 방어`);
+            } else if (chosen === 'banana') {
+                racer.currentItem = '🍌';
+                const bananaGeo = new THREE.TorusGeometry(1.4, 0.6, 8, 16, Math.PI);
+                const bananaMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffaa00, emissiveIntensity: 0.5 });
+                const mesh = new THREE.Mesh(bananaGeo, bananaMat);
+                scene.add(mesh);
+                trackTraps.push({
+                    mesh: mesh,
+                    type: 'banana',
+                    progress: Math.max(0, racer.progress - 0.01),
+                    laneOffset: racer.laneOffset,
+                    active: true
+                });
+                alignTrackEntities();
+                showCinematicSubtitle(`🍌 [${racer.name}] 트랙에 바나나 트랩 투척!`);
+            }
+
+            setTimeout(() => { racer.currentItem = null; }, 3500);
+        }
+
+        // --- 10. [핵심 물리] 도로 경사각 정렬 & 쇠구슬 리얼 롤링 회전 ---
+        function alignRacersToTrack() {
+            if (!trackSpline || surfaceFrames.length === 0) return;
+
+            const mapData = trackPresets[activeMapKey];
+            const hasJump = mapData.jumpZones && mapData.jumpZones.length > 0;
+            const jumpZone = hasJump ? mapData.jumpZones[0] : null;
+
+            racers.forEach(r => {
+                const { point, tangent, normal, binormal } = getSurfaceOrientationAt(r.progress);
+
+                let jumpYOffset = 0;
+                const safeProgress = Math.min(0.999, Math.max(0.0001, r.progress));
+                if (hasJump && safeProgress >= jumpZone.start && safeProgress <= jumpZone.end) {
+                    r.isAirborne = true;
+                    const jumpNorm = (safeProgress - jumpZone.start) / (jumpZone.end - jumpZone.start);
+                    jumpYOffset = Math.sin(jumpNorm * Math.PI) * jumpZone.height;
+                } else {
+                    if (r.isAirborne) {
+                        r.isAirborne = false;
+                        createSparks(r.mesh.position, 0x00e5ff);
+                    }
+                }
+
+                // 구슬 중심 위치: 도로 표면 + 구슬 반지름만큼 정확히 올려 접지
+                r.mesh.position.copy(point)
+                    .add(binormal.clone().multiplyScalar(r.laneOffset))
+                    .add(normal.clone().multiplyScalar(BALL_RADIUS + jumpYOffset));
+
+                // 차체 프레임(지붕, 스프라이트 등)의 3D 도로 경사각 정렬
+                const rotMatrix = new THREE.Matrix4();
+                rotMatrix.makeBasis(binormal, normal, tangent);
+                r.mesh.quaternion.setFromRotationMatrix(rotMatrix);
+
+                // [리얼리티 회전] 쇠구슬 내부 구체를 진행 방향 축(X축)으로 실제로 굴림
+                r.marbleMesh.rotation.x = r.rollAngle;
+
+                // 스핀 피격 시 지면 법선 기준으로 회전
+                if (r.spinAngle > 0) {
+                    const spinQuat = new THREE.Quaternion();
+                    spinQuat.setFromAxisAngle(normal, r.spinAngle);
+                    r.mesh.quaternion.premultiply(spinQuat);
+                }
+            });
+        }
+
+        // --- 11. Race Flow Operations ---
+        function startRace() {
+            if (raceStarted && !raceEnded) return;
+
+            raceStarted = true;
+            racePaused = false;
+            raceEnded = false;
+            raceTime = 0;
+            finishedCount = 0;
+
+            setControlsLocked(true);
+
+            racers.forEach(r => {
+                r.finished = false;
+                r.finishTime = 0;
+                r.isAirborne = false;
+                r.speedMultiplier = 1.0;
+                r.rollAngle = 0;
+                r.spinTimer = 0;
+                r.hasShield = false;
+                r.currentItem = null;
+            });
+
+            document.getElementById('race-status-badge').textContent = 'RACING';
+            document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded font-mono font-bold animate-pulse';
+
+            const btn = document.getElementById('btn-start');
+            btn.innerHTML = '<i class="fa-solid fa-flag-checkered animate-bounce"></i><span>진행 중</span>';
+            btn.classList.replace('from-pink-600', 'from-emerald-600');
+            btn.classList.replace('to-rose-600', 'to-teal-600');
+
+            document.getElementById('btn-pause').disabled = false;
+            updatePauseButtonUI();
+
+            showCinematicSubtitle(`🏁 [${trackPresets[activeMapKey].name}] 마블 레이스 스타트!`);
+        }
+
+        function togglePauseRace() {
+            if (!raceStarted || raceEnded) return;
+
+            racePaused = !racePaused;
+            updatePauseButtonUI();
+
+            if (racePaused) {
+                document.getElementById('race-status-badge').textContent = 'PAUSED';
+                document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded font-mono font-bold';
+                showCinematicSubtitle("⏸️ 레이스가 일시 중지되었습니다.");
+            } else {
+                document.getElementById('race-status-badge').textContent = 'RACING';
+                document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded font-mono font-bold animate-pulse';
+                showCinematicSubtitle("▶️ 레이스를 재개합니다!");
+            }
+        }
+
+        function updatePauseButtonUI() {
+            const pauseIcon = document.getElementById('pause-icon');
+            const pauseText = document.getElementById('pause-text');
+            if (racePaused) {
+                pauseIcon.className = 'fa-solid fa-play';
+                pauseText.textContent = '계속';
+            } else {
+                pauseIcon.className = 'fa-solid fa-pause';
+                pauseText.textContent = '일시중지';
+            }
+        }
+
+        function finishRace() {
+            raceEnded = true;
+            racePaused = false;
+            setControlsLocked(false);
+            document.getElementById('btn-pause').disabled = true;
+
+            document.getElementById('race-status-badge').textContent = 'FINISH';
+            document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded font-mono font-bold';
+
+            const sorted = [...racers].sort((a, b) => a.finishTime - b.finishTime);
+            showCinematicSubtitle(`🏆 1위 [${sorted[0].name}] 결승선 통과! 최종 챔피언 탄생!`);
+
+            openResultModal(sorted);
+        }
+
+        function resetRace() {
+            raceStarted = false;
+            racePaused = false;
+            raceEnded = false;
+            raceTime = 0;
+            finishedCount = 0;
+
+            setControlsLocked(false);
+
+            const modal = document.getElementById('result-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 400);
+
+            const btn = document.getElementById('btn-start');
+            btn.innerHTML = '<i class="fa-solid fa-play"></i><span>레이스 스타트</span>';
+            btn.classList.replace('from-emerald-600', 'from-pink-600');
+            btn.classList.replace('to-teal-600', 'to-rose-600');
+
+            const btnPause = document.getElementById('btn-pause');
+            btnPause.disabled = true;
+            updatePauseButtonUI();
+
+            document.getElementById('race-status-badge').textContent = 'READY';
+            document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded font-mono font-bold';
+
+            racers.forEach((r, index) => {
+                r.progress = Math.max(0, 0.008 - (index * 0.0007));
+                r.laneOffset = ((index % 5) - 2) * 4.5;
+                r.targetLaneOffset = r.laneOffset;
+                r.speedMultiplier = 1.0;
+                r.rollAngle = 0;
+                r.spinTimer = 0;
+                r.hasShield = false;
+                r.finished = false;
+                r.finishTime = 0;
+                r.currentItem = null;
+            });
+
+            selectedTargetRacer = racers[0];
+            alignRacersToTrack();
+            updateLeaderboardUI();
+            showCinematicSubtitle("🏁 코스 준비 완료. 레이스 스타트를 눌러주세요.");
+        }
+
+        function setControlsLocked(locked) {
+            document.getElementById('map-select').disabled = locked;
+            document.getElementById('btn-player-modal').disabled = locked;
+        }
+
+        function onSelectMap(mapKey) {
+            if (raceStarted && !raceEnded) return;
+            activeMapKey = mapKey;
+            buildTrack(mapKey);
+            resetRace();
+            showCinematicSubtitle(`🗺️ 트랙 변경: [${trackPresets[mapKey].name}] 로딩 완료!`);
+        }
+
+        // --- 12. Radar Minimap Rendering ---
+        function drawMinimap() {
+            const canvas = document.getElementById('minimap-canvas');
+            if (!canvas || !trackSpline) return;
+            const ctx = canvas.getContext('2d');
+
+            if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const points = trackSpline.getPoints(140);
+
+            let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+            points.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.z < minZ) minZ = p.z;
+                if (p.z > maxZ) maxZ = p.z;
+            });
+
+            const pad = 14;
+            const rangeX = (maxX - minX) || 1;
+            const rangeZ = (maxZ - minZ) || 1;
+
+            const mapX = (x) => pad + ((x - minX) / rangeX) * (canvas.width - pad * 2);
+            const mapY = (z) => pad + ((z - minZ) / rangeZ) * (canvas.height - pad * 2);
+
+            ctx.lineWidth = 5.0;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.45)';
+            ctx.beginPath();
+            points.forEach((p, idx) => {
+                if (idx === 0) ctx.moveTo(mapX(p.x), mapY(p.z));
+                else ctx.lineTo(mapX(p.x), mapY(p.z));
+            });
+            ctx.stroke();
+
+            // Item Boxes on Map
+            ctx.fillStyle = '#ffd700';
+            trackItems.forEach(i => {
+                if (i.active) {
+                    const pt = trackSpline.getPointAt(i.progress);
+                    ctx.fillRect(mapX(pt.x) - 1.5, mapY(pt.z) - 1.5, 3, 3);
+                }
+            });
+
+            const startPt = points[0];
+            const endPt = points[points.length - 1];
+            ctx.fillStyle = '#00e5ff';
+            ctx.beginPath(); ctx.arc(mapX(startPt.x), mapY(startPt.z), 4, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#ff0055';
+            ctx.beginPath(); ctx.arc(mapX(endPt.x), mapY(endPt.z), 4, 0, Math.PI * 2); ctx.fill();
+
+            racers.forEach(r => {
+                const pos = r.mesh.position;
+                const rx = mapX(pos.x);
+                const ry = mapY(pos.z);
+
+                ctx.fillStyle = r.colorStr || '#' + r.color.toString(16).padStart(6, '0');
+                ctx.beginPath();
+                ctx.arc(rx, ry, r.id === selectedTargetRacer?.id ? 5.5 : 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (r.id === selectedTargetRacer?.id || r.rank === 1) {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        // --- 13. Custom Player Modal Handlers ---
+        function openPlayerModal() {
+            if (raceStarted && !raceEnded) return;
+            renderPlayerEditList();
+            const modal = document.getElementById('player-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 20);
+        }
+
+        function closePlayerModal() {
+            const modal = document.getElementById('player-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function renderPlayerEditList() {
+            const listEl = document.getElementById('player-edit-list');
+            listEl.innerHTML = currentPlayers.map((p, idx) => `
+                <div class="flex items-center gap-2 p-2 bg-white/5 rounded-xl border border-white/5">
+                    <span class="text-xs font-mono text-white/50 w-6 text-center">${idx + 1}</span>
+                    <input type="color" value="${p.color}" onchange="updatePlayerColor(${idx}, this.value)" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0 outline-none">
+                    <input type="text" value="${p.name}" oninput="updatePlayerName(${idx}, this.value)" class="flex-1 bg-white/10 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-purple-500 font-bold">
+                    <button onclick="removePlayerSlot(${idx})" class="text-white/40 hover:text-rose-400 p-1.5 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function updatePlayerName(idx, val) { currentPlayers[idx].name = val; }
+        function updatePlayerColor(idx, val) { currentPlayers[idx].color = val; }
+
+        function removePlayerSlot(idx) {
+            if (currentPlayers.length <= 1) {
+                alert("최소 1명 이상의 참가자가 필요합니다.");
+                return;
+            }
+            currentPlayers.splice(idx, 1);
+            renderPlayerEditList();
+        }
+
+        function addNewPlayerSlot() {
+            if (currentPlayers.length >= 16) {
+                alert("최대 16명까지 참가할 수 있습니다.");
+                return;
+            }
+            const colors = ['#00e5ff', '#ff007f', '#ffd700', '#00ff66', '#a855f7', '#ff6600'];
+            currentPlayers.push({
+                id: 'p' + (Date.now() % 10000),
+                name: `구슬 ${currentPlayers.length + 1}`,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                desc: '특급 크롬 마블!'
+            });
+            renderPlayerEditList();
+        }
+
+        function applyBulkPlayers() {
+            const input = document.getElementById('bulk-player-input').value.trim();
+            if (!input) return;
+            const names = input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            if (names.length === 0) return;
+
+            const palette = ['#ff2d75', '#00e5ff', '#ffd700', '#a855f7', '#ff5722', '#00ff66', '#ff007f', '#3b82f6'];
+            currentPlayers = names.slice(0, 16).map((name, i) => ({
+                id: 'p' + (i + 1),
+                name: name,
+                color: palette[i % palette.length],
+                desc: '질주하는 크롬 마블!'
+            }));
+
+            document.getElementById('bulk-player-input').value = '';
+            renderPlayerEditList();
+        }
+
+        function resetDefaultPlayers() {
+            currentPlayers = [
+                { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '빛나는 황금빛 크롬 스틸볼!' }
+            ];
+            renderPlayerEditList();
+        }
+
+        function saveAndApplyPlayers() {
+            closePlayerModal();
+            createRacers();
+            resetRace();
+            showCinematicSubtitle("✨ 참가자 명단 및 구슬 배치가 완료되었습니다!");
+        }
+
+        // --- 14. Leaderboard UI ---
+        function updateLeaderboardUI() {
+            const listEl = document.getElementById('leaderboard-list');
+            if (!listEl) return;
+
+            const sorted = [...racers].sort((a, b) => {
+                if (a.finished && b.finished) return a.finishTime - b.finishTime;
+                if (a.finished) return -1;
+                if (b.finished) return 1;
+                return b.progress - a.progress;
+            });
+
+            listEl.innerHTML = sorted.map((r, i) => `
+                <div onclick="selectRacer('${r.id}')" class="flex items-center justify-between p-1.5 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-all border ${selectedTargetRacer?.id === r.id ? 'border-pink-500 bg-pink-500/10' : 'border-transparent'}">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black ${i === 0 ? 'bg-yellow-400 text-black' : i === 1 ? 'bg-slate-300 text-black' : i === 2 ? 'bg-amber-600 text-white' : 'bg-white/10 text-white'}">
+                            ${i + 1}
+                        </span>
+                        <span class="font-bold text-[12px] tracking-wide" style="color: ${r.colorStr}">${r.name}</span>
+                        ${r.currentItem ? `<span class="text-xs animate-bounce">${r.currentItem}</span>` : ''}
+                    </div>
+                    <span class="text-[10px] font-mono ${r.finished ? 'text-green-400 font-bold' : (r.spinTimer > 0 ? 'text-red-400 font-bold animate-pulse' : (r.speedMultiplier > 1.5 ? 'text-yellow-300 font-bold' : 'text-white/60'))}">
+                        ${r.finished ? 'GOAL!' : (r.spinTimer > 0 ? 'SPIN!' : (r.speedMultiplier > 1.5 ? 'BOOST!' : Math.floor(r.progress * 100) + '%'))}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function openResultModal(sorted) {
+            const modal = document.getElementById('result-modal');
+            const podiumEl = document.getElementById('podium-container');
+            const rankingListEl = document.getElementById('modal-ranking-list');
+            const winner = sorted[0];
+
+            document.getElementById('winner-tagline').textContent = `🏆 최종 우승: [${winner.name}] - "${winner.desc}"`;
+
+            const p1 = sorted[0], p2 = sorted[1], p3 = sorted[2];
+            podiumEl.innerHTML = `
+                ${p2 ? `
+                <div class="flex flex-col items-center flex-1">
+                    <span class="text-xs font-bold truncate max-w-[80px]" style="color: ${p2.colorStr}">${p2.name}</span>
+                    <div class="w-full bg-slate-300/20 border-t-2 border-slate-300 h-16 rounded-t-xl flex items-center justify-center font-black text-slate-300 text-lg">2</div>
+                </div>` : ''}
+                <div class="flex flex-col items-center flex-1 -mt-4">
+                    <i class="fa-solid fa-crown text-yellow-400 text-lg mb-1 animate-bounce"></i>
+                    <span class="text-sm font-black truncate max-w-[90px]" style="color: ${p1.colorStr}">${p1.name}</span>
+                    <div class="w-full bg-yellow-500/30 border-t-4 border-yellow-400 h-24 rounded-t-xl flex items-center justify-center font-black text-yellow-400 text-2xl shadow-lg">1</div>
+                </div>
+                ${p3 ? `
+                <div class="flex flex-col items-center flex-1">
+                    <span class="text-xs font-bold truncate max-w-[80px]" style="color: ${p3.colorStr}">${p3.name}</span>
+                    <div class="w-full bg-amber-700/20 border-t-2 border-amber-600 h-12 rounded-t-xl flex items-center justify-center font-black text-amber-500 text-base">3</div>
+                </div>` : ''}
+            `;
+
+            rankingListEl.innerHTML = sorted.slice(3).map((r, idx) => `
+                <div class="flex items-center justify-between p-1.5 rounded-lg bg-white/5 border border-white/5">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-white/50 text-[11px]">${idx + 4}위</span>
+                        <span class="font-bold text-xs" style="color: ${r.colorStr}">${r.name}</span>
+                    </div>
+                    <span class="text-white/40 text-[10px] font-mono">${r.finishTime.toFixed(2)}s</span>
+                </div>
+            `).join('');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 20);
+        }
+
+        function selectRacer(id) {
+            const found = racers.find(r => r.id === id);
+            if (found) {
+                selectedTargetRacer = found;
+                showCinematicSubtitle(`집중 추적: [${found.name}] - "${found.desc}"`);
+                updateLeaderboardUI();
+            }
+        }
+
+        function setCameraMode(mode) {
+            cameraMode = mode;
+            ['chase', 'action', 'drone', 'orbit'].forEach(m => {
+                const btn = document.getElementById(`cam-${m}`);
+                if (btn) {
+                    btn.className = m === mode ? 
+                        "px-3 py-1.5 bg-pink-600 rounded-xl text-xs font-bold text-white shadow-lg shadow-pink-600/50 flex items-center space-x-2" : 
+                        "px-3 py-1.5 bg-white/10 hover:bg-pink-600 rounded-xl text-xs font-bold transition-all flex items-center space-x-2";
+                }
+            });
+            showCinematicSubtitle(`카메라 모드: ${mode.toUpperCase()}`);
+        }
+
+        // [대형 안내 메시지 출력]
+        function showCinematicSubtitle(text) {
+            const subEl = document.getElementById('cinematic-subtitle');
+            if (!subEl) return;
+            subEl.querySelector('span').textContent = text;
+            subEl.style.opacity = '1';
+            subEl.style.transform = 'translateY(0)';
+
+            clearTimeout(subEl._timeout);
+            subEl._timeout = setTimeout(() => {
+                subEl.style.opacity = '0';
+                subEl.style.transform = 'translateY(16px)';
+            }, 2800);
+        }
+
+        function createSparks(pos, colorHex) {
+            const count = 16;
+            const geom = new THREE.BufferGeometry();
+            const positions = [];
+            const velocities = [];
+
+            for (let i = 0; i < count; i++) {
+                positions.push(pos.x, pos.y, pos.z);
+                velocities.push(
+                    (Math.random() - 0.5) * 2.0,
+                    Math.random() * 1.5 + 0.3,
+                    (Math.random() - 0.5) * 2.0
+                );
+            }
+
+            geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({
+                color: colorHex,
+                size: 0.75,
+                transparent: true,
+                opacity: 1.0,
+                blending: THREE.AdditiveBlending
+            });
+
+            const pSystem = new THREE.Points(geom, mat);
+            scene.add(pSystem);
+            particles.push({ system: pSystem, velocities: velocities, life: 28 });
+        }
+
+        // --- 15. Camera Controls ---
+        function setupMouseControls() {
+            const container = document.getElementById('canvas-container');
+            container.addEventListener('mousedown', (e) => {
+                if (cameraMode === 'orbit') {
+                    isMouseDown = true;
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isMouseDown || cameraMode !== 'orbit') return;
+                const deltaX = e.clientX - mouseX;
+                const deltaY = e.clientY - mouseY;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+
+                orbitAngleX -= deltaX * 0.008;
+                orbitAngleY = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, orbitAngleY + deltaY * 0.008));
+            });
+
+            window.addEventListener('mouseup', () => { isMouseDown = false; });
+            container.addEventListener('wheel', (e) => {
+                if (cameraMode === 'orbit') {
+                    orbitRadius = Math.max(30, Math.min(340, orbitRadius + e.deltaY * 0.08));
+                }
+            });
+        }
+
+        // --- 16. Main Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (raceStarted && !racePaused && !raceEnded && trackSpline) {
+                raceTime += 0.016;
+                updatePhysicsAndItems();
+                alignRacersToTrack();
+
+                if (Math.floor(raceTime * 10) % 10 === 0) {
+                    updateLeaderboardUI();
+                }
+            }
+
+            // Particle Updates
+            for (let idx = particles.length - 1; idx >= 0; idx--) {
+                const p = particles[idx];
+                const posArr = p.system.geometry.attributes.position.array;
+                for (let i = 0; i < p.velocities.length / 3; i++) {
+                    posArr[i * 3] += p.velocities[i * 3];
+                    posArr[i * 3 + 1] += p.velocities[i * 3 + 1];
+                    posArr[i * 3 + 2] += p.velocities[i * 3 + 2];
+                    p.velocities[i * 3 + 1] -= 0.035;
+                }
+                p.system.geometry.attributes.position.needsUpdate = true;
+                p.system.material.opacity -= 0.035;
+                p.life--;
+                if (p.life <= 0) {
+                    scene.remove(p.system);
+                    particles.splice(idx, 1);
+                }
+            }
+
+            // Dynamic Camera Framing
+            if (selectedTargetRacer && trackSpline) {
+                const targetPos = selectedTargetRacer.mesh.position;
+                const { tangent, normal, binormal } = getSurfaceOrientationAt(selectedTargetRacer.progress);
+
+                let desiredCameraPos = new THREE.Vector3();
+
+                if (cameraMode === 'chase') {
+                    desiredCameraPos.copy(targetPos)
+                        .sub(tangent.clone().multiplyScalar(15))
+                        .add(normal.clone().multiplyScalar(6.8));
+                    camera.position.lerp(desiredCameraPos, 0.1);
+                    camera.lookAt(targetPos.clone().add(normal.clone().multiplyScalar(1.5)));
+                } else if (cameraMode === 'action') {
+                    desiredCameraPos.copy(targetPos)
+                        .add(binormal.clone().multiplyScalar(11.5))
+                        .add(normal.clone().multiplyScalar(4.0));
+                    camera.position.lerp(desiredCameraPos, 0.12);
+                    camera.lookAt(targetPos);
+                } else if (cameraMode === 'drone') {
+                    desiredCameraPos.copy(targetPos).add(new THREE.Vector3(0, 80, -30));
+                    camera.position.lerp(desiredCameraPos, 0.08);
+                    camera.lookAt(targetPos);
+                } else if (cameraMode === 'orbit') {
+                    const cx = targetPos.x + Math.sin(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
+                    const cz = targetPos.z + Math.cos(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
+                    const cy = targetPos.y + Math.sin(orbitAngleY) * orbitRadius;
+                    camera.position.set(cx, cy, cz);
+                    camera.lookAt(targetPos);
+                }
+            }
+
+            if (screenShakeIntensity > 0) {
+                camera.position.x += (Math.random() - 0.5) * screenShakeIntensity;
+                camera.position.y += (Math.random() - 0.5) * screenShakeIntensity;
+                screenShakeIntensity *= 0.9;
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+
+            drawMinimap();
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = function() {
+            initThree();
+            animate();
+            showCinematicSubtitle("🎬 제니 볼 준비 완료! [레이스 스타트]를 눌러주세요.");
+        };
+    </script>
+</body>
+</html>
