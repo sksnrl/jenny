@@ -1867,6 +1867,29 @@ if (selectedTargetRacer && trackSpline) {
         }
 
         window.onload = function() {
+		// --- 스페이스바 단축키 이벤트 리스너 ---
+window.addEventListener('keydown', (e) => {
+    // 1. 입력창(참가자 이름 등)에 타이핑 중일 때는 스페이스바 동작 방지
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) {
+        return;
+    }
+
+    // 2. 스페이스바 눌림 감지
+    if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault(); // 스페이스바로 인한 브라우저 기본 스크롤 현상 방지
+
+        // 레이스가 이미 종료된 상태라면 아무 동작 안 함 (또는 resetRace())
+        if (raceEnded) return;
+
+        // 레이스 시작 전이면 시작, 진행 중이면 일시정지 토글
+        if (!raceStarted) {
+            startRace();
+        } else {
+            togglePauseRace();
+        }
+    }
+});
             initThree();
             animate();
             showCinematicSubtitle("🎬 JENNIE 볼 준비 완료! [레이스 스타트]를 눌러주세요.");
