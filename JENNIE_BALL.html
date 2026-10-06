@@ -51,12 +51,12 @@
                     <h1 class="cinematic-font text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-yellow-300 to-cyan-400">
                         제니 슈퍼 볼 레이스
                     </h1>
-                    <p class="text-[9px] text-white/70 font-mono tracking-widest uppercase">7 EXTREME CIRCUITS & SOUND FX</p>
+                    <p class="text-[9px] text-white/70 font-mono tracking-widest uppercase">7 EXTREME CIRCUITS & SPATIAL AUDIO</p>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 bg-black/85 backdrop-blur-md border border-white/10 p-2 rounded-2xl shadow-2xl flex-wrap">
-                <!-- Map Selector (총 7개 맵) -->
+                <!-- Map Selector -->
                 <div class="relative flex items-center">
                     <i class="fa-solid fa-map-location-dot absolute left-3 text-cyan-400 text-xs pointer-events-none"></i>
                     <select id="map-select" onchange="onSelectMap(this.value)" class="bg-white/10 border border-white/20 text-white text-xs font-bold rounded-xl pl-8 pr-3 py-2 outline-none focus:border-pink-500 cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed">
@@ -206,7 +206,7 @@
     </div>
 
     <script>
-        // --- 1. Web Audio API 엔진 (합성 사운드) ---
+        // --- 1. Web Audio API 엔진 (거리 감쇠 3D 사운드) ---
         let audioCtx = null;
         function getAudioContext() {
             if (!audioCtx) {
@@ -220,10 +220,22 @@
         }
 
         const SoundEngine = {
-            playMetallicHit: function(volume = 0.4) {
+            // 카메라와 사운드 발생 위치 간 거리에 따른 볼륨 감쇠 계수 (0.0 ~ 1.0)
+            getDistanceGain: function(worldPos, maxDist = 320) {
+                if (!camera || !worldPos) return 1.0;
+                const dist = camera.position.distanceTo(worldPos);
+                const factor = THREE.MathUtils.clamp(1 - (dist - 15) / (maxDist - 15), 0, 1);
+                return factor * factor; // 자연스러운 2차 곡선 감쇠
+            },
+
+            playMetallicHit: function(volume = 0.4, worldPos = null) {
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
+                    const distGain = this.getDistanceGain(worldPos, 260);
+                    const finalVolume = volume * distGain;
+                    if (finalVolume <= 0.001) return;
+
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     
@@ -231,7 +243,7 @@
                     osc.frequency.setValueAtTime(1400 + Math.random() * 800, now);
                     osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
 
-                    gain.gain.setValueAtTime(volume * 0.5, now);
+                    gain.gain.setValueAtTime(finalVolume * 0.5, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
                     osc.connect(gain);
@@ -240,10 +252,15 @@
                     osc.stop(now + 0.12);
                 } catch(e) {}
             },
-            playBooster: function() {
+
+            playBooster: function(worldPos = null) {
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
+                    const distGain = this.getDistanceGain(worldPos, 350);
+                    const finalVolume = 0.35 * distGain;
+                    if (finalVolume <= 0.001) return;
+
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
 
@@ -251,7 +268,7 @@
                     osc.frequency.setValueAtTime(220, now);
                     osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
 
-                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.setValueAtTime(finalVolume, now);
                     gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
 
                     osc.connect(gain);
@@ -260,10 +277,15 @@
                     osc.stop(now + 0.35);
                 } catch(e) {}
             },
-            playWormhole: function() {
+
+            playWormhole: function(worldPos = null) {
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
+                    const distGain = this.getDistanceGain(worldPos, 400);
+                    const finalVolume = 0.45 * distGain;
+                    if (finalVolume <= 0.001) return;
+
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
 
@@ -271,7 +293,7 @@
                     osc.frequency.setValueAtTime(900, now);
                     osc.frequency.exponentialRampToValueAtTime(90, now + 0.45);
 
-                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.setValueAtTime(finalVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
 
                     osc.connect(gain);
@@ -280,10 +302,15 @@
                     osc.stop(now + 0.45);
                 } catch(e) {}
             },
-            playItemBox: function() {
+
+            playItemBox: function(worldPos = null) {
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
+                    const distGain = this.getDistanceGain(worldPos, 300);
+                    const finalVolume = 0.28 * distGain;
+                    if (finalVolume <= 0.001) return;
+
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
 
@@ -293,7 +320,7 @@
                     osc.frequency.setValueAtTime(783.99, now + 0.16);
                     osc.frequency.setValueAtTime(1046.50, now + 0.24);
 
-                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.setValueAtTime(finalVolume, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
                     osc.connect(gain);
@@ -304,7 +331,7 @@
             }
         };
 
-        // --- 2. 기본 참가자 엔트리 (JENNIE 1명 기본) ---
+        // --- 2. 기본 참가자 엔트리 (JENNIE 기본) ---
         let currentPlayers = [
             { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '빛나는 황금빛 크롬 스틸볼!' }
         ];
@@ -966,6 +993,7 @@
                     spinTimer: 0,
                     hasShield: false,
                     shieldTimer: 0,
+                    bumperInvulTimer: 0, // 범퍼 연속 충돌 방지용 무적 타이머
                     isAirborne: false,
                     finished: false,
                     finishTime: 0,
@@ -1014,6 +1042,11 @@
 
             racers.forEach(r => {
                 if (r.finished) return;
+
+                // 범퍼 무적 타이머 감소
+                if (r.bumperInvulTimer > 0) {
+                    r.bumperInvulTimer -= 0.016;
+                }
 
                 let rubberbandFactor = 1.0;
                 if (racers.length > 1) {
@@ -1074,7 +1107,7 @@
                         r.progress = activeWormhole.rewindTo;
                         r.spinTimer = 1.0;
                         r.speedMultiplier = 0.4;
-                        SoundEngine.playWormhole();
+                        SoundEngine.playWormhole(r.mesh.position);
                         createSparks(r.mesh.position, 0x9333ea);
                         screenShakeIntensity = 0.85;
 
@@ -1091,7 +1124,7 @@
                         item.active = false;
                         item.mesh.visible = false;
                         item.respawnTimer = 4.0;
-                        SoundEngine.playItemBox();
+                        SoundEngine.playItemBox(r.mesh.position);
                         triggerRandomItem(r);
                     }
                 });
@@ -1111,16 +1144,30 @@
                             }
                         } else if (trap.type === 'boost') {
                             r.speedMultiplier = 2.2;
-                            SoundEngine.playBooster();
+                            SoundEngine.playBooster(r.mesh.position);
                             createSparks(r.mesh.position, 0x00ffcc);
                             showCinematicSubtitle(`⚡ [${r.name}] 부스터 패드 폭풍 가속!`);
                         } else if (trap.type === 'bumper') {
-                            r.progress = Math.max(0.01, r.progress - 0.05);
-                            r.velocityOffset = (r.laneOffset < trap.laneOffset ? -1 : 1) * 4.0;
-                            r.spinTimer = 0.8;
-                            SoundEngine.playMetallicHit(0.8);
+                            // 무적 시간 중이면 충돌 무시 (무한 루프 방지)
+                            if (r.bumperInvulTimer > 0) return;
+
+                            // 1. 역행 폭을 적절히 축소하여 과도한 뒤쪽 워프 방지
+                            r.progress = Math.max(0.005, r.progress - 0.018);
+
+                            // 2. 범퍼 위치를 기준으로 확실히 바깥쪽 차선으로 강제 튕김
+                            const pushDir = r.laneOffset >= trap.laneOffset ? 1 : -1;
+                            r.laneOffset += pushDir * 6.5; 
+                            r.targetLaneOffset = THREE.MathUtils.clamp(r.laneOffset + pushDir * 5.0, -(ROAD_WIDTH / 2 - 2), (ROAD_WIDTH / 2 - 2));
+                            r.velocityOffset = pushDir * 5.5;
+
+                            // 3. 1.8초간 동일 범퍼 및 인근 범퍼 판정 무적화
+                            r.bumperInvulTimer = 1.8;
+                            r.spinTimer = 0.7;
+                            r.speedMultiplier = 0.5;
+
+                            SoundEngine.playMetallicHit(0.8, r.mesh.position);
                             createSparks(r.mesh.position, 0xff0055);
-                            showCinematicSubtitle(`💥 [${r.name}] 핀볼 범퍼에 강타당해 역행!`);
+                            showCinematicSubtitle(`💥 [${r.name}] 핀볼 범퍼에 강타당해 튕겨나감!`);
                             screenShakeIntensity = 0.7;
                         }
                     }
@@ -1174,9 +1221,8 @@
                             r1.speedMultiplier = Math.max(0.4, r1.speedMultiplier - 0.25);
                         }
 
-                        SoundEngine.playMetallicHit(0.35);
-
                         const midPos = pos1.clone().add(pos2).multiplyScalar(0.5);
+                        SoundEngine.playMetallicHit(0.35, midPos);
                         createSparks(midPos, 0xffffff);
 
                         if (Math.random() < 0.2) {
@@ -1198,7 +1244,7 @@
             if (chosen === 'booster') {
                 racer.currentItem = '🚀';
                 racer.speedMultiplier = 2.6;
-                SoundEngine.playBooster();
+                SoundEngine.playBooster(racer.mesh.position);
                 createSparks(racer.mesh.position, 0xff4500);
                 showCinematicSubtitle(`🚀 [${racer.name}] 로켓 부스터 점화!`);
             } else if (chosen === 'thunder') {
@@ -1279,7 +1325,7 @@
                 } else {
                     if (r.isAirborne) {
                         r.isAirborne = false;
-                        SoundEngine.playMetallicHit(0.5);
+                        SoundEngine.playMetallicHit(0.5, r.mesh.position);
                         createSparks(r.mesh.position, 0x00e5ff);
                     }
                 }
@@ -1395,6 +1441,7 @@
                 r.rollAngle = 0;
                 r.spinTimer = 0;
                 r.hasShield = false;
+                r.bumperInvulTimer = 0;
                 r.currentItem = null;
                 r.velocityOffset = 0;
             });
@@ -1426,7 +1473,7 @@
             } else {
                 document.getElementById('race-status-badge').textContent = 'RACING';
                 document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded font-mono font-bold animate-pulse';
-                showCinematicSubtitle("▶️️ 레이스를 재개합니다!");
+                showCinematicSubtitle("▶ 레이스를 재개합니다!");
             }
         }
 
@@ -1490,6 +1537,7 @@
                 r.rollAngle = 0;
                 r.spinTimer = 0;
                 r.hasShield = false;
+                r.bumperInvulTimer = 0;
                 r.finished = false;
                 r.finishTime = 0;
                 r.currentItem = null;
@@ -1733,36 +1781,34 @@
             particles.push({ system: pSystem, velocities: velocities, life: 25 });
         }
 
-// --- [기존 setupMouseControls 전체 교체] ---
-function setupMouseControls() {
-    const container = document.getElementById('canvas-container');
-    
-    container.addEventListener('mousedown', (e) => {
-        isMouseDown = true;
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
+        function setupMouseControls() {
+            const container = document.getElementById('canvas-container');
+            
+            container.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
 
-    window.addEventListener('mousemove', (e) => {
-        if (!isMouseDown) return;
-        const deltaX = e.clientX - mouseX;
-        const deltaY = e.clientY - mouseY;
-        mouseX = e.clientX;
-        mouseY = e.clientY;
+            window.addEventListener('mousemove', (e) => {
+                if (!isMouseDown) return;
+                const deltaX = e.clientX - mouseX;
+                const deltaY = e.clientY - mouseY;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
 
-        orbitAngleX -= deltaX * 0.008;
-        orbitAngleY = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, orbitAngleY + deltaY * 0.008));
-    });
+                orbitAngleX -= deltaX * 0.008;
+                orbitAngleY = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, orbitAngleY + deltaY * 0.008));
+            });
 
-    window.addEventListener('mouseup', () => { isMouseDown = false; });
-    
-    container.addEventListener('wheel', (e) => {
-        // 모든 뷰에서 휠로 줌인/줌아웃 가능
-        orbitRadius = Math.max(15, Math.min(450, orbitRadius + e.deltaY * 0.08));
-    });
-}
+            window.addEventListener('mouseup', () => { isMouseDown = false; });
+            
+            container.addEventListener('wheel', (e) => {
+                orbitRadius = Math.max(15, Math.min(450, orbitRadius + e.deltaY * 0.08));
+            });
+        }
 
-        // --- 17. 메인 애니메이션 렌더 루프 ---
+        // --- 16. 메인 애니메이션 렌더 루프 ---
         function animate() {
             requestAnimationFrame(animate);
 
@@ -1794,57 +1840,51 @@ function setupMouseControls() {
                 }
             }
 
-// --- [animate() 내부의 카메라 위치 계산 부분 교체] ---
-if (selectedTargetRacer && trackSpline) {
-    const targetPos = selectedTargetRacer.mesh.position;
-    const { tangent, normal, binormal } = getSurfaceOrientationAt(selectedTargetRacer.progress);
+            if (selectedTargetRacer && trackSpline) {
+                const targetPos = selectedTargetRacer.mesh.position;
+                const { tangent, normal, binormal } = getSurfaceOrientationAt(selectedTargetRacer.progress);
 
-    let desiredCameraPos = new THREE.Vector3();
+                let desiredCameraPos = new THREE.Vector3();
 
-    if (cameraMode === 'chase') {
-        // [추격 뷰] 뒤쪽 기본 위치를 기준으로 마우스 회전/거리 오프셋 결합
-        const baseOffset = tangent.clone().multiplyScalar(-orbitRadius * 0.15)
-            .add(normal.clone().multiplyScalar(orbitRadius * 0.06));
-        
-        // 횡방향(좌우) 및 수직(상하) 마우스 회전 반영
-        const rotatedOffset = baseOffset.clone()
-            .add(binormal.clone().multiplyScalar(Math.sin(orbitAngleX) * (orbitRadius * 0.2)))
-            .add(normal.clone().multiplyScalar((orbitAngleY - Math.PI / 4) * (orbitRadius * 0.25)));
+                if (cameraMode === 'chase') {
+                    const baseOffset = tangent.clone().multiplyScalar(-orbitRadius * 0.15)
+                        .add(normal.clone().multiplyScalar(orbitRadius * 0.06));
+                    
+                    const rotatedOffset = baseOffset.clone()
+                        .add(binormal.clone().multiplyScalar(Math.sin(orbitAngleX) * (orbitRadius * 0.2)))
+                        .add(normal.clone().multiplyScalar((orbitAngleY - Math.PI / 4) * (orbitRadius * 0.25)));
 
-        desiredCameraPos.copy(targetPos).add(rotatedOffset);
-        camera.position.lerp(desiredCameraPos, 0.12);
-        camera.lookAt(targetPos.clone().add(normal.clone().multiplyScalar(1.5)));
+                    desiredCameraPos.copy(targetPos).add(rotatedOffset);
+                    camera.position.lerp(desiredCameraPos, 0.12);
+                    camera.lookAt(targetPos.clone().add(normal.clone().multiplyScalar(1.5)));
 
-    } else if (cameraMode === 'action') {
-        // [다이내믹 캠] 측면 위치를 기준으로 마우스 조작 결합
-        const baseOffset = binormal.clone().multiplyScalar(Math.cos(orbitAngleX) * (orbitRadius * 0.15))
-            .add(tangent.clone().multiplyScalar(Math.sin(orbitAngleX) * (orbitRadius * 0.15)))
-            .add(normal.clone().multiplyScalar(Math.sin(orbitAngleY) * (orbitRadius * 0.12)));
+                } else if (cameraMode === 'action') {
+                    const baseOffset = binormal.clone().multiplyScalar(Math.cos(orbitAngleX) * (orbitRadius * 0.15))
+                        .add(tangent.clone().multiplyScalar(Math.sin(orbitAngleX) * (orbitRadius * 0.15)))
+                        .add(normal.clone().multiplyScalar(Math.sin(orbitAngleY) * (orbitRadius * 0.12)));
 
-        desiredCameraPos.copy(targetPos).add(baseOffset);
-        camera.position.lerp(desiredCameraPos, 0.12);
-        camera.lookAt(targetPos);
+                    desiredCameraPos.copy(targetPos).add(baseOffset);
+                    camera.position.lerp(desiredCameraPos, 0.12);
+                    camera.lookAt(targetPos);
 
-    } else if (cameraMode === 'drone') {
-        // [탑 드론] 상공에서 내려다보는 상태에서 마우스로 각도/고도 조절
-        const droneHeight = Math.sin(orbitAngleY) * (orbitRadius * 0.8) + 20;
-        const droneDist = Math.cos(orbitAngleY) * (orbitRadius * 0.8);
-        
-        desiredCameraPos.copy(targetPos)
-            .add(new THREE.Vector3(Math.sin(orbitAngleX) * droneDist, droneHeight, Math.cos(orbitAngleX) * droneDist));
+                } else if (cameraMode === 'drone') {
+                    const droneHeight = Math.sin(orbitAngleY) * (orbitRadius * 0.8) + 20;
+                    const droneDist = Math.cos(orbitAngleY) * (orbitRadius * 0.8);
+                    
+                    desiredCameraPos.copy(targetPos)
+                        .add(new THREE.Vector3(Math.sin(orbitAngleX) * droneDist, droneHeight, Math.cos(orbitAngleX) * droneDist));
 
-        camera.position.lerp(desiredCameraPos, 0.09);
-        camera.lookAt(targetPos);
+                    camera.position.lerp(desiredCameraPos, 0.09);
+                    camera.lookAt(targetPos);
 
-    } else if (cameraMode === 'orbit') {
-        // [자유 조작] 360도 완전 구면 좌표계 회전
-        const cx = targetPos.x + Math.sin(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
-        const cz = targetPos.z + Math.cos(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
-        const cy = targetPos.y + Math.sin(orbitAngleY) * orbitRadius;
-        camera.position.set(cx, cy, cz);
-        camera.lookAt(targetPos);
-    }
-}
+                } else if (cameraMode === 'orbit') {
+                    const cx = targetPos.x + Math.sin(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
+                    const cz = targetPos.z + Math.cos(orbitAngleX) * Math.cos(orbitAngleY) * orbitRadius;
+                    const cy = targetPos.y + Math.sin(orbitAngleY) * orbitRadius;
+                    camera.position.set(cx, cy, cz);
+                    camera.lookAt(targetPos);
+                }
+            }
 
             if (screenShakeIntensity > 0) {
                 camera.position.x += (Math.random() - 0.5) * screenShakeIntensity;
@@ -1867,32 +1907,28 @@ if (selectedTargetRacer && trackSpline) {
         }
 
         window.onload = function() {
-		// --- 스페이스바 단축키 이벤트 리스너 ---
-window.addEventListener('keydown', (e) => {
-    // 1. 입력창(참가자 이름 등)에 타이핑 중일 때는 스페이스바 동작 방지
-    const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) {
-        return;
-    }
+            // 스페이스바 단축키 이벤트 리스너
+            window.addEventListener('keydown', (e) => {
+                const tag = e.target.tagName.toLowerCase();
+                if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) {
+                    return;
+                }
 
-    // 2. 스페이스바 눌림 감지
-    if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault(); // 스페이스바로 인한 브라우저 기본 스크롤 현상 방지
+                if (e.code === 'Space' || e.key === ' ') {
+                    e.preventDefault();
+                    if (raceEnded) return;
 
-        // 레이스가 이미 종료된 상태라면 아무 동작 안 함 (또는 resetRace())
-        if (raceEnded) return;
+                    if (!raceStarted) {
+                        startRace();
+                    } else {
+                        togglePauseRace();
+                    }
+                }
+            });
 
-        // 레이스 시작 전이면 시작, 진행 중이면 일시정지 토글
-        if (!raceStarted) {
-            startRace();
-        } else {
-            togglePauseRace();
-        }
-    }
-});
             initThree();
             animate();
-            showCinematicSubtitle("🎬 JENNIE 볼 준비 완료! [레이스 스타트]를 눌러주세요.");
+            showCinematicSubtitle("🎬 JENNIE 볼 준비 완료! [레이스 스타트] 또는 [Space]를 눌러주세요.");
         };
     </script>
 </body>
