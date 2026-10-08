@@ -188,7 +188,7 @@
                     <span>구슬 추가</span>
                 </button>
                 <div class="flex gap-2">
-                    <button onclick="resetDefaultPlayers()" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs transition-all">기본값(6인)</button>
+                    <button onclick="resetDefaultPlayers()" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs transition-all">기본값(제니)</button>
                     <button onclick="saveAndApplyPlayers()" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-purple-600/30">저장 및 트랙 배치</button>
                 </div>
             </div>
@@ -338,14 +338,9 @@
             }
         };
 
-        // --- 2. 기본 참가자 엔트리 ---
+        // --- 2. 기본 참가자 엔트리 (JENNIE 단독 출전 기본값) ---
         let currentPlayers = [
-            { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '황금빛 크롬 챔피언!' },
-            { id: 'p2', name: 'MIN SO-HEE', color: '#00e5ff', desc: '날카로운 레인 파고들기!' },
-            { id: 'p3', name: '제니꾹빡', color: '#ffd700', desc: '폭발적인 공격성!' },
-            { id: 'p4', name: '흰혹등고래', color: '#38bdf8', desc: '묵직한 드래프팅 순항!' },
-            { id: 'p5', name: '관우', color: '#ef4444', desc: '강력한 정면 돌파!' },
-            { id: 'p6', name: '루피', color: '#00ff66', desc: '변칙적인 와이드 드리프터!' }
+            { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '황금빛 크롬 스틸볼 챔피언!' }
         ];
 
         // --- 3. 7대 전방향 다차원 서킷 프리셋 ---
@@ -566,7 +561,7 @@
         let mouseX = 0, mouseY = 0;
         let orbitAngleX = 0, orbitAngleY = Math.PI / 4, orbitRadius = 160;
 
-        // --- [업그레이드 1] 절차적 스튜디오 환경 큐브맵(IBL) 생성 ---
+        // --- 5. 절차적 스튜디오 환경 큐브맵(IBL) 생성 ---
         function generateProceduralEnvironmentMap(renderer) {
             const size = 256;
             const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(size, {
@@ -579,15 +574,14 @@
             const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRenderTarget);
             const tempScene = new THREE.Scene();
 
-            // 반사면에 맺힐 네온 하이라이트 박스 배치
             const boxGeo = new THREE.BoxGeometry(40, 40, 40);
             const mats = [
-                new THREE.MeshBasicMaterial({ color: 0x00e5ff }), // +X 네온 시안
-                new THREE.MeshBasicMaterial({ color: 0xff007f }), // -X 네온 핑크
-                new THREE.MeshBasicMaterial({ color: 0xffffff }), // +Y 화이트 천장
-                new THREE.MeshBasicMaterial({ color: 0x050510 }), // -Y 어두운 바닥
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8 }), // +Z 블루 라이트
-                new THREE.MeshBasicMaterial({ color: 0xa855f7 })  // -Z 퍼플 라이트
+                new THREE.MeshBasicMaterial({ color: 0x00e5ff }),
+                new THREE.MeshBasicMaterial({ color: 0xff007f }),
+                new THREE.MeshBasicMaterial({ color: 0xffffff }),
+                new THREE.MeshBasicMaterial({ color: 0x050510 }),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 }),
+                new THREE.MeshBasicMaterial({ color: 0xa855f7 })
             ];
             const envBox = new THREE.Mesh(boxGeo, mats);
             envBox.material.forEach(m => m.side = THREE.BackSide);
@@ -597,18 +591,16 @@
             return cubeRenderTarget.texture;
         }
 
-        // --- [업그레이드 2] 절차적 카본 & 레이싱 그리드 트랙 텍스처 생성 ---
+        // --- 6. 절차적 카본 & 레이싱 그리드 트랙 텍스처 생성 ---
         function generateProceduralTrackTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 1024;
             canvas.height = 1024;
             const ctx = canvas.getContext('2d');
 
-            // 1. 카본 파이버 기본 베이스
             ctx.fillStyle = '#111118';
             ctx.fillRect(0, 0, 1024, 1024);
 
-            // 미세 그리드 패턴
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctx.lineWidth = 2;
             const step = 32;
@@ -619,13 +611,11 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
             }
 
-            // 2. 중앙 발광 네온 스피드 스트라이프
             ctx.fillStyle = 'rgba(0, 229, 255, 0.22)';
             ctx.fillRect(504, 0, 16, 1024);
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(510, 0, 4, 1024);
 
-            // 3. 서브 레인 가이드라인
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.lineWidth = 4;
             ctx.setLineDash([40, 40]);
@@ -633,7 +623,6 @@
             ctx.beginPath(); ctx.moveTo(768, 0); ctx.lineTo(768, 1024); ctx.stroke();
             ctx.setLineDash([]);
 
-            // 4. 좌우 체커 엣지 (연석 느낌)
             for (let y = 0; y < 1024; y += 64) {
                 ctx.fillStyle = (y / 64) % 2 === 0 ? '#ff0055' : '#ffffff';
                 ctx.fillRect(0, y, 28, 64);
@@ -647,7 +636,7 @@
             return texture;
         }
 
-        // --- 5. Three.js 초기화 ---
+        // --- 7. Three.js 초기화 ---
         function initThree() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
@@ -658,20 +647,18 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.15; // 자연스러운 PBR 톤 매핑
+            renderer.toneMappingExposure = 1.15;
             container.appendChild(renderer.domElement);
 
-            // 절차적 환경 맵 적용 (IBL 활성화)
             const envTexture = generateProceduralEnvironmentMap(renderer);
             scene.environment = envTexture;
 
             const renderScene = new THREE.RenderPass(scene, camera);
-            // 깔끔하고 날카로운 네온 발광 블룸
             const bloomPass = new THREE.UnrealBloomPass(
                 new THREE.Vector2(window.innerWidth, window.innerHeight),
-                0.95,  // strength
-                0.35,  // radius
-                0.88   // threshold
+                0.95,
+                0.35,
+                0.88
             );
             composer = new THREE.EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -692,7 +679,7 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        // --- 6. RMF(Rotation Minimizing Frames) 연산 ---
+        // --- 8. RMF(Rotation Minimizing Frames) 연산 ---
         function computeRobustSurfaceFrames() {
             surfaceFrames = [];
             
@@ -780,7 +767,7 @@
             return (1 - offsetNorm * offsetNorm) * -0.9;
         }
 
-        // --- 7. 정교한 PBR 트랙 및 게이트 빌드 ---
+        // --- 9. 정교한 PBR 트랙 및 게이트 빌드 ---
         function buildTrack(mapKey) {
             trackMeshes.forEach(mesh => scene.remove(mesh));
             trackMeshes = [];
@@ -851,7 +838,6 @@
             roadGeometry.setIndex(indices);
             roadGeometry.computeVertexNormals();
 
-            // 정교한 PBR 카본 그리드 노면 재질
             const trackTexture = generateProceduralTrackTexture();
             const roadMaterial = new THREE.MeshStandardMaterial({
                 color: mapData.roadColor,
@@ -865,7 +851,6 @@
             scene.add(roadMesh);
             trackMeshes.push(roadMesh);
 
-            // 레이저 가드레일
             if (leftEdgePts.length > 0) {
                 const railGeoL = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(leftEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
                 const railGeoR = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rightEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
@@ -882,7 +867,6 @@
                 trackMeshes.push(railL, railR);
             }
 
-            // 사이버 트랙 전용 상공 네온 링
             if (mapKey === 'cyber') {
                 for (let k = 0.08; k < 0.95; k += 0.07) {
                     const { point, normal } = getSurfaceOrientationAt(k);
@@ -895,7 +879,6 @@
                 }
             }
 
-            // 고공 슬림 게이트
             createSurfaceGate(0, 0x00e5ff, 'START LINE');
             createSurfaceGate(1, 0xff0055, 'FINISH LINE');
 
@@ -955,7 +938,7 @@
             activeWormholes = [];
         }
 
-        // --- 8. 3D 홀로그램 아이템 모델 생성 ---
+        // --- 10. 3D 홀로그램 아이템 모델 생성 ---
         function createHoloItemModel(type) {
             const group = new THREE.Group();
 
@@ -1236,13 +1219,13 @@
             sceneryMeshes.push(gridHelper);
         }
 
-        // --- 9. [업그레이드 3] 컨택트 섀도우 & 고정밀 PBR 플레이어 생성 ---
+        // --- 11. 구슬 엔티티 생성 (제니 1인 단독 기본값 대응) ---
         function createRacers() {
             racers.forEach(r => scene.remove(r.mesh));
             racers = [];
 
             const personalities = [
-                { style: 'aggressive', baseLanePreference: 0.0,  wanderSpan: 5.0, itemGreed: 0.85 },
+                { style: 'aggressive', baseLanePreference: 0.0, wanderSpan: 5.5, itemGreed: 0.85 },
                 { style: 'left_wing',  baseLanePreference: -4.5, wanderSpan: 4.0, itemGreed: 0.65 },
                 { style: 'right_wing', baseLanePreference: 4.5,  wanderSpan: 4.0, itemGreed: 0.65 },
                 { style: 'wide_drifter', baseLanePreference: 0.0, wanderSpan: 6.5, itemGreed: 0.95 },
@@ -1256,7 +1239,6 @@
 
                 const marbleMesh = new THREE.Group();
 
-                // Layer 1: 내부 발광 코어
                 const coreGeo = new THREE.IcosahedronGeometry(BALL_RADIUS * 0.55, 1);
                 const coreMat = new THREE.MeshStandardMaterial({
                     color: colorHex,
@@ -1267,7 +1249,6 @@
                 const coreMesh = new THREE.Mesh(coreGeo, coreMat);
                 marbleMesh.add(coreMesh);
 
-                // Layer 2: 정교한 금속 섀시 자이로 링 (환경 맵 반사 극대화)
                 const gyroGeo = new THREE.TorusGeometry(BALL_RADIUS * 0.78, 0.08, 12, 32);
                 const gyroMat = new THREE.MeshStandardMaterial({
                     color: 0xcccccc,
@@ -1281,7 +1262,6 @@
                 gyro2.rotation.x = Math.PI / 2;
                 marbleMesh.add(gyro1, gyro2);
 
-                // Layer 3: 고정밀 물리 글래스 쉘 (Transmission & IOR)
                 const shellGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
                 const shellMat = new THREE.MeshPhysicalMaterial({
                     color: 0xffffff,
@@ -1296,7 +1276,6 @@
                 marbleMesh.add(new THREE.Mesh(shellGeo, shellMat));
                 group.add(marbleMesh);
 
-                // 접지 부드러운 컨택트 섀도우 (노면 밀착감 부여)
                 const shadowGeo = new THREE.PlaneGeometry(BALL_RADIUS * 2.8, BALL_RADIUS * 2.8);
                 const shadowCanvas = document.createElement('canvas');
                 shadowCanvas.width = 128;
@@ -1314,7 +1293,6 @@
                 contactShadow.position.y = -BALL_RADIUS + 0.05;
                 group.add(contactShadow);
 
-                // 접지 글로우 링
                 const glowGeo = new THREE.RingGeometry(BALL_RADIUS * 0.4, BALL_RADIUS * 1.5, 24);
                 const glowMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.55 });
                 const groundGlow = new THREE.Mesh(glowGeo, glowMat);
@@ -1322,20 +1300,17 @@
                 groundGlow.position.y = -BALL_RADIUS + 0.1;
                 group.add(groundGlow);
 
-                // 쉴드 메쉬
                 const shieldGeo = new THREE.SphereGeometry(BALL_RADIUS * 1.45, 24, 24);
                 const shieldMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0 });
                 const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
                 group.add(shieldMesh);
 
-                // 비콘 레이저
                 const beaconGeo = new THREE.CylinderGeometry(0.12, 0.12, 18, 8);
                 const beaconMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.5 });
                 const beacon = new THREE.Mesh(beaconGeo, beaconMat);
                 beacon.position.y = 9.5;
                 group.add(beacon);
 
-                // [업그레이드 4] 선명한 2K급 HUD 네임태그
                 const canvas = document.createElement('canvas');
                 canvas.width = 1024;
                 canvas.height = 256;
@@ -1364,6 +1339,7 @@
 
                 const startProgress = Math.max(0, 0.005 - (index * 0.0006));
                 const totalP = currentPlayers.length;
+                // 단독 출전일 경우 중앙(0.0)에 정렬, 복수일 경우 고르게 분산
                 const laneSpread = totalP === 1 ? 0 : (-7.0 + (index / (totalP - 1)) * 14.0);
                 const personality = personalities[index % personalities.length];
 
@@ -1413,7 +1389,7 @@
             alignRacersToTrack();
         }
 
-        // --- 10. 물리 및 AI 업데이트 ---
+        // --- 12. 물리 및 AI 업데이트 ---
         function updatePhysicsAndItems(deltaTime) {
             const mapData = trackPresets[activeMapKey];
             const timeScale = deltaTime / 0.016;
@@ -1424,7 +1400,6 @@
                 r.beacon.material.opacity = (r.rank === 1 || r.id === selectedTargetRacer?.id) ? 0.85 : 0.25;
             });
 
-            // 핀볼 플리퍼
             dynamicFlippers.forEach(f => {
                 f.swingPhase += 0.08 * timeScale;
                 const prevAngle = f.currentAngle;
@@ -1436,12 +1411,10 @@
                 f.angularVelocity = (f.currentAngle - prevAngle) * (f.side === 'left' ? 1 : -1);
             });
 
-            // 회전 스피너
             dynamicSpinners.forEach(s => {
                 s.bladeMesh.rotation.y += s.rotationSpeed * timeScale;
             });
 
-            // 3D 홀로그램 아이템
             dynamicItems.forEach(item => {
                 if (item.active) {
                     item.group.rotation.y += 0.035 * timeScale;
@@ -1491,7 +1464,6 @@
                     }
                 }
 
-                // 온화한 척력
                 let separationForce = 0;
                 racers.forEach(other => {
                     if (other.id !== r.id && !other.finished) {
@@ -1506,7 +1478,6 @@
                     }
                 });
 
-                // AI 탐색
                 r.aiDecisionTimer -= deltaTime;
                 if (r.aiDecisionTimer <= 0) {
                     r.aiDecisionTimer = 0.5 + Math.random() * 0.4;
@@ -1587,7 +1558,6 @@
                     });
                 }
 
-                // 완화된 원심력
                 const dtCurv = 0.005;
                 const tPrev = Math.max(0, r.progress - dtCurv);
                 const tNext = Math.min(1, r.progress + dtCurv);
@@ -1601,7 +1571,6 @@
                 const centrifugalForce = -lateralCurv * (r.currentVelocity * 350.0) * (2.0 - fMult);
                 r.velocityOffset += centrifugalForce * timeScale;
 
-                // U자 도로 복원력 & 안전 범퍼
                 const centeringGravity = - (r.laneOffset / (ROAD_WIDTH / 2)) * 0.18;
                 let wallRepelForce = 0;
                 const safeWallMargin = 9.5;
@@ -1636,7 +1605,6 @@
 
                 r.progress += r.currentVelocity * timeScale;
 
-                // 3D 쿼터니언 회전
                 const forwardDelta = r.currentVelocity * 1400.0 * timeScale;
                 const rotAxis = new THREE.Vector3().crossVectors(normal, tangent).normalize();
                 const rotAngle = forwardDelta / BALL_RADIUS;
@@ -1645,7 +1613,6 @@
                 r.marbleQuaternion.premultiply(deltaQuat);
                 r.marbleMesh.quaternion.copy(r.marbleQuaternion);
 
-                // 핀볼 플리퍼 충돌
                 dynamicFlippers.forEach(f => {
                     if (r.flipperCooldown > 0) return;
 
@@ -1707,7 +1674,6 @@
                     }
                 });
 
-                // 회전 스피너
                 dynamicSpinners.forEach(s => {
                     if (Math.abs(r.progress - s.progress) < 0.004) {
                         if (Math.abs(r.laneOffset) < 5.0) {
@@ -1721,7 +1687,6 @@
                     }
                 });
 
-                // 웜홀
                 activeWormholes.forEach(w => {
                     if (w.active && Math.abs(r.progress - w.enter) < 0.004) {
                         r.progress = w.rewindTo;
@@ -1737,7 +1702,6 @@
                     }
                 });
 
-                // 아이템 획득
                 dynamicItems.forEach(item => {
                     if (item.active && Math.abs(r.progress - item.progress) < 0.0035 && Math.abs(r.laneOffset - item.laneOffset) < 3.8) {
                         item.active = false;
@@ -1748,7 +1712,6 @@
                     }
                 });
 
-                // 트랩
                 dynamicTraps.forEach(trap => {
                     if (trap.active && Math.abs(r.progress - trap.progress) < 0.0035 && Math.abs(r.laneOffset - trap.laneOffset) < 3.4) {
                         if (trap.type === 'banana') {
@@ -1787,7 +1750,6 @@
                     }
                 });
 
-                // 결승선 통과
                 if (r.progress >= 1.0) {
                     r.progress = 1.0;
                     r.finished = true;
@@ -1891,7 +1853,7 @@
             setTimeout(() => { racer.currentItem = null; }, 3500);
         }
 
-        // --- 11. 레이서 위치 정렬 ---
+        // --- 13. 레이서 위치 정렬 ---
         function alignRacersToTrack() {
             if (!trackSpline || surfaceFrames.length === 0) return;
 
@@ -1934,7 +1896,7 @@
             });
         }
 
-        // --- 12. 전방향 2D 톱다운 텔레메트리 레이더 ---
+        // --- 14. 전방향 2D 톱다운 텔레메트리 레이더 ---
         function drawMinimap() {
             const canvas = document.getElementById('minimap-canvas');
             if (!canvas || !trackSpline) return;
@@ -2018,7 +1980,7 @@
             });
         }
 
-        // --- 13. 레이스 제어 흐름 ---
+        // --- 15. 레이스 제어 흐름 ---
         function startRace() {
             if (raceStarted && !raceEnded) return;
             getAudioContext();
@@ -2169,7 +2131,7 @@
             showCinematicSubtitle(`🗺️ 트랙 로딩 완료: [${trackPresets[mapKey].name}]`);
         }
 
-        // --- 14. 엔트리 설정 모달 ---
+        // --- 16. 엔트리 설정 모달 ---
         function openPlayerModal() {
             if (raceStarted && !raceEnded) return;
             renderPlayerEditList();
@@ -2243,12 +2205,7 @@
 
         function resetDefaultPlayers() {
             currentPlayers = [
-                { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '황금빛 크롬 챔피언!' },
-                { id: 'p2', name: 'MIN SO-HEE', color: '#00e5ff', desc: '날카로운 레인 파고들기!' },
-                { id: 'p3', name: '제니꾹빡', color: '#ffd700', desc: '폭발적인 공격성!' },
-                { id: 'p4', name: '흰혹등고래', color: '#38bdf8', desc: '묵직한 드래프팅 순항!' },
-                { id: 'p5', name: '관우', color: '#ef4444', desc: '강력한 정면 돌파!' },
-                { id: 'p6', name: '루피', color: '#00ff66', desc: '변칙적인 와이드 드리프터!' }
+                { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '황금빛 크롬 스틸볼 챔피언!' }
             ];
             renderPlayerEditList();
         }
@@ -2260,7 +2217,7 @@
             showCinematicSubtitle("✨ 참가 구슬 엔트리 설정 완료!");
         }
 
-        // --- 15. 리더보드 & 모달 UI ---
+        // --- 17. 리더보드 & 모달 UI ---
         function updateLeaderboardUI() {
             const listEl = document.getElementById('leaderboard-list');
             if (!listEl) return;
@@ -2392,7 +2349,7 @@
             });
         }
 
-        // --- 16. 메인 렌더 루프 ---
+        // --- 18. 메인 렌더 루프 ---
         function animate() {
             requestAnimationFrame(animate);
 
@@ -2499,7 +2456,7 @@
 
             initThree();
             animate();
-            showCinematicSubtitle("🎬 울트라 PBR 그래픽스 에디션 가동! [레이스 스타트] 또는 [Space]");
+            showCinematicSubtitle("🎬 엔트리 설정 후 [레이스 스타트] 또는 [Space]");
         };
     </script>
 </body>
