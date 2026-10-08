@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>제니 슈퍼 볼 레이스 - 7대 서킷 얼티밋</title>
+    <title>제니 슈퍼 볼 레이스 - 울트라 PBR 그래픽스 에디션</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Three.js CDN -->
+    <!-- Three.js & Post-Processing Stack (r128) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -31,11 +37,11 @@
 </head>
 <body class="relative w-screen h-screen select-none">
 
-    <!-- Three.js Canvas -->
+    <!-- Three.js Canvas Container -->
     <div id="canvas-container" class="absolute inset-0 z-0"></div>
 
     <!-- Screen Vignette -->
-    <div class="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/20 to-black/90"></div>
+    <div class="absolute inset-0 pointer-events-none z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/20 to-black/85"></div>
 
     <!-- UI Overlay Layer -->
     <div class="absolute inset-0 z-20 flex flex-col justify-between p-3 md:p-5 pointer-events-none">
@@ -51,7 +57,7 @@
                     <h1 class="cinematic-font text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-yellow-300 to-cyan-400">
                         제니 슈퍼 볼 레이스
                     </h1>
-                    <p class="text-[9px] text-white/70 font-mono tracking-widest uppercase">7 EXTREME CIRCUITS & SPATIAL AUDIO</p>
+                    <p class="text-[9px] text-white/70 font-mono tracking-widest uppercase">ULTRA PBR & STUDIO IBL REFLECTION</p>
                 </div>
             </div>
 
@@ -60,13 +66,13 @@
                 <div class="relative flex items-center">
                     <i class="fa-solid fa-map-location-dot absolute left-3 text-cyan-400 text-xs pointer-events-none"></i>
                     <select id="map-select" onchange="onSelectMap(this.value)" class="bg-white/10 border border-white/20 text-white text-xs font-bold rounded-xl pl-8 pr-3 py-2 outline-none focus:border-pink-500 cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                        <option value="roller">1. 제니 롤러 (고속 코스터)</option>
-                        <option value="quantum">2. 퀀텀 제니 (분기길 & 1회용 웜홀)</option>
-                        <option value="pinball">3. 핀볼 제니 (연속 바운서 타워)</option>
-                        <option value="volcano">4. 볼케이노 제니 (지그재그 협곡)</option>
-                        <option value="skyIsland">5. 천공 제니 (스카이 점프 캐즘)</option>
-                        <option value="cyber">6. 사이버 제니 (초광속 부스트)</option>
-                        <option value="chaos">7. 카오스 제니 (궁극의 복합 서킷)</option>
+                        <option value="roller">1. 제니 롤러 (거대 8자 교차 인피니티 루프)</option>
+                        <option value="quantum">2. 퀀텀 제니 (더블 윙 분기 & 웜홀 인터체인지)</option>
+                        <option value="pinball" selected>3. 핀볼 제니 (나선형 3단 핀볼 볼텍스 타워)</option>
+                        <option value="volcano">4. 볼케이노 제니 (지그재그 협곡 & 지그재그 슬라이드)</option>
+                        <option value="skyIsland">5. 천공 제니 (스카이 트라이앵글 3각 도약 서킷)</option>
+                        <option value="cyber">6. 사이버 제니 (네온 링 오픈 하이퍼웨이)</option>
+                        <option value="chaos">7. 카오스 제니 (궁극의 오메가 초대형 챔피언십)</option>
                     </select>
                 </div>
 
@@ -95,7 +101,7 @@
             </div>
         </header>
 
-        <!-- Big Subtitle Notification Center -->
+        <!-- Notification Center -->
         <div class="w-full flex justify-center px-4 my-auto">
             <div id="cinematic-subtitle" class="bg-black/90 backdrop-blur-xl border-2 border-pink-500/70 px-8 py-3 rounded-2xl shadow-2xl opacity-0 transform translate-y-4 transition-all duration-300 text-center max-w-2xl">
                 <span class="cinematic-font text-lg md:text-2xl text-yellow-300 tracking-wider drop-shadow-[0_2px_12px_rgba(253,224,71,0.6)]"></span>
@@ -105,7 +111,7 @@
         <!-- Bottom Layout -->
         <div class="flex flex-col md:flex-row justify-between items-end gap-3 pointer-events-none">
             
-            <!-- Left HUD: Leaderboard & Vertical Telemetry Radar -->
+            <!-- Left HUD: Leaderboard & 2D Top-Down Radar -->
             <div class="w-72 md:w-80 bg-black/85 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl pointer-events-auto flex flex-col gap-2">
                 <div class="flex items-center justify-between pb-1.5 border-b border-white/10">
                     <h3 class="cinematic-font text-xs text-pink-400 tracking-wider flex items-center space-x-1.5">
@@ -117,16 +123,16 @@
 
                 <div id="leaderboard-list" class="space-y-1 max-h-32 overflow-y-auto pr-1"></div>
 
-                <!-- 세로형 롱 서킷 미니맵 레이더 -->
+                <!-- 정방형 2D 전방향 미니맵 레이더 -->
                 <div class="pt-1.5 border-t border-white/10">
                     <div class="flex items-center justify-between mb-1">
                         <span class="text-[11px] font-bold text-cyan-400 flex items-center space-x-1">
                             <i class="fa-solid fa-crosshairs"></i>
-                            <span>세로 트랙 레이더</span>
+                            <span>코스 텔레메트리 레이더</span>
                         </span>
-                        <span class="text-[9px] text-pink-400 font-mono tracking-widest">TELEMETRY</span>
+                        <span class="text-[9px] text-pink-400 font-mono tracking-widest">MULTI-VECTOR</span>
                     </div>
-                    <div class="relative w-full h-52 bg-black/95 rounded-xl border border-cyan-500/30 overflow-hidden shadow-inner flex items-center justify-center">
+                    <div class="relative w-full h-44 bg-black/95 rounded-xl border border-cyan-500/30 overflow-hidden shadow-inner flex items-center justify-center">
                         <canvas id="minimap-canvas" class="w-full h-full"></canvas>
                     </div>
                 </div>
@@ -165,7 +171,7 @@
                 <button onclick="closePlayerModal()" class="text-white/60 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <p class="text-xs text-white/60 mb-3">참가자 이름을 쉼표(,)로 구분해 여러 구슬을 한 번에 세팅할 수 있습니다.</p>
+            <p class="text-xs text-white/60 mb-3">쉼표(,)로 구분해 여러 구슬의 이름을 한 번에 입력하세요.</p>
 
             <div class="flex gap-2 mb-4">
                 <input id="bulk-player-input" type="text" placeholder="예: JENNIE, MIN SO-HEE, 제니꾹빡, 흰혹등고래, 관우, 루피" class="flex-1 bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-purple-500">
@@ -182,7 +188,7 @@
                     <span>구슬 추가</span>
                 </button>
                 <div class="flex gap-2">
-                    <button onclick="resetDefaultPlayers()" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs transition-all">기본값(제니)</button>
+                    <button onclick="resetDefaultPlayers()" class="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs transition-all">기본값(6인)</button>
                     <button onclick="saveAndApplyPlayers()" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-xs font-bold text-white transition-all shadow-lg shadow-purple-600/30">저장 및 트랙 배치</button>
                 </div>
             </div>
@@ -206,50 +212,64 @@
     </div>
 
     <script>
-        // --- 1. Web Audio API 엔진 (거리 감쇠 3D 사운드) ---
+        // --- 1. Web Audio API 엔진 ---
         let audioCtx = null;
         function getAudioContext() {
             if (!audioCtx) {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 audioCtx = new AudioContextClass();
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             return audioCtx;
         }
 
         const SoundEngine = {
-            // 카메라와 사운드 발생 위치 간 거리에 따른 볼륨 감쇠 계수 (0.0 ~ 1.0)
             getDistanceGain: function(worldPos, maxDist = 320) {
                 if (!camera || !worldPos) return 1.0;
                 const dist = camera.position.distanceTo(worldPos);
                 const factor = THREE.MathUtils.clamp(1 - (dist - 15) / (maxDist - 15), 0, 1);
-                return factor * factor; // 자연스러운 2차 곡선 감쇠
+                return factor * factor;
             },
 
             playMetallicHit: function(volume = 0.4, worldPos = null) {
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
-                    const distGain = this.getDistanceGain(worldPos, 260);
-                    const finalVolume = volume * distGain;
+                    const finalVolume = volume * this.getDistanceGain(worldPos, 260);
                     if (finalVolume <= 0.001) return;
 
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-                    
                     osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(1400 + Math.random() * 800, now);
-                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
-
-                    gain.gain.setValueAtTime(finalVolume * 0.5, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
+                    osc.frequency.setValueAtTime(1200 + Math.random() * 600, now);
+                    osc.frequency.exponentialRampToValueAtTime(140, now + 0.1);
+                    gain.gain.setValueAtTime(finalVolume * 0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.12);
+                    osc.stop(now + 0.1);
+                } catch(e) {}
+            },
+
+            playFlipperLaunch: function(worldPos = null) {
+                try {
+                    const ctx = getAudioContext();
+                    const now = ctx.currentTime;
+                    const finalVolume = 0.5 * this.getDistanceGain(worldPos, 360);
+                    if (finalVolume <= 0.001) return;
+
+                    const osc1 = ctx.createOscillator();
+                    const gain1 = ctx.createGain();
+                    osc1.type = 'square';
+                    osc1.frequency.setValueAtTime(220, now);
+                    osc1.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                    gain1.gain.setValueAtTime(finalVolume * 0.6, now);
+                    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc1.connect(gain1);
+                    gain1.connect(ctx.destination);
+                    osc1.start(now);
+                    osc1.stop(now + 0.2);
                 } catch(e) {}
             },
 
@@ -257,24 +277,20 @@
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
-                    const distGain = this.getDistanceGain(worldPos, 350);
-                    const finalVolume = 0.35 * distGain;
+                    const finalVolume = 0.3 * this.getDistanceGain(worldPos, 350);
                     if (finalVolume <= 0.001) return;
 
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-
                     osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(220, now);
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
-
+                    osc.frequency.setValueAtTime(240, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
                     gain.gain.setValueAtTime(finalVolume, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
-
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.35);
+                    osc.stop(now + 0.3);
                 } catch(e) {}
             },
 
@@ -282,24 +298,20 @@
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
-                    const distGain = this.getDistanceGain(worldPos, 400);
-                    const finalVolume = 0.45 * distGain;
+                    const finalVolume = 0.4 * this.getDistanceGain(worldPos, 400);
                     if (finalVolume <= 0.001) return;
 
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(900, now);
-                    osc.frequency.exponentialRampToValueAtTime(90, now + 0.45);
-
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.4);
                     gain.gain.setValueAtTime(finalVolume, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.45);
+                    osc.stop(now + 0.4);
                 } catch(e) {}
             },
 
@@ -307,211 +319,238 @@
                 try {
                     const ctx = getAudioContext();
                     const now = ctx.currentTime;
-                    const distGain = this.getDistanceGain(worldPos, 300);
-                    const finalVolume = 0.28 * distGain;
+                    const finalVolume = 0.3 * this.getDistanceGain(worldPos, 300);
                     if (finalVolume <= 0.001) return;
 
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
-
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now);
-                    osc.frequency.setValueAtTime(659.25, now + 0.08);
-                    osc.frequency.setValueAtTime(783.99, now + 0.16);
-                    osc.frequency.setValueAtTime(1046.50, now + 0.24);
-
+                    osc.frequency.setValueAtTime(523, now);
+                    osc.frequency.setValueAtTime(659, now + 0.07);
+                    osc.frequency.setValueAtTime(1046, now + 0.15);
                     gain.gain.setValueAtTime(finalVolume, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.start(now);
-                    osc.stop(now + 0.35);
+                    osc.stop(now + 0.28);
                 } catch(e) {}
             }
         };
 
-        // --- 2. 기본 참가자 엔트리 (JENNIE 기본) ---
+        // --- 2. 기본 참가자 엔트리 ---
         let currentPlayers = [
-            { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '빛나는 황금빛 크롬 스틸볼!' }
+            { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '황금빛 크롬 챔피언!' },
+            { id: 'p2', name: 'MIN SO-HEE', color: '#00e5ff', desc: '날카로운 레인 파고들기!' },
+            { id: 'p3', name: '제니꾹빡', color: '#ffd700', desc: '폭발적인 공격성!' },
+            { id: 'p4', name: '흰혹등고래', color: '#38bdf8', desc: '묵직한 드래프팅 순항!' },
+            { id: 'p5', name: '관우', color: '#ef4444', desc: '강력한 정면 돌파!' },
+            { id: 'p6', name: '루피', color: '#00ff66', desc: '변칙적인 와이드 드리프터!' }
         ];
 
-        // --- 3. 총 7개의 초장거리 고유 서킷 프리셋 ---
+        // --- 3. 7대 전방향 다차원 서킷 프리셋 ---
         const trackPresets = {
             roller: {
-                name: '제니 롤러코스터',
-                desc: '가파른 고저차와 롤링 하강이 반복되는 클래식 스피드웨이',
-                ambient: 0x050512,
-                fog: 0x090920,
-                roadColor: 0x161528,
-                glowColor: 0xff007f,
-                jumpZones: [{ start: 0.32, end: 0.38, height: 42 }],
+                name: '제니 롤러 (거대 8자 교차 인피니티 루프)',
+                ambient: 0x050514, fog: 0x080824, roadColor: 0x141228, glowColor: 0xff007f,
+                jumpZones: [{ start: 0.26, end: 0.32, height: 45 }],
                 forkZones: [],
+                flippers: [{ progress: 0.68, side: 'left' }],
+                spinners: [{ progress: 0.44, speed: 0.05 }],
+                wormholes: [{ enter: 0.82, rewindTo: 0.70 }],
+                frictionMult: 1.0,
                 points: [
-                    new THREE.Vector3(0, 110, -780),
-                    new THREE.Vector3(-90, 80, -600),
-                    new THREE.Vector3(120, 40, -420),
-                    new THREE.Vector3(0, 10, -240),
-                    new THREE.Vector3(-140, 60, -60),
-                    new THREE.Vector3(80, 20, 140),
-                    new THREE.Vector3(-60, 40, 320),
-                    new THREE.Vector3(100, 10, 520),
-                    new THREE.Vector3(0, 0, 780)
+                    new THREE.Vector3(-450, 140, -450),
+                    new THREE.Vector3(-200, 160, -250),
+                    new THREE.Vector3(0, 70, 0),
+                    new THREE.Vector3(300, 30, 250),
+                    new THREE.Vector3(500, 50, 500),
+                    new THREE.Vector3(300, 70, 700),
+                    new THREE.Vector3(0, 15, 400),
+                    new THREE.Vector3(-300, 40, 100),
+                    new THREE.Vector3(0, 25, -150),
+                    new THREE.Vector3(350, 80, -400),
+                    new THREE.Vector3(100, 110, -600),
+                    new THREE.Vector3(-450, 140, -450)
                 ]
             },
             quantum: {
-                name: '퀀텀 스플릿 캐즘',
-                desc: '분기길과 1회용 역행 웜홀이 전략적 변수를 만드는 코스',
-                ambient: 0x060314,
-                fog: 0x0c0624,
-                roadColor: 0x1a122e,
-                glowColor: 0xa855f7,
-                jumpZones: [{ start: 0.22, end: 0.28, height: 36 }],
-                forkZones: [{ start: 0.36, end: 0.52, leftShift: -9.5, rightShift: 9.5 }],
+                name: '퀀텀 제니 (더블 윙 분기 & 웜홀 인터체인지)',
+                ambient: 0x060216, fog: 0x0c0428, roadColor: 0x1c1033, glowColor: 0xa855f7,
+                jumpZones: [{ start: 0.18, end: 0.24, height: 35 }],
+                forkZones: [{ start: 0.32, end: 0.58, leftShift: -11.5, rightShift: 11.5 }],
+                flippers: [{ progress: 0.65, side: 'right' }],
+                spinners: [],
+                wormholes: [
+                    { enter: 0.45, rewindTo: 0.33 },
+                    { enter: 0.76, rewindTo: 0.60 }
+                ],
+                frictionMult: 1.0,
                 points: [
-                    new THREE.Vector3(0, 60, -820),
-                    new THREE.Vector3(-110, 50, -640),
-                    new THREE.Vector3(100, 30, -440),
-                    new THREE.Vector3(-40, 20, -220),
-                    new THREE.Vector3(140, 70, 0),
-                    new THREE.Vector3(-120, 30, 220),
-                    new THREE.Vector3(80, 10, 460),
-                    new THREE.Vector3(-60, 25, 660),
-                    new THREE.Vector3(0, 0, 840)
+                    new THREE.Vector3(0, 50, -650),
+                    new THREE.Vector3(250, 70, -500),
+                    new THREE.Vector3(550, 90, -200),
+                    new THREE.Vector3(450, 60, 200),
+                    new THREE.Vector3(150, 30, 450),
+                    new THREE.Vector3(0, 20, 650),
+                    new THREE.Vector3(-150, 30, 450),
+                    new THREE.Vector3(-450, 60, 200),
+                    new THREE.Vector3(-550, 90, -200),
+                    new THREE.Vector3(-250, 70, -500),
+                    new THREE.Vector3(0, 50, -650)
                 ]
             },
             pinball: {
-                name: '하이퍼 핀볼 타워',
-                desc: '연속 바운서 범퍼와 도약대로 지나온 길로 튕겨 올라가는 핀볼 경기장',
-                ambient: 0x020f18,
-                fog: 0x031726,
-                roadColor: 0x0c2233,
-                glowColor: 0x00e5ff,
+                name: '핀볼 제니 (나선형 3단 핀볼 볼텍스 타워)',
+                ambient: 0x01101c, fog: 0x02182a, roadColor: 0x0b2438, glowColor: 0x00e5ff,
                 jumpZones: [
-                    { start: 0.20, end: 0.26, height: 38 },
-                    { start: 0.62, end: 0.69, height: 50 }
+                    { start: 0.16, end: 0.22, height: 36 },
+                    { start: 0.58, end: 0.65, height: 45 }
                 ],
                 forkZones: [],
+                flippers: [
+                    { progress: 0.28, side: 'left' },
+                    { progress: 0.29, side: 'right' },
+                    { progress: 0.76, side: 'left' }
+                ],
+                spinners: [
+                    { progress: 0.42, speed: 0.08 },
+                    { progress: 0.85, speed: -0.07 }
+                ],
+                wormholes: [{ enter: 0.52, rewindTo: 0.42 }],
+                frictionMult: 0.9,
                 points: [
-                    new THREE.Vector3(0, 130, -750),
-                    new THREE.Vector3(130, 95, -550),
-                    new THREE.Vector3(-110, 70, -350),
-                    new THREE.Vector3(80, 45, -150),
-                    new THREE.Vector3(-120, 20, 80),
-                    new THREE.Vector3(140, 50, 280),
-                    new THREE.Vector3(-70, 15, 520),
-                    new THREE.Vector3(0, 0, 780)
+                    new THREE.Vector3(0, 260, -500),
+                    new THREE.Vector3(450, 220, -100),
+                    new THREE.Vector3(250, 180, 450),
+                    new THREE.Vector3(-350, 140, 300),
+                    new THREE.Vector3(-450, 110, -250),
+                    new THREE.Vector3(0, 80, -400),
+                    new THREE.Vector3(380, 55, 0),
+                    new THREE.Vector3(150, 35, 380),
+                    new THREE.Vector3(-250, 20, 150),
+                    new THREE.Vector3(0, 10, -500)
                 ]
             },
             volcano: {
-                name: '마그마 캐니언',
-                desc: '가파른 90도 코너링과 슬라이딩 마그마 트랩이 도사리는 붉은 협곡',
-                ambient: 0x140602,
-                fog: 0x1c0903,
-                roadColor: 0x2a170d,
-                glowColor: 0xf97316,
+                name: '볼케이노 제니 (지그재그 협곡 & 지그재그 슬라이드)',
+                ambient: 0x160501, fog: 0x220803, roadColor: 0x2e1509, glowColor: 0xf97316,
                 jumpZones: [],
-                forkZones: [{ start: 0.40, end: 0.55, leftShift: -10, rightShift: 10 }],
+                forkZones: [{ start: 0.42, end: 0.56, leftShift: -10, rightShift: 10 }],
+                flippers: [{ progress: 0.68, side: 'left' }],
+                spinners: [],
+                wormholes: [{ enter: 0.74, rewindTo: 0.62 }],
+                frictionMult: 0.55,
                 points: [
-                    new THREE.Vector3(0, 40, -800),
-                    new THREE.Vector3(-150, 40, -620),
-                    new THREE.Vector3(150, 25, -420),
-                    new THREE.Vector3(-160, 55, -200),
-                    new THREE.Vector3(0, 15, 0),
-                    new THREE.Vector3(170, 30, 220),
-                    new THREE.Vector3(-140, 10, 450),
-                    new THREE.Vector3(80, 20, 650),
-                    new THREE.Vector3(0, 0, 820)
+                    new THREE.Vector3(-500, 110, -500),
+                    new THREE.Vector3(500, 90, -400),
+                    new THREE.Vector3(-450, 75, -150),
+                    new THREE.Vector3(450, 60, 100),
+                    new THREE.Vector3(-500, 45, 350),
+                    new THREE.Vector3(500, 30, 600),
+                    new THREE.Vector3(0, 15, 300),
+                    new THREE.Vector3(-500, 110, -500)
                 ]
             },
             skyIsland: {
-                name: '천공 제니 아일랜드',
-                desc: '구름 위 떠 있는 부유섬을 넘나드는 초대형 2연속 공중 도약 서킷',
-                ambient: 0x080c18,
-                fog: 0x0c1326,
-                roadColor: 0x151c2e,
-                glowColor: 0x38bdf8,
+                name: '천공 제니 (스카이 트라이앵글 3각 도약 서킷)',
+                ambient: 0x060e1c, fog: 0x0a162c, roadColor: 0x122036, glowColor: 0x38bdf8,
                 jumpZones: [
-                    { start: 0.28, end: 0.37, height: 60 },
-                    { start: 0.68, end: 0.77, height: 65 }
+                    { start: 0.24, end: 0.33, height: 65 },
+                    { start: 0.56, end: 0.65, height: 70 },
+                    { start: 0.82, end: 0.90, height: 75 }
                 ],
                 forkZones: [],
+                flippers: [{ progress: 0.44, side: 'right' }],
+                spinners: [{ progress: 0.68, speed: 0.04 }],
+                wormholes: [],
+                frictionMult: 1.0,
                 points: [
-                    new THREE.Vector3(0, 20, -850),
-                    new THREE.Vector3(-80, 50, -650),
-                    new THREE.Vector3(90, 80, -450),
-                    new THREE.Vector3(0, 40, -250),
-                    new THREE.Vector3(-110, 90, -50),
-                    new THREE.Vector3(100, 35, 180),
-                    new THREE.Vector3(-80, 70, 420),
-                    new THREE.Vector3(90, 20, 660),
-                    new THREE.Vector3(0, 0, 850)
+                    new THREE.Vector3(0, 180, -600),
+                    new THREE.Vector3(250, 130, -350),
+                    new THREE.Vector3(550, 80, 350),
+                    new THREE.Vector3(150, 60, 400),
+                    new THREE.Vector3(-550, 110, 350),
+                    new THREE.Vector3(-250, 150, -200),
+                    new THREE.Vector3(0, 180, -600)
                 ]
             },
             cyber: {
-                name: '사이버펑크 메가루프',
-                desc: '촘촘한 부스터 패드로 광속의 가속감을 선사하는 사이버네틱 고속도로',
-                ambient: 0x070114,
-                fog: 0x0e0224,
-                roadColor: 0x180d2b,
-                glowColor: 0xec4899,
-                jumpZones: [{ start: 0.45, end: 0.52, height: 40 }],
-                forkZones: [{ start: 0.25, end: 0.38, leftShift: -8.5, rightShift: 8.5 }],
+                name: '사이버 제니 (네온 링 오픈 하이퍼웨이)',
+                ambient: 0x090118, fog: 0x11022c, roadColor: 0x1c0d32, glowColor: 0xec4899,
+                jumpZones: [{ start: 0.38, end: 0.44, height: 35 }],
+                forkZones: [{ start: 0.20, end: 0.34, leftShift: -9, rightShift: 9 }],
+                flippers: [{ progress: 0.62, side: 'left' }],
+                spinners: [{ progress: 0.76, speed: 0.06 }],
+                wormholes: [{ enter: 0.84, rewindTo: 0.72 }],
+                frictionMult: 1.1,
                 points: [
-                    new THREE.Vector3(0, 80, -800),
-                    new THREE.Vector3(120, 60, -600),
-                    new THREE.Vector3(-120, 30, -380),
-                    new THREE.Vector3(0, 15, -160),
-                    new THREE.Vector3(140, 50, 80),
-                    new THREE.Vector3(-140, 25, 320),
-                    new THREE.Vector3(90, 45, 560),
-                    new THREE.Vector3(0, 0, 800)
+                    new THREE.Vector3(-550, 60, -550),
+                    new THREE.Vector3(550, 80, -550),
+                    new THREE.Vector3(650, 40, 0),
+                    new THREE.Vector3(550, 60, 550),
+                    new THREE.Vector3(-550, 90, 550),
+                    new THREE.Vector3(-650, 40, 0),
+                    new THREE.Vector3(-550, 60, -550)
                 ]
             },
             chaos: {
-                name: '카오스 디멘션 보텍스',
-                desc: '분기길, 점프대, 1회용 웜홀, 핀볼 범퍼가 모두 총출동한 최종 결전장',
-                ambient: 0x0d0317,
-                fog: 0x140524,
-                roadColor: 0x220e33,
-                glowColor: 0xeab308,
+                name: '카오스 제니 (궁극의 오메가 초대형 챔피언십)',
+                ambient: 0x0e021a, fog: 0x18042c, roadColor: 0x260e3a, glowColor: 0xeab308,
                 jumpZones: [
-                    { start: 0.18, end: 0.25, height: 45 },
-                    { start: 0.65, end: 0.73, height: 55 }
+                    { start: 0.15, end: 0.22, height: 48 },
+                    { start: 0.60, end: 0.68, height: 58 }
                 ],
-                forkZones: [
-                    { start: 0.35, end: 0.48, leftShift: -11.0, rightShift: 11.0 }
+                forkZones: [{ start: 0.30, end: 0.45, leftShift: -11.5, rightShift: 11.5 }],
+                flippers: [
+                    { progress: 0.25, side: 'left' },
+                    { progress: 0.26, side: 'right' },
+                    { progress: 0.78, side: 'right' }
                 ],
+                spinners: [
+                    { progress: 0.50, speed: 0.07 },
+                    { progress: 0.88, speed: -0.06 }
+                ],
+                wormholes: [
+                    { enter: 0.48, rewindTo: 0.36 },
+                    { enter: 0.84, rewindTo: 0.70 }
+                ],
+                frictionMult: 0.95,
                 points: [
-                    new THREE.Vector3(0, 120, -900),
-                    new THREE.Vector3(-140, 90, -700),
-                    new THREE.Vector3(150, 60, -500),
-                    new THREE.Vector3(-100, 30, -280),
-                    new THREE.Vector3(120, 75, -60),
-                    new THREE.Vector3(-130, 40, 160),
-                    new THREE.Vector3(100, 15, 400),
-                    new THREE.Vector3(-90, 50, 640),
-                    new THREE.Vector3(0, 0, 880)
+                    new THREE.Vector3(-600, 70, 500),
+                    new THREE.Vector3(-250, 90, 200),
+                    new THREE.Vector3(-450, 130, -300),
+                    new THREE.Vector3(0, 160, -650),
+                    new THREE.Vector3(450, 130, -300),
+                    new THREE.Vector3(250, 90, 200),
+                    new THREE.Vector3(600, 70, 500),
+                    new THREE.Vector3(350, 40, 700),
+                    new THREE.Vector3(0, 20, 400),
+                    new THREE.Vector3(-350, 40, 700),
+                    new THREE.Vector3(-600, 70, 500)
                 ]
             }
         };
 
         // --- 4. 엔진 상태 변수 ---
-        let scene, camera, renderer;
+        let scene, camera, renderer, composer;
+        let clock = new THREE.Clock();
         let racers = [];
         let trackSpline = null;
         let trackMeshes = [];
         let sceneryMeshes = [];
-        let activeMapKey = 'roller';
+        let activeMapKey = 'pinball';
 
-        const SEGMENTS_COUNT = 750;
+        const SEGMENTS_COUNT = 900;
         let surfaceFrames = [];
         const BALL_RADIUS = 1.6;
         const ROAD_WIDTH = 28.0;
 
         let dynamicItems = [];
         let dynamicTraps = [];
-        let activeWormhole = null;
+        let dynamicFlippers = [];
+        let dynamicSpinners = [];
+        let activeWormholes = [];
 
         let raceStarted = false;
         let racePaused = false;
@@ -521,32 +560,128 @@
 
         let cameraMode = 'chase';
         let selectedTargetRacer = null;
-        let particles = [];
         let screenShakeIntensity = 0;
 
         let isMouseDown = false;
         let mouseX = 0, mouseY = 0;
-        let orbitAngleX = 0, orbitAngleY = Math.PI / 4, orbitRadius = 150;
+        let orbitAngleX = 0, orbitAngleY = Math.PI / 4, orbitRadius = 160;
+
+        // --- [업그레이드 1] 절차적 스튜디오 환경 큐브맵(IBL) 생성 ---
+        function generateProceduralEnvironmentMap(renderer) {
+            const size = 256;
+            const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(size, {
+                format: THREE.RGBFormat,
+                generateMipmaps: true,
+                minFilter: THREE.LinearMipmapLinearFilter,
+                magFilter: THREE.LinearFilter
+            });
+
+            const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRenderTarget);
+            const tempScene = new THREE.Scene();
+
+            // 반사면에 맺힐 네온 하이라이트 박스 배치
+            const boxGeo = new THREE.BoxGeometry(40, 40, 40);
+            const mats = [
+                new THREE.MeshBasicMaterial({ color: 0x00e5ff }), // +X 네온 시안
+                new THREE.MeshBasicMaterial({ color: 0xff007f }), // -X 네온 핑크
+                new THREE.MeshBasicMaterial({ color: 0xffffff }), // +Y 화이트 천장
+                new THREE.MeshBasicMaterial({ color: 0x050510 }), // -Y 어두운 바닥
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 }), // +Z 블루 라이트
+                new THREE.MeshBasicMaterial({ color: 0xa855f7 })  // -Z 퍼플 라이트
+            ];
+            const envBox = new THREE.Mesh(boxGeo, mats);
+            envBox.material.forEach(m => m.side = THREE.BackSide);
+            tempScene.add(envBox);
+
+            cubeCamera.update(renderer, tempScene);
+            return cubeRenderTarget.texture;
+        }
+
+        // --- [업그레이드 2] 절차적 카본 & 레이싱 그리드 트랙 텍스처 생성 ---
+        function generateProceduralTrackTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+
+            // 1. 카본 파이버 기본 베이스
+            ctx.fillStyle = '#111118';
+            ctx.fillRect(0, 0, 1024, 1024);
+
+            // 미세 그리드 패턴
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 2;
+            const step = 32;
+            for (let x = 0; x < 1024; x += step) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+            }
+            for (let y = 0; y < 1024; y += step) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+            }
+
+            // 2. 중앙 발광 네온 스피드 스트라이프
+            ctx.fillStyle = 'rgba(0, 229, 255, 0.22)';
+            ctx.fillRect(504, 0, 16, 1024);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(510, 0, 4, 1024);
+
+            // 3. 서브 레인 가이드라인
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([40, 40]);
+            ctx.beginPath(); ctx.moveTo(256, 0); ctx.lineTo(256, 1024); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(768, 0); ctx.lineTo(768, 1024); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 4. 좌우 체커 엣지 (연석 느낌)
+            for (let y = 0; y < 1024; y += 64) {
+                ctx.fillStyle = (y / 64) % 2 === 0 ? '#ff0055' : '#ffffff';
+                ctx.fillRect(0, y, 28, 64);
+                ctx.fillRect(996, y, 28, 64);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 24);
+            return texture;
+        }
 
         // --- 5. Three.js 초기화 ---
         function initThree() {
             const container = document.getElementById('canvas-container');
             scene = new THREE.Scene();
 
-            camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.5, 6000);
+            camera = new THREE.PerspectiveCamera(54, window.innerWidth / window.innerHeight, 0.5, 9000);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.35;
+            renderer.toneMappingExposure = 1.15; // 자연스러운 PBR 톤 매핑
             container.appendChild(renderer.domElement);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+            // 절차적 환경 맵 적용 (IBL 활성화)
+            const envTexture = generateProceduralEnvironmentMap(renderer);
+            scene.environment = envTexture;
+
+            const renderScene = new THREE.RenderPass(scene, camera);
+            // 깔끔하고 날카로운 네온 발광 블룸
+            const bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                0.95,  // strength
+                0.35,  // radius
+                0.88   // threshold
+            );
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
 
             const dirLight = new THREE.DirectionalLight(0xffffff, 2.4);
-            dirLight.position.set(150, 350, 150);
+            dirLight.position.set(200, 450, 200);
             scene.add(dirLight);
 
             setupMouseControls();
@@ -557,34 +692,73 @@
             window.addEventListener('resize', onWindowResize);
         }
 
-        // --- 6. 서피스 프레임 계산 ---
+        // --- 6. RMF(Rotation Minimizing Frames) 연산 ---
         function computeRobustSurfaceFrames() {
             surfaceFrames = [];
-            let prevNormal = new THREE.Vector3(0, 1, 0);
+            
+            const p0 = trackSpline.getPointAt(0);
+            const t0 = trackSpline.getTangentAt(0).normalize();
+            
+            let initialUp = new THREE.Vector3(0, 1, 0);
+            if (Math.abs(t0.dot(initialUp)) > 0.95) initialUp = new THREE.Vector3(0, 0, 1);
+            
+            let r0 = new THREE.Vector3().crossVectors(t0, initialUp).normalize();
+            let u0 = new THREE.Vector3().crossVectors(r0, t0).normalize();
+
+            let currentP = p0;
+            let currentT = t0;
+            let currentR = r0;
+            let currentU = u0;
 
             for (let i = 0; i <= SEGMENTS_COUNT; i++) {
                 const t = i / SEGMENTS_COUNT;
-                const point = trackSpline.getPointAt(t);
-                const tangent = trackSpline.getTangentAt(t).normalize();
+                const nextP = trackSpline.getPointAt(t);
+                const nextT = trackSpline.getTangentAt(t).normalize();
 
-                let binormal = new THREE.Vector3().crossVectors(tangent, prevNormal).normalize();
-                if (binormal.lengthSq() < 0.001) {
-                    binormal = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 0, 1)).normalize();
+                if (i > 0) {
+                    const v1 = new THREE.Vector3().subVectors(nextP, currentP);
+                    const c1 = v1.lengthSq();
+                    if (c1 > 1e-6) {
+                        const rL = currentR.clone().sub(v1.clone().multiplyScalar((2 / c1) * currentR.dot(v1)));
+                        const tL = currentT.clone().sub(v1.clone().multiplyScalar((2 / c1) * currentT.dot(v1)));
+                        
+                        const v2 = new THREE.Vector3().subVectors(nextT, tL);
+                        const c2 = v2.lengthSq();
+                        if (c2 > 1e-6) {
+                            currentR = rL.sub(v2.clone().multiplyScalar((2 / c2) * rL.dot(v2))).normalize();
+                        } else {
+                            currentR = rL.normalize();
+                        }
+                        currentU = new THREE.Vector3().crossVectors(currentR, nextT).normalize();
+                    }
+                    currentP = nextP;
+                    currentT = nextT;
                 }
 
-                let normal = new THREE.Vector3().crossVectors(binormal, tangent).normalize();
-                if (normal.y < -0.3 && prevNormal.y > 0) {
-                    normal.negate();
-                    binormal.negate();
-                }
-                prevNormal = normal.clone();
+                const dt = 0.005;
+                const tBefore = Math.max(0, t - dt);
+                const tAfter = Math.min(1, t + dt);
+                const tanB = trackSpline.getTangentAt(tBefore).normalize();
+                const tanA = trackSpline.getTangentAt(tAfter).normalize();
+                
+                const dTan = new THREE.Vector3().subVectors(tanA, tanB);
+                const lateralCurvature = dTan.dot(currentR);
+                const bankAngle = THREE.MathUtils.clamp(lateralCurvature * 8.5, -0.52, 0.52);
 
-                surfaceFrames.push({ point, tangent, normal, binormal });
+                const finalR = currentR.clone().applyAxisAngle(currentT, bankAngle);
+                const finalU = currentU.clone().applyAxisAngle(currentT, bankAngle);
+
+                surfaceFrames.push({
+                    point: currentP.clone(),
+                    tangent: currentT.clone(),
+                    normal: finalU,
+                    binormal: finalR
+                });
             }
         }
 
         function getSurfaceOrientationAt(progress) {
-            const safeT = Math.min(0.9999, Math.max(0.0001, progress));
+            const safeT = THREE.MathUtils.clamp(progress, 0.0001, 0.9999);
             const floatIdx = safeT * SEGMENTS_COUNT;
             const idx1 = Math.floor(floatIdx);
             const idx2 = Math.min(SEGMENTS_COUNT, idx1 + 1);
@@ -601,7 +775,12 @@
             return { point, tangent, normal, binormal };
         }
 
-        // --- 7. 트랙 및 랜덤 프로시저럴 엔티티 생성 ---
+        function getTrackSagHeight(laneOffset) {
+            const offsetNorm = THREE.MathUtils.clamp(laneOffset / (ROAD_WIDTH / 2), -1, 1);
+            return (1 - offsetNorm * offsetNorm) * -0.9;
+        }
+
+        // --- 7. 정교한 PBR 트랙 및 게이트 빌드 ---
         function buildTrack(mapKey) {
             trackMeshes.forEach(mesh => scene.remove(mesh));
             trackMeshes = [];
@@ -612,13 +791,14 @@
 
             const mapData = trackPresets[mapKey];
             scene.background = new THREE.Color(mapData.ambient);
-            scene.fog = new THREE.FogExp2(mapData.fog, 0.002);
+            scene.fog = new THREE.FogExp2(mapData.fog, 0.0014);
 
             trackSpline = new THREE.CatmullRomCurve3(mapData.points);
             trackSpline.closed = false;
 
             computeRobustSurfaceFrames();
 
+            const CROSS_SECTIONS = 6;
             const vertices = [];
             const uvs = [];
             const indices = [];
@@ -634,24 +814,33 @@
                 const t = i / SEGMENTS_COUNT;
                 const { point, normal, binormal } = surfaceFrames[i];
 
-                const leftPoint = point.clone().add(binormal.clone().multiplyScalar(-ROAD_WIDTH / 2));
-                const rightPoint = point.clone().add(binormal.clone().multiplyScalar(ROAD_WIDTH / 2));
+                for (let j = 0; j <= CROSS_SECTIONS; j++) {
+                    const u = j / CROSS_SECTIONS;
+                    const offsetNorm = (u - 0.5) * 2;
+                    const widthOffset = offsetNorm * (ROAD_WIDTH / 2);
+                    const sagHeight = getTrackSagHeight(widthOffset);
 
-                leftEdgePts.push(leftPoint.clone().add(normal.clone().multiplyScalar(0.5)));
-                rightEdgePts.push(rightPoint.clone().add(normal.clone().multiplyScalar(0.5)));
+                    const vert = point.clone()
+                        .add(binormal.clone().multiplyScalar(widthOffset))
+                        .add(normal.clone().multiplyScalar(sagHeight));
 
-                vertices.push(leftPoint.x, leftPoint.y, leftPoint.z);
-                vertices.push(rightPoint.x, rightPoint.y, rightPoint.z);
+                    vertices.push(vert.x, vert.y, vert.z);
+                    uvs.push(u, t);
 
-                uvs.push(0, t * 90);
-                uvs.push(1, t * 90);
+                    if (j === 0) leftEdgePts.push(vert.clone().add(normal.clone().multiplyScalar(0.7)));
+                    if (j === CROSS_SECTIONS) rightEdgePts.push(vert.clone().add(normal.clone().multiplyScalar(0.7)));
+                }
 
                 if (i < SEGMENTS_COUNT) {
                     const nextT = (i + 1) / SEGMENTS_COUNT;
                     if (!isChasm(t) && !isChasm(nextT)) {
-                        const base = i * 2;
-                        indices.push(base, base + 1, base + 2);
-                        indices.push(base + 1, base + 3, base + 2);
+                        for (let j = 0; j < CROSS_SECTIONS; j++) {
+                            const curRow = i * (CROSS_SECTIONS + 1);
+                            const nextRow = (i + 1) * (CROSS_SECTIONS + 1);
+
+                            indices.push(curRow + j, curRow + j + 1, nextRow + j);
+                            indices.push(curRow + j + 1, nextRow + j + 1, nextRow + j);
+                        }
                     }
                 }
             }
@@ -662,10 +851,13 @@
             roadGeometry.setIndex(indices);
             roadGeometry.computeVertexNormals();
 
+            // 정교한 PBR 카본 그리드 노면 재질
+            const trackTexture = generateProceduralTrackTexture();
             const roadMaterial = new THREE.MeshStandardMaterial({
                 color: mapData.roadColor,
-                roughness: 0.35,
-                metalness: 0.75,
+                map: trackTexture,
+                roughness: 0.32,
+                metalness: 0.65,
                 side: THREE.DoubleSide
             });
 
@@ -673,22 +865,39 @@
             scene.add(roadMesh);
             trackMeshes.push(roadMesh);
 
-            const railGeoL = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(leftEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
-            const railGeoR = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rightEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
-            const railMat = new THREE.MeshBasicMaterial({ color: mapData.glowColor });
+            // 레이저 가드레일
+            if (leftEdgePts.length > 0) {
+                const railGeoL = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(leftEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
+                const railGeoR = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rightEdgePts), SEGMENTS_COUNT, 0.45, 6, false);
+                const railMat = new THREE.MeshStandardMaterial({
+                    color: mapData.glowColor,
+                    emissive: mapData.glowColor,
+                    emissiveIntensity: 1.8,
+                    roughness: 0.1
+                });
 
-            const railL = new THREE.Mesh(railGeoL, railMat);
-            const railR = new THREE.Mesh(railGeoR, railMat);
-            scene.add(railL, railR);
-            trackMeshes.push(railL, railR);
+                const railL = new THREE.Mesh(railGeoL, railMat);
+                const railR = new THREE.Mesh(railGeoR, railMat);
+                scene.add(railL, railR);
+                trackMeshes.push(railL, railR);
+            }
 
+            // 사이버 트랙 전용 상공 네온 링
+            if (mapKey === 'cyber') {
+                for (let k = 0.08; k < 0.95; k += 0.07) {
+                    const { point, normal } = getSurfaceOrientationAt(k);
+                    const ringGeo = new THREE.TorusGeometry(ROAD_WIDTH * 0.55, 0.35, 8, 24);
+                    const ringMat = new THREE.MeshStandardMaterial({ color: 0xec4899, emissive: 0xec4899, emissiveIntensity: 1.5 });
+                    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                    ringMesh.position.copy(point).add(normal.clone().multiplyScalar(4.0));
+                    scene.add(ringMesh);
+                    trackMeshes.push(ringMesh);
+                }
+            }
+
+            // 고공 슬림 게이트
             createSurfaceGate(0, 0x00e5ff, 'START LINE');
             createSurfaceGate(1, 0xff0055, 'FINISH LINE');
-
-            mapData.jumpZones.forEach(z => createSurfaceGate(z.start, 0xffeb3b, 'AIR JUMP'));
-            if (mapData.forkZones) {
-                mapData.forkZones.forEach(f => createSurfaceGate(f.start, 0xa855f7, 'FORK SPLIT'));
-            }
 
             proceduralSpawnEntities();
             buildScenery(mapData.glowColor);
@@ -698,8 +907,8 @@
             const { point, tangent, normal, binormal } = getSurfaceOrientationAt(t);
             const group = new THREE.Group();
 
-            const gateGeo = new THREE.TorusGeometry(16, 0.9, 8, 24, Math.PI);
-            const gateMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.9, roughness: 0.2 });
+            const gateGeo = new THREE.TorusGeometry(26, 0.6, 8, 32, Math.PI);
+            const gateMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 1.5, roughness: 0.2 });
             const arch = new THREE.Mesh(gateGeo, gateMat);
             group.add(arch);
 
@@ -719,13 +928,13 @@
             ctx.fillText(text, 256, 64);
 
             const texture = new THREE.CanvasTexture(canvas);
-            const bannerMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-            const bannerMesh = new THREE.Mesh(new THREE.PlaneGeometry(18, 4), bannerMat);
-            bannerMesh.position.y = 8.5;
+            const bannerMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+            const bannerMesh = new THREE.Mesh(new THREE.PlaneGeometry(22, 4.8), bannerMat);
+            bannerMesh.position.y = 20.5;
             group.add(bannerMesh);
 
             const rotMatrix = new THREE.Matrix4();
-            rotMatrix.makeBasis(binormal, normal, tangent);
+            rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
             group.quaternion.setFromRotationMatrix(rotMatrix);
             group.position.copy(point);
 
@@ -734,39 +943,78 @@
         }
 
         function clearEntities() {
-            dynamicItems.forEach(i => scene.remove(i.mesh));
+            dynamicItems.forEach(i => scene.remove(i.group));
             dynamicItems = [];
             dynamicTraps.forEach(t => scene.remove(t.mesh));
             dynamicTraps = [];
-            if (activeWormhole) {
-                scene.remove(activeWormhole.mesh);
-                activeWormhole = null;
-            }
+            dynamicFlippers.forEach(f => scene.remove(f.group));
+            dynamicFlippers = [];
+            dynamicSpinners.forEach(s => scene.remove(s.mesh));
+            dynamicSpinners = [];
+            activeWormholes.forEach(w => scene.remove(w.mesh));
+            activeWormholes = [];
         }
 
-        // --- 8. 무작위 다양성 배치 및 1회용 웜홀 ---
+        // --- 8. 3D 홀로그램 아이템 모델 생성 ---
+        function createHoloItemModel(type) {
+            const group = new THREE.Group();
+
+            if (type === 'booster') {
+                const bodyGeo = new THREE.ConeGeometry(0.8, 2.4, 16);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff3b30, emissive: 0xff0055, emissiveIntensity: 1.2, metalness: 0.8, roughness: 0.2 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.rotation.x = -Math.PI / 2;
+                group.add(body);
+
+                const ringGeo = new THREE.TorusGeometry(0.9, 0.15, 8, 16);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                group.add(new THREE.Mesh(ringGeo, ringMat));
+            } else if (type === 'thunder') {
+                const boltGeo = new THREE.CylinderGeometry(0.2, 0.4, 2.4, 8);
+                const boltMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffcc00, emissiveIntensity: 1.8 });
+                const b1 = new THREE.Mesh(boltGeo, boltMat);
+                b1.rotation.z = Math.PI / 4;
+                b1.position.set(-0.4, 0.4, 0);
+                const b2 = new THREE.Mesh(boltGeo, boltMat);
+                b2.rotation.z = -Math.PI / 4;
+                b2.position.set(0.4, -0.4, 0);
+                group.add(b1, b2);
+            } else if (type === 'magnet') {
+                const magnetGeo = new THREE.TorusGeometry(1.0, 0.35, 12, 16, Math.PI);
+                const magnetMat = new THREE.MeshStandardMaterial({ color: 0xa855f7, emissive: 0x9333ea, emissiveIntensity: 1.4, metalness: 0.7, roughness: 0.2 });
+                const mag = new THREE.Mesh(magnetGeo, magnetMat);
+                mag.rotation.z = Math.PI;
+                group.add(mag);
+            } else {
+                const shieldGeo = new THREE.OctahedronGeometry(1.2, 0);
+                const shieldMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, emissiveIntensity: 1.5, wireframe: true });
+                group.add(new THREE.Mesh(shieldGeo, shieldMat));
+            }
+
+            const podGeo = new THREE.SphereGeometry(1.9, 16, 16);
+            const podMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff, transmission: 0.9, opacity: 0.5, transparent: true, roughness: 0.08, ior: 1.4
+            });
+            group.add(new THREE.Mesh(podGeo, podMat));
+
+            return group;
+        }
+
         function proceduralSpawnEntities() {
             clearEntities();
 
-            const itemBoxGeo = new THREE.BoxGeometry(2.8, 2.8, 2.8);
-            const itemBoxMat = new THREE.MeshPhysicalMaterial({
-                color: 0xffea00, metalness: 0.2, roughness: 0.1, transmission: 0.5,
-                transparent: true, opacity: 0.95, emissive: 0xffaa00, emissiveIntensity: 0.8
-            });
-            const ringGeo = new THREE.TorusGeometry(2.4, 0.15, 8, 24);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-
-            const itemCount = 6 + Math.floor(Math.random() * 3);
+            const itemTypes = ['booster', 'thunder', 'magnet', 'shield'];
+            const itemCount = 8;
             for (let i = 0; i < itemCount; i++) {
-                const t = 0.08 + (i / itemCount) * 0.82 + (Math.random() - 0.5) * 0.04;
-                [-7.0, 0, 7.0].forEach(offset => {
-                    const group = new THREE.Group();
-                    group.add(new THREE.Mesh(itemBoxGeo, itemBoxMat.clone()));
-                    group.add(new THREE.Mesh(ringGeo, ringMat));
-                    scene.add(group);
+                const t = 0.08 + (i / itemCount) * 0.82;
+                [-7.5, 0, 7.5].forEach((offset, idx) => {
+                    const assignedType = itemTypes[(i + idx) % itemTypes.length];
+                    const itemVisual = createHoloItemModel(assignedType);
+                    scene.add(itemVisual);
 
                     dynamicItems.push({
-                        mesh: group,
+                        group: itemVisual,
+                        type: assignedType,
                         progress: t,
                         laneOffset: offset,
                         active: true,
@@ -775,24 +1023,24 @@
                 });
             }
 
-            const trapCount = 14 + Math.floor(Math.random() * 6);
+            const trapCount = 16;
             const bananaGeo = new THREE.TorusGeometry(1.4, 0.6, 8, 16, Math.PI);
-            const bananaMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffaa00, emissiveIntensity: 0.5 });
+            const bananaMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffaa00, emissiveIntensity: 0.8 });
             const boostGeo = new THREE.BoxGeometry(6.5, 0.3, 4.5);
-            const boostMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8 });
+            const boostMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 1.6 });
             const bumperGeo = new THREE.CylinderGeometry(2.5, 3.2, 2.5, 16);
-            const bumperMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 0.8 });
+            const bumperMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 1.5, metalness: 0.8, roughness: 0.2 });
 
             for (let i = 0; i < trapCount; i++) {
                 const t = 0.06 + Math.random() * 0.88;
-                const rndType = Math.random();
+                const rnd = Math.random();
                 let type = 'boost';
                 let mesh = null;
 
-                if (rndType < 0.40) {
+                if (rnd < 0.45) {
                     type = 'boost';
                     mesh = new THREE.Mesh(boostGeo, boostMat);
-                } else if (rndType < 0.75) {
+                } else if (rnd < 0.75) {
                     type = 'banana';
                     mesh = new THREE.Mesh(bananaGeo, bananaMat);
                 } else {
@@ -802,42 +1050,97 @@
 
                 scene.add(mesh);
                 dynamicTraps.push({
-                    mesh: mesh,
-                    type: type,
-                    progress: t,
-                    laneOffset: (Math.random() - 0.5) * (ROAD_WIDTH - 6),
-                    active: true
+                    mesh: mesh, type: type, progress: t, laneOffset: (Math.random() - 0.5) * (ROAD_WIDTH - 8), active: true
                 });
             }
 
-            spawnSingleUseWormhole();
+            const mapData = trackPresets[activeMapKey];
+            if (mapData.flippers) {
+                mapData.flippers.forEach(cfg => createFlipperEntity(cfg.progress, cfg.side));
+            }
+            if (mapData.spinners) {
+                mapData.spinners.forEach(cfg => createSpinnerEntity(cfg.progress, cfg.speed));
+            }
+            if (mapData.wormholes) {
+                mapData.wormholes.forEach(cfg => spawnSingleUseWormhole(cfg.enter, cfg.rewindTo));
+            }
+
             alignAllEntities();
         }
 
-        function spawnSingleUseWormhole() {
-            if (activeWormhole) scene.remove(activeWormhole.mesh);
+        function createFlipperEntity(progress, side) {
+            const group = new THREE.Group();
+            const pivotBaseGeo = new THREE.CylinderGeometry(1.6, 1.8, 3.5, 16);
+            const pivotBaseMat = new THREE.MeshStandardMaterial({ color: 0x222233, metalness: 0.9, roughness: 0.2 });
+            group.add(new THREE.Mesh(pivotBaseGeo, pivotBaseMat));
 
-            const enterProgress = 0.52 + Math.random() * 0.22;
-            const rewindDistance = 0.08 + Math.random() * 0.06;
+            const paddlePivot = new THREE.Group();
+            const paddleGeo = new THREE.BoxGeometry(11.5, 2.2, 1.8);
+            paddleGeo.translate(side === 'left' ? 5.2 : -5.2, 0, 0);
 
+            const paddleMat = new THREE.MeshStandardMaterial({
+                color: side === 'left' ? 0xff007f : 0x00e5ff,
+                emissive: side === 'left' ? 0xff0055 : 0x00a2ff,
+                emissiveIntensity: 1.4,
+                roughness: 0.15,
+                metalness: 0.85
+            });
+            paddlePivot.add(new THREE.Mesh(paddleGeo, paddleMat));
+
+            const neonGeo = new THREE.BoxGeometry(11.0, 0.4, 0.4);
+            neonGeo.translate(side === 'left' ? 5.2 : -5.2, 1.2, 0);
+            paddlePivot.add(new THREE.Mesh(neonGeo, new THREE.MeshBasicMaterial({ color: 0xffffff })));
+
+            group.add(paddlePivot);
+            scene.add(group);
+
+            dynamicFlippers.push({
+                group: group,
+                paddlePivot: paddlePivot,
+                progress: progress,
+                side: side,
+                baseLane: side === 'left' ? -(ROAD_WIDTH / 2 - 1.8) : (ROAD_WIDTH / 2 - 1.8),
+                swingPhase: Math.random() * Math.PI * 2,
+                currentAngle: 0,
+                angularVelocity: 0
+            });
+        }
+
+        function createSpinnerEntity(progress, speed) {
+            const group = new THREE.Group();
+            const postGeo = new THREE.CylinderGeometry(1.0, 1.0, 5.0, 16);
+            const postMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.3 });
+            group.add(new THREE.Mesh(postGeo, postMat));
+
+            const bladeGeo = new THREE.BoxGeometry(10.0, 1.2, 1.0);
+            const bladeMat = new THREE.MeshStandardMaterial({ color: 0xeab308, emissive: 0xca8a04, emissiveIntensity: 1.2, metalness: 0.8, roughness: 0.2 });
+            const bladeMesh = new THREE.Mesh(bladeGeo, bladeMat);
+            bladeMesh.position.y = 1.8;
+            group.add(bladeMesh);
+
+            scene.add(group);
+            dynamicSpinners.push({
+                mesh: group,
+                bladeMesh: bladeMesh,
+                progress: progress,
+                rotationSpeed: speed || 0.05
+            });
+        }
+
+        function spawnSingleUseWormhole(enterProgress, rewindDistance) {
             const group = new THREE.Group();
             const ringGeo = new THREE.TorusGeometry(8.5, 1.2, 16, 32);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x9333ea, wireframe: true });
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0x9333ea, emissive: 0xa855f7, emissiveIntensity: 2.0, wireframe: true });
             group.add(new THREE.Mesh(ringGeo, ringMat));
 
             const coreGeo = new THREE.CircleGeometry(7.5, 24);
-            const coreMat = new THREE.MeshBasicMaterial({ color: 0x3b0764, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0x3b0764, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
             group.add(new THREE.Mesh(coreGeo, coreMat));
 
             scene.add(group);
-
-            activeWormhole = {
-                mesh: group,
-                enter: enterProgress,
-                rewindTo: Math.max(0.04, enterProgress - rewindDistance),
-                active: true,
-                respawnCooldown: 0
-            };
+            activeWormholes.push({
+                mesh: group, enter: enterProgress, rewindTo: rewindDistance, active: true, respawnCooldown: 0
+            });
         }
 
         function alignAllEntities() {
@@ -845,59 +1148,107 @@
 
             dynamicItems.forEach(item => {
                 const { point, normal, binormal } = getSurfaceOrientationAt(item.progress);
-                item.mesh.position.copy(point)
+                const sagHeight = getTrackSagHeight(item.laneOffset);
+                item.group.position.copy(point)
                     .add(binormal.clone().multiplyScalar(item.laneOffset))
-                    .add(normal.clone().multiplyScalar(3.0));
+                    .add(normal.clone().multiplyScalar(2.6 + sagHeight));
             });
 
             dynamicTraps.forEach(trap => {
                 const { point, tangent, normal, binormal } = getSurfaceOrientationAt(trap.progress);
+                const sagHeight = getTrackSagHeight(trap.laneOffset);
                 const rotMatrix = new THREE.Matrix4();
-                rotMatrix.makeBasis(binormal, normal, tangent);
+                rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
                 trap.mesh.quaternion.setFromRotationMatrix(rotMatrix);
                 trap.mesh.position.copy(point)
                     .add(binormal.clone().multiplyScalar(trap.laneOffset))
-                    .add(normal.clone().multiplyScalar(trap.type === 'bumper' ? 1.25 : 0.7));
+                    .add(normal.clone().multiplyScalar((trap.type === 'bumper' ? 1.25 : 0.7) + sagHeight));
             });
 
-            if (activeWormhole && activeWormhole.active) {
-                const { point, tangent, normal, binormal } = getSurfaceOrientationAt(activeWormhole.enter);
+            dynamicFlippers.forEach(f => {
+                const { point, tangent, normal, binormal } = getSurfaceOrientationAt(f.progress);
+                const sagHeight = getTrackSagHeight(f.baseLane);
                 const rotMatrix = new THREE.Matrix4();
-                rotMatrix.makeBasis(binormal, normal, tangent);
-                activeWormhole.mesh.quaternion.setFromRotationMatrix(rotMatrix);
-                activeWormhole.mesh.position.copy(point).add(normal.clone().multiplyScalar(7.5));
-            }
+                rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
+                f.group.quaternion.setFromRotationMatrix(rotMatrix);
+                f.group.position.copy(point)
+                    .add(binormal.clone().multiplyScalar(f.baseLane))
+                    .add(normal.clone().multiplyScalar(1.2 + sagHeight));
+            });
+
+            dynamicSpinners.forEach(s => {
+                const { point, tangent, normal, binormal } = getSurfaceOrientationAt(s.progress);
+                const sagHeight = getTrackSagHeight(0);
+                const rotMatrix = new THREE.Matrix4();
+                rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
+                s.mesh.quaternion.setFromRotationMatrix(rotMatrix);
+                s.mesh.position.copy(point).add(normal.clone().multiplyScalar(1.5 + sagHeight));
+            });
+
+            activeWormholes.forEach(w => {
+                if (w.active) {
+                    const { point, tangent, normal, binormal } = getSurfaceOrientationAt(w.enter);
+                    const rotMatrix = new THREE.Matrix4();
+                    rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
+                    w.mesh.quaternion.setFromRotationMatrix(rotMatrix);
+                    w.mesh.position.copy(point).add(normal.clone().multiplyScalar(7.5));
+                }
+            });
         }
 
         function buildScenery(glowColor) {
+            const starGeo = new THREE.BufferGeometry();
+            const starPositions = [];
+            for (let i = 0; i < 2000; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                const r = 2600 + Math.random() * 800;
+                starPositions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+            const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2.0, transparent: true, opacity: 0.8 });
+            const starPoints = new THREE.Points(starGeo, starMat);
+            scene.add(starPoints);
+            sceneryMeshes.push(starPoints);
+
             const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-            for (let i = 0; i < 45; i++) {
-                const h = 70 + Math.random() * 140;
-                const w = 25 + Math.random() * 35;
+            for (let i = 0; i < 55; i++) {
+                const h = 80 + Math.random() * 160;
+                const w = 25 + Math.random() * 40;
                 const mat = new THREE.MeshStandardMaterial({
                     color: 0x080816,
                     emissive: (i % 3 === 0) ? glowColor : 0x0a0a24,
-                    emissiveIntensity: 0.35
+                    emissiveIntensity: 0.4,
+                    roughness: 0.4
                 });
                 const bldg = new THREE.Mesh(boxGeo, mat);
                 const angle = Math.random() * Math.PI * 2;
-                const dist = 240 + Math.random() * 360;
+                const dist = 650 + Math.random() * 550;
                 bldg.scale.set(w, h, w);
-                bldg.position.set(Math.cos(angle) * dist, h / 2 - 50, Math.sin(angle) * dist);
+                bldg.position.set(Math.cos(angle) * dist, h / 2 - 60, Math.sin(angle) * dist);
                 scene.add(bldg);
                 sceneryMeshes.push(bldg);
             }
 
-            const gridHelper = new THREE.GridHelper(2200, 60, glowColor, 0x111126);
-            gridHelper.position.y = -60;
+            const gridHelper = new THREE.GridHelper(3200, 80, glowColor, 0x111126);
+            gridHelper.position.y = -65;
             scene.add(gridHelper);
             sceneryMeshes.push(gridHelper);
         }
 
-        // --- 9. 레이서 생성 ---
+        // --- 9. [업그레이드 3] 컨택트 섀도우 & 고정밀 PBR 플레이어 생성 ---
         function createRacers() {
             racers.forEach(r => scene.remove(r.mesh));
             racers = [];
+
+            const personalities = [
+                { style: 'aggressive', baseLanePreference: 0.0,  wanderSpan: 5.0, itemGreed: 0.85 },
+                { style: 'left_wing',  baseLanePreference: -4.5, wanderSpan: 4.0, itemGreed: 0.65 },
+                { style: 'right_wing', baseLanePreference: 4.5,  wanderSpan: 4.0, itemGreed: 0.65 },
+                { style: 'wide_drifter', baseLanePreference: 0.0, wanderSpan: 6.5, itemGreed: 0.95 },
+                { style: 'in_cutter',  baseLanePreference: -2.5, wanderSpan: 4.5, itemGreed: 0.50 },
+                { style: 'out_runner', baseLanePreference: 3.0,  wanderSpan: 4.5, itemGreed: 0.70 }
+            ];
 
             racers = currentPlayers.map((player, index) => {
                 const group = new THREE.Group();
@@ -905,95 +1256,152 @@
 
                 const marbleMesh = new THREE.Group();
 
-                const sphereGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
-                const chromeMat = new THREE.MeshStandardMaterial({
-                    color: 0xeeeeee, metalness: 0.95, roughness: 0.08,
-                    emissive: colorHex, emissiveIntensity: 0.25
+                // Layer 1: 내부 발광 코어
+                const coreGeo = new THREE.IcosahedronGeometry(BALL_RADIUS * 0.55, 1);
+                const coreMat = new THREE.MeshStandardMaterial({
+                    color: colorHex,
+                    emissive: colorHex,
+                    emissiveIntensity: 1.2,
+                    roughness: 0.1
                 });
-                marbleMesh.add(new THREE.Mesh(sphereGeo, chromeMat));
+                const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+                marbleMesh.add(coreMesh);
 
-                const ringGeo = new THREE.TorusGeometry(BALL_RADIUS * 1.005, 0.06, 8, 32);
-                const ringMat = new THREE.MeshBasicMaterial({ color: colorHex });
-                const equatorRing1 = new THREE.Mesh(ringGeo, ringMat);
-                const equatorRing2 = new THREE.Mesh(ringGeo, ringMat);
-                equatorRing2.rotation.x = Math.PI / 2;
-                marbleMesh.add(equatorRing1, equatorRing2);
+                // Layer 2: 정교한 금속 섀시 자이로 링 (환경 맵 반사 극대화)
+                const gyroGeo = new THREE.TorusGeometry(BALL_RADIUS * 0.78, 0.08, 12, 32);
+                const gyroMat = new THREE.MeshStandardMaterial({
+                    color: 0xcccccc,
+                    emissive: colorHex,
+                    emissiveIntensity: 0.8,
+                    metalness: 0.95,
+                    roughness: 0.08
+                });
+                const gyro1 = new THREE.Mesh(gyroGeo, gyroMat);
+                const gyro2 = new THREE.Mesh(gyroGeo, gyroMat);
+                gyro2.rotation.x = Math.PI / 2;
+                marbleMesh.add(gyro1, gyro2);
 
+                // Layer 3: 고정밀 물리 글래스 쉘 (Transmission & IOR)
+                const shellGeo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+                const shellMat = new THREE.MeshPhysicalMaterial({
+                    color: 0xffffff,
+                    metalness: 0.05,
+                    roughness: 0.02,
+                    transmission: 0.92,
+                    ior: 1.52,
+                    thickness: 1.4,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                marbleMesh.add(new THREE.Mesh(shellGeo, shellMat));
                 group.add(marbleMesh);
 
+                // 접지 부드러운 컨택트 섀도우 (노면 밀착감 부여)
+                const shadowGeo = new THREE.PlaneGeometry(BALL_RADIUS * 2.8, BALL_RADIUS * 2.8);
+                const shadowCanvas = document.createElement('canvas');
+                shadowCanvas.width = 128;
+                shadowCanvas.height = 128;
+                const sCtx = shadowCanvas.getContext('2d');
+                const grad = sCtx.createRadialGradient(64, 64, 8, 64, 64, 60);
+                grad.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+                sCtx.fillStyle = grad;
+                sCtx.fillRect(0, 0, 128, 128);
+                const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+                const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false });
+                const contactShadow = new THREE.Mesh(shadowGeo, shadowMat);
+                contactShadow.rotation.x = -Math.PI / 2;
+                contactShadow.position.y = -BALL_RADIUS + 0.05;
+                group.add(contactShadow);
+
+                // 접지 글로우 링
                 const glowGeo = new THREE.RingGeometry(BALL_RADIUS * 0.4, BALL_RADIUS * 1.5, 24);
-                const glowMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
+                const glowMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.55 });
                 const groundGlow = new THREE.Mesh(glowGeo, glowMat);
                 groundGlow.rotation.x = Math.PI / 2;
                 groundGlow.position.y = -BALL_RADIUS + 0.1;
                 group.add(groundGlow);
 
+                // 쉴드 메쉬
                 const shieldGeo = new THREE.SphereGeometry(BALL_RADIUS * 1.45, 24, 24);
                 const shieldMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true, transparent: true, opacity: 0 });
                 const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
                 group.add(shieldMesh);
 
+                // 비콘 레이저
                 const beaconGeo = new THREE.CylinderGeometry(0.12, 0.12, 18, 8);
                 const beaconMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.5 });
                 const beacon = new THREE.Mesh(beaconGeo, beaconMat);
                 beacon.position.y = 9.5;
                 group.add(beacon);
 
+                // [업그레이드 4] 선명한 2K급 HUD 네임태그
                 const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 180;
+                canvas.width = 1024;
+                canvas.height = 256;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = player.color;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
                 ctx.beginPath();
-                ctx.roundRect(10, 10, 492, 160, 30);
+                ctx.roundRect(16, 16, 992, 224, 48);
                 ctx.fill();
-                ctx.lineWidth = 10;
-                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 14;
+                ctx.strokeStyle = player.color;
                 ctx.stroke();
 
-                ctx.fillStyle = '#000000';
-                ctx.font = '800 110px "Black Han Sans", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '800 120px "Black Han Sans", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(player.name, 256, 90);
+                ctx.fillText(player.name, 512, 128);
 
                 const texture = new THREE.CanvasTexture(canvas);
-                const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
-                const sprite = new THREE.Sprite(spriteMat);
-                sprite.scale.set(6.4, 2.6, 1);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+                sprite.scale.set(6.8, 1.8, 1);
                 sprite.position.set(0, 5.2, 0);
                 group.add(sprite);
 
                 scene.add(group);
 
                 const startProgress = Math.max(0, 0.005 - (index * 0.0006));
-                const laneSpread = currentPlayers.length === 1 ? 0 : ((index % 5) - 2) * 4.6;
+                const totalP = currentPlayers.length;
+                const laneSpread = totalP === 1 ? 0 : (-7.0 + (index / (totalP - 1)) * 14.0);
+                const personality = personalities[index % personalities.length];
 
                 return {
                     id: player.id,
                     name: player.name,
                     color: colorHex,
                     colorStr: player.color,
-                    desc: player.desc || '질주하는 슈퍼 마블!',
+                    desc: player.desc || '자율 주행 슈퍼 마블!',
                     mesh: group,
                     marbleMesh: marbleMesh,
+                    coreMesh: coreMesh,
+                    gyro1: gyro1,
+                    gyro2: gyro2,
                     shieldMesh: shieldMesh,
                     beacon: beacon,
                     progress: startProgress,
                     laneOffset: laneSpread,
                     targetLaneOffset: laneSpread,
+                    aiPersonality: personality,
+                    aiDecisionTimer: Math.random() * 0.4,
                     preferredFork: index % 2 === 0 ? 'left' : 'right',
-                    laneChangeSpeed: 0.035 + Math.random() * 0.03,
-                    baseSpeed: 0.00050,
+                    laneChangeSpeed: 0.055 + Math.random() * 0.025,
+                    baseSpeed: 0.00045,
+                    currentVelocity: 0.00045,
                     speedMultiplier: 1.0,
                     velocityOffset: 0,
-                    rollAngle: 0,
+                    marbleQuaternion: new THREE.Quaternion(),
+                    scaleStretch: new THREE.Vector3(1, 1, 1),
                     currentItem: null,
                     spinAngle: 0,
                     spinTimer: 0,
                     hasShield: false,
                     shieldTimer: 0,
-                    bumperInvulTimer: 0, // 범퍼 연속 충돌 방지용 무적 타이머
+                    bumperInvulTimer: 0,
+                    airLaunchHeight: 0,
+                    airLaunchVelocity: 0,
+                    flipperCooldown: 0,
                     isAirborne: false,
                     finished: false,
                     finishTime: 0,
@@ -1005,9 +1413,10 @@
             alignRacersToTrack();
         }
 
-        // --- 10. 물리 시뮬레이션 및 충돌 / 1회용 웜홀 소멸 로직 ---
-        function updatePhysicsAndItems() {
+        // --- 10. 물리 및 AI 업데이트 ---
+        function updatePhysicsAndItems(deltaTime) {
             const mapData = trackPresets[activeMapKey];
+            const timeScale = deltaTime / 0.016;
 
             const ranked = [...racers].sort((a, b) => b.progress - a.progress);
             ranked.forEach((r, idx) => {
@@ -1015,59 +1424,153 @@
                 r.beacon.material.opacity = (r.rank === 1 || r.id === selectedTargetRacer?.id) ? 0.85 : 0.25;
             });
 
+            // 핀볼 플리퍼
+            dynamicFlippers.forEach(f => {
+                f.swingPhase += 0.08 * timeScale;
+                const prevAngle = f.currentAngle;
+                const rawSin = Math.sin(f.swingPhase);
+                let curve = rawSin > 0 ? Math.pow(rawSin, 1.8) : -Math.pow(-rawSin, 1.8) * 0.4;
+                const maxSwing = (Math.PI / 360) * 360;
+                f.currentAngle = (f.side === 'left' ? 1 : -1) * (curve * maxSwing);
+                f.paddlePivot.rotation.y = f.currentAngle;
+                f.angularVelocity = (f.currentAngle - prevAngle) * (f.side === 'left' ? 1 : -1);
+            });
+
+            // 회전 스피너
+            dynamicSpinners.forEach(s => {
+                s.bladeMesh.rotation.y += s.rotationSpeed * timeScale;
+            });
+
+            // 3D 홀로그램 아이템
             dynamicItems.forEach(item => {
                 if (item.active) {
-                    item.mesh.rotation.y += 0.04;
-                    item.mesh.children[1].rotation.x += 0.03;
+                    item.group.rotation.y += 0.035 * timeScale;
+                    item.group.position.y += Math.sin(raceTime * 3 + item.laneOffset) * 0.008;
                 } else {
-                    item.respawnTimer -= 0.016;
+                    item.respawnTimer -= deltaTime;
                     if (item.respawnTimer <= 0) {
                         item.active = true;
-                        item.mesh.visible = true;
+                        item.group.visible = true;
                     }
                 }
             });
 
-            if (activeWormhole) {
-                if (activeWormhole.active) {
-                    activeWormhole.mesh.rotation.z += 0.05;
+            activeWormholes.forEach(w => {
+                if (w.active) {
+                    w.mesh.rotation.z += 0.05 * timeScale;
                 } else {
-                    activeWormhole.respawnCooldown -= 0.016;
-                    if (activeWormhole.respawnCooldown <= 0) {
-                        spawnSingleUseWormhole();
-                        alignAllEntities();
+                    w.respawnCooldown -= deltaTime;
+                    if (w.respawnCooldown <= 0) {
+                        w.active = true;
+                        w.mesh.visible = true;
                     }
                 }
-            }
+            });
 
             racers.forEach(r => {
                 if (r.finished) return;
 
-                // 범퍼 무적 타이머 감소
-                if (r.bumperInvulTimer > 0) {
-                    r.bumperInvulTimer -= 0.016;
+                if (r.bumperInvulTimer > 0) r.bumperInvulTimer -= deltaTime;
+                if (r.flipperCooldown > 0) r.flipperCooldown -= deltaTime;
+
+                r.coreMesh.rotation.y += 0.05 * timeScale;
+                r.gyro1.rotation.x += 0.04 * timeScale;
+                r.gyro2.rotation.y += 0.04 * timeScale;
+
+                r.scaleStretch.lerp(new THREE.Vector3(1, 1, 1), 0.1 * timeScale);
+                r.marbleMesh.scale.copy(r.scaleStretch);
+
+                if (r.airLaunchHeight > 0 || r.airLaunchVelocity > 0) {
+                    r.airLaunchHeight += r.airLaunchVelocity * timeScale;
+                    r.airLaunchVelocity -= 1.6 * timeScale;
+                    if (r.airLaunchHeight <= 0) {
+                        r.airLaunchHeight = 0;
+                        r.airLaunchVelocity = 0;
+                        r.scaleStretch.set(1.3, 0.7, 1.3);
+                        SoundEngine.playMetallicHit(0.6, r.mesh.position);
+                    }
+                }
+
+                // 온화한 척력
+                let separationForce = 0;
+                racers.forEach(other => {
+                    if (other.id !== r.id && !other.finished) {
+                        const dProg = other.progress - r.progress;
+                        if (Math.abs(dProg) < 0.012) {
+                            const distLane = r.laneOffset - other.laneOffset;
+                            if (Math.abs(distLane) < 4.0) {
+                                const sign = distLane >= 0 ? 1 : -1;
+                                separationForce += sign * (4.0 - Math.abs(distLane)) * 0.15;
+                            }
+                        }
+                    }
+                });
+
+                // AI 탐색
+                r.aiDecisionTimer -= deltaTime;
+                if (r.aiDecisionTimer <= 0) {
+                    r.aiDecisionTimer = 0.5 + Math.random() * 0.4;
+
+                    let nearestDanger = null;
+                    dynamicTraps.forEach(trap => {
+                        if (trap.active && trap.type !== 'boost') {
+                            const dProg = trap.progress - r.progress;
+                            if (dProg > 0 && dProg < 0.04 && Math.abs(trap.laneOffset - r.laneOffset) < 3.8) {
+                                nearestDanger = trap;
+                            }
+                        }
+                    });
+
+                    let bestItem = null;
+                    let minItemDist = Infinity;
+                    if (!nearestDanger && Math.random() < r.aiPersonality.itemGreed) {
+                        dynamicItems.forEach(item => {
+                            if (item.active) {
+                                const dProg = item.progress - r.progress;
+                                if (dProg > 0.005 && dProg < 0.05) {
+                                    const dist = Math.hypot(dProg * 1000, item.laneOffset - r.laneOffset);
+                                    if (dist < minItemDist) {
+                                        minItemDist = dist;
+                                        bestItem = item;
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    if (nearestDanger) {
+                        const avoidDir = nearestDanger.laneOffset >= r.laneOffset ? -1 : 1;
+                        r.targetLaneOffset = THREE.MathUtils.clamp(r.laneOffset + avoidDir * 6.5, -9.0, 9.0);
+                    } else if (bestItem) {
+                        r.targetLaneOffset = bestItem.laneOffset;
+                    } else {
+                        const basePref = r.aiPersonality.baseLanePreference;
+                        const span = r.aiPersonality.wanderSpan;
+                        const target = basePref + (Math.random() - 0.5) * 2 * span;
+                        r.targetLaneOffset = THREE.MathUtils.clamp(target, -8.5, 8.5);
+                    }
                 }
 
                 let rubberbandFactor = 1.0;
                 if (racers.length > 1) {
-                    if (r.rank >= 5) rubberbandFactor = 1.38;
-                    else if (r.rank >= 3) rubberbandFactor = 1.18;
-                    else if (r.rank === 1) rubberbandFactor = 0.95;
+                    if (r.rank >= 5) rubberbandFactor = 1.35;
+                    else if (r.rank >= 3) rubberbandFactor = 1.15;
+                    else if (r.rank === 1) rubberbandFactor = 0.96;
                 }
 
                 if (r.spinTimer > 0) {
-                    r.spinTimer -= 0.016;
-                    r.spinAngle += 0.35;
+                    r.spinTimer -= deltaTime;
+                    r.spinAngle += 0.35 * timeScale;
                     r.speedMultiplier = 0.35;
                 } else {
                     r.spinAngle = 0;
-                    r.speedMultiplier += (1.0 - r.speedMultiplier) * 0.03;
+                    r.speedMultiplier += (1.0 - r.speedMultiplier) * 0.03 * timeScale;
                 }
 
                 if (r.hasShield) {
-                    r.shieldTimer -= 0.016;
+                    r.shieldTimer -= deltaTime;
                     r.shieldMesh.material.opacity = 0.6;
-                    r.shieldMesh.rotation.y += 0.05;
+                    r.shieldMesh.rotation.y += 0.05 * timeScale;
                     if (r.shieldTimer <= 0) {
                         r.hasShield = false;
                         r.shieldMesh.material.opacity = 0;
@@ -1084,51 +1587,168 @@
                     });
                 }
 
-                if (!inFork && Math.random() < 0.018) {
-                    r.targetLaneOffset = (Math.random() - 0.5) * (ROAD_WIDTH - 6);
+                // 완화된 원심력
+                const dtCurv = 0.005;
+                const tPrev = Math.max(0, r.progress - dtCurv);
+                const tNext = Math.min(1, r.progress + dtCurv);
+                const tanP = trackSpline.getTangentAt(tPrev).normalize();
+                const tanN = trackSpline.getTangentAt(tNext).normalize();
+                const dTan = new THREE.Vector3().subVectors(tanN, tanP);
+                const { binormal, normal, tangent } = getSurfaceOrientationAt(r.progress);
+                const lateralCurv = dTan.dot(binormal);
+                
+                const fMult = mapData.frictionMult || 1.0;
+                const centrifugalForce = -lateralCurv * (r.currentVelocity * 350.0) * (2.0 - fMult);
+                r.velocityOffset += centrifugalForce * timeScale;
+
+                // U자 도로 복원력 & 안전 범퍼
+                const centeringGravity = - (r.laneOffset / (ROAD_WIDTH / 2)) * 0.18;
+                let wallRepelForce = 0;
+                const safeWallMargin = 9.5;
+                if (Math.abs(r.laneOffset) > safeWallMargin) {
+                    const excess = Math.abs(r.laneOffset) - safeWallMargin;
+                    wallRepelForce = -Math.sign(r.laneOffset) * excess * 0.45;
                 }
 
                 const laneDiff = (r.targetLaneOffset - r.laneOffset);
-                r.laneOffset += laneDiff * r.laneChangeSpeed + r.velocityOffset;
-                r.velocityOffset *= 0.88;
+                r.laneOffset += (laneDiff * r.laneChangeSpeed * timeScale) + 
+                                (r.velocityOffset * timeScale) + 
+                                (separationForce * timeScale) +
+                                (centeringGravity * timeScale) +
+                                (wallRepelForce * timeScale);
+                
+                r.velocityOffset *= Math.pow(0.90 * fMult, timeScale);
 
-                const currentMoveSpeed = r.baseSpeed * rubberbandFactor * r.speedMultiplier;
-                r.progress += currentMoveSpeed;
-
-                const forwardDistance = currentMoveSpeed * 1200.0;
-                r.rollAngle += forwardDistance / BALL_RADIUS;
-
-                if (r.speedMultiplier > 1.3 && Math.random() < 0.35) {
-                    createSparks(r.mesh.position, r.color);
+                const maxLane = ROAD_WIDTH / 2 - 2.2;
+                if (Math.abs(r.laneOffset) > maxLane) {
+                    r.laneOffset = Math.sign(r.laneOffset) * maxLane;
+                    r.velocityOffset *= -0.3;
                 }
 
-                if (activeWormhole && activeWormhole.active) {
-                    if (Math.abs(r.progress - activeWormhole.enter) < 0.004) {
-                        r.progress = activeWormhole.rewindTo;
-                        r.spinTimer = 1.0;
-                        r.speedMultiplier = 0.4;
-                        SoundEngine.playWormhole(r.mesh.position);
-                        createSparks(r.mesh.position, 0x9333ea);
-                        screenShakeIntensity = 0.85;
+                const gravityDot = tangent.dot(new THREE.Vector3(0, -1, 0));
+                const gravityAccel = gravityDot * 0.00035;
 
-                        activeWormhole.active = false;
-                        activeWormhole.mesh.visible = false;
-                        activeWormhole.respawnCooldown = 12.0;
+                r.currentVelocity = THREE.MathUtils.clamp(
+                    r.baseSpeed * rubberbandFactor * r.speedMultiplier + gravityAccel,
+                    0.00015,
+                    0.0022
+                );
 
-                        showCinematicSubtitle(`🌀 [${r.name}] 웜홀에 흡수되어 뒤로 워프! (웜홀 소멸됨)`);
-                    }
-                }
+                r.progress += r.currentVelocity * timeScale;
 
-                dynamicItems.forEach(item => {
-                    if (item.active && Math.abs(r.progress - item.progress) < 0.0035 && Math.abs(r.laneOffset - item.laneOffset) < 3.8) {
-                        item.active = false;
-                        item.mesh.visible = false;
-                        item.respawnTimer = 4.0;
-                        SoundEngine.playItemBox(r.mesh.position);
-                        triggerRandomItem(r);
+                // 3D 쿼터니언 회전
+                const forwardDelta = r.currentVelocity * 1400.0 * timeScale;
+                const rotAxis = new THREE.Vector3().crossVectors(normal, tangent).normalize();
+                const rotAngle = forwardDelta / BALL_RADIUS;
+
+                const deltaQuat = new THREE.Quaternion().setFromAxisAngle(rotAxis, rotAngle);
+                r.marbleQuaternion.premultiply(deltaQuat);
+                r.marbleMesh.quaternion.copy(r.marbleQuaternion);
+
+                // 핀볼 플리퍼 충돌
+                dynamicFlippers.forEach(f => {
+                    if (r.flipperCooldown > 0) return;
+
+                    const TRACK_METERS = 2200.0;
+                    const dz = (r.progress - f.progress) * TRACK_METERS;
+                    const dx = r.laneOffset - f.baseLane;
+
+                    const FLIPPER_LEN = 11.5;
+                    const isLeft = f.side === 'left';
+                    const sideDir = isLeft ? 1 : -1;
+                    const tipX = sideDir * FLIPPER_LEN * Math.cos(f.currentAngle);
+                    const tipZ = FLIPPER_LEN * Math.sin(f.currentAngle);
+
+                    const segLenSq = tipX * tipX + tipZ * tipZ;
+                    const t = THREE.MathUtils.clamp((dx * tipX + dz * tipZ) / segLenSq, 0, 1);
+                    
+                    const closestX = t * tipX;
+                    const closestZ = t * tipZ;
+                    const distX = dx - closestX;
+                    const distZ = dz - closestZ;
+                    const distSq = distX * distX + distZ * distZ;
+                    const hitRadius = BALL_RADIUS + 1.2;
+
+                    if (distSq < hitRadius * hitRadius) {
+                        let normX = -tipZ;
+                        let normZ = tipX;
+                        const normLen = Math.hypot(normX, normZ) || 1;
+                        normX /= normLen;
+                        normZ /= normLen;
+                        if (normZ < 0) { normX = -normX; normZ = -normZ; }
+
+                        const isUpSwinging = f.angularVelocity > 0;
+                        const tipLeverage = 0.4 + 1.8 * Math.pow(t, 1.4);
+                        const swingBoost = isUpSwinging ? 1.6 : 0.6;
+                        const finalForce = tipLeverage * swingBoost;
+
+                        r.velocityOffset = normX * (6.0 * finalForce);
+                        r.targetLaneOffset = THREE.MathUtils.clamp(
+                            r.laneOffset + normX * (10.0 * finalForce), 
+                            -(ROAD_WIDTH / 2 - 2), 
+                            (ROAD_WIDTH / 2 - 2)
+                        );
+
+                        r.speedMultiplier = Math.min(3.2, 1.2 + normZ * (1.8 * finalForce));
+                        r.progress += (normZ * 0.008 * finalForce);
+                        r.airLaunchVelocity = 12.0 + 22.0 * finalForce;
+                        r.flipperCooldown = 1.4;
+                        r.scaleStretch.set(0.7, 1.4, 0.7);
+
+                        if (t > 0.65 && isUpSwinging) {
+                            SoundEngine.playFlipperLaunch(r.mesh.position);
+                            showCinematicSubtitle(`🔥 [${r.name}] 플리퍼 끝자락 스위트스팟 정타! (x${finalForce.toFixed(1)})`);
+                            screenShakeIntensity = 0.8;
+                        } else {
+                            SoundEngine.playMetallicHit(0.7, r.mesh.position);
+                            showCinematicSubtitle(`⚡ [${r.name}] 플리퍼 몸체에 빗맞음!`);
+                            screenShakeIntensity = 0.3;
+                        }
                     }
                 });
 
+                // 회전 스피너
+                dynamicSpinners.forEach(s => {
+                    if (Math.abs(r.progress - s.progress) < 0.004) {
+                        if (Math.abs(r.laneOffset) < 5.0) {
+                            r.spinTimer = 1.0;
+                            r.speedMultiplier = 0.45;
+                            const pushSign = r.laneOffset >= 0 ? 1 : -1;
+                            r.velocityOffset += pushSign * 8.0;
+                            SoundEngine.playMetallicHit(0.75, r.mesh.position);
+                            showCinematicSubtitle(`🌀 [${r.name}] 회전 스피너 블레이드에 강타!`);
+                        }
+                    }
+                });
+
+                // 웜홀
+                activeWormholes.forEach(w => {
+                    if (w.active && Math.abs(r.progress - w.enter) < 0.004) {
+                        r.progress = w.rewindTo;
+                        r.spinTimer = 1.0;
+                        r.speedMultiplier = 0.4;
+                        SoundEngine.playWormhole(r.mesh.position);
+                        screenShakeIntensity = 0.8;
+
+                        w.active = false;
+                        w.mesh.visible = false;
+                        w.respawnCooldown = 12.0;
+                        showCinematicSubtitle(`🌀 [${r.name}] 차원 웜홀에 흡수되어 워프!`);
+                    }
+                });
+
+                // 아이템 획득
+                dynamicItems.forEach(item => {
+                    if (item.active && Math.abs(r.progress - item.progress) < 0.0035 && Math.abs(r.laneOffset - item.laneOffset) < 3.8) {
+                        item.active = false;
+                        item.group.visible = false;
+                        item.respawnTimer = 4.0;
+                        SoundEngine.playItemBox(r.mesh.position);
+                        triggerHoloItem(r, item.type);
+                    }
+                });
+
+                // 트랩
                 dynamicTraps.forEach(trap => {
                     if (trap.active && Math.abs(r.progress - trap.progress) < 0.0035 && Math.abs(r.laneOffset - trap.laneOffset) < 3.4) {
                         if (trap.type === 'banana') {
@@ -1138,61 +1758,54 @@
                                 showCinematicSubtitle(`🛡️ [${r.name}] 쉴드로 바나나 방어!`);
                             } else {
                                 r.spinTimer = 1.2;
-                                createSparks(r.mesh.position, 0xffea00);
                                 showCinematicSubtitle(`🍌 [${r.name}] 바나나 밟고 미끄러짐!`);
-                                if (r.id === selectedTargetRacer?.id) screenShakeIntensity = 0.6;
+                                if (r.id === selectedTargetRacer?.id) screenShakeIntensity = 0.5;
                             }
                         } else if (trap.type === 'boost') {
                             r.speedMultiplier = 2.2;
+                            r.scaleStretch.set(0.8, 0.8, 1.4);
                             SoundEngine.playBooster(r.mesh.position);
-                            createSparks(r.mesh.position, 0x00ffcc);
                             showCinematicSubtitle(`⚡ [${r.name}] 부스터 패드 폭풍 가속!`);
                         } else if (trap.type === 'bumper') {
-                            // 무적 시간 중이면 충돌 무시 (무한 루프 방지)
                             if (r.bumperInvulTimer > 0) return;
 
-                            // 1. 역행 폭을 적절히 축소하여 과도한 뒤쪽 워프 방지
                             r.progress = Math.max(0.005, r.progress - 0.018);
-
-                            // 2. 범퍼 위치를 기준으로 확실히 바깥쪽 차선으로 강제 튕김
                             const pushDir = r.laneOffset >= trap.laneOffset ? 1 : -1;
                             r.laneOffset += pushDir * 6.5; 
                             r.targetLaneOffset = THREE.MathUtils.clamp(r.laneOffset + pushDir * 5.0, -(ROAD_WIDTH / 2 - 2), (ROAD_WIDTH / 2 - 2));
                             r.velocityOffset = pushDir * 5.5;
 
-                            // 3. 1.8초간 동일 범퍼 및 인근 범퍼 판정 무적화
                             r.bumperInvulTimer = 1.8;
                             r.spinTimer = 0.7;
                             r.speedMultiplier = 0.5;
+                            r.scaleStretch.set(1.4, 0.7, 1.4);
 
                             SoundEngine.playMetallicHit(0.8, r.mesh.position);
-                            createSparks(r.mesh.position, 0xff0055);
                             showCinematicSubtitle(`💥 [${r.name}] 핀볼 범퍼에 강타당해 튕겨나감!`);
-                            screenShakeIntensity = 0.7;
+                            screenShakeIntensity = 0.6;
                         }
                     }
                 });
 
+                // 결승선 통과
                 if (r.progress >= 1.0) {
                     r.progress = 1.0;
                     r.finished = true;
                     r.finishTime = raceTime;
                     finishedCount++;
 
-                    createSparks(r.mesh.position, 0xffffff);
                     showCinematicSubtitle(`🏁 [${r.name}] 결승선 통과! (${finishedCount}위)`);
-
                     if (finishedCount === 1) screenShakeIntensity = 0.8;
                     if (finishedCount >= racers.length) finishRace();
                 }
             });
 
             if (racers.length > 1) {
-                handleMarbleCollisions();
+                handleMarbleCollisions(timeScale);
             }
         }
 
-        function handleMarbleCollisions() {
+        function handleMarbleCollisions(timeScale) {
             const collisionDist = BALL_RADIUS * 2.1;
 
             for (let i = 0; i < racers.length; i++) {
@@ -1210,8 +1823,8 @@
                         const laneDelta = r1.laneOffset - r2.laneOffset;
                         const pushDir = laneDelta >= 0 ? 1 : -1;
 
-                        r1.velocityOffset += pushDir * (overlap * 0.45);
-                        r2.velocityOffset -= pushDir * (overlap * 0.45);
+                        r1.velocityOffset += pushDir * (overlap * 0.4) * timeScale;
+                        r2.velocityOffset -= pushDir * (overlap * 0.4) * timeScale;
 
                         if (r1.progress > r2.progress) {
                             r1.speedMultiplier = Math.min(2.0, r1.speedMultiplier + 0.35);
@@ -1223,9 +1836,8 @@
 
                         const midPos = pos1.clone().add(pos2).multiplyScalar(0.5);
                         SoundEngine.playMetallicHit(0.35, midPos);
-                        createSparks(midPos, 0xffffff);
 
-                        if (Math.random() < 0.2) {
+                        if (Math.random() < 0.15 * timeScale) {
                             showCinematicSubtitle(`💥 [${r1.name}]와 [${r2.name}] 격렬한 몸싸움!`);
                         }
                     }
@@ -1233,21 +1845,13 @@
             }
         }
 
-        function triggerRandomItem(racer) {
-            const isBackMarker = racers.length > 1 && racer.rank >= 3;
-            const items = isBackMarker ? 
-                ['booster', 'thunder', 'magnet', 'booster', 'shield'] : 
-                ['shield', 'banana', 'booster', 'banana'];
-
-            const chosen = items[Math.floor(Math.random() * items.length)];
-
-            if (chosen === 'booster') {
+        function triggerHoloItem(racer, itemType) {
+            if (itemType === 'booster') {
                 racer.currentItem = '🚀';
                 racer.speedMultiplier = 2.6;
                 SoundEngine.playBooster(racer.mesh.position);
-                createSparks(racer.mesh.position, 0xff4500);
                 showCinematicSubtitle(`🚀 [${racer.name}] 로켓 부스터 점화!`);
-            } else if (chosen === 'thunder') {
+            } else if (itemType === 'thunder') {
                 racer.currentItem = '⚡';
                 const leaders = racers.filter(r => r.rank <= 2 && r.id !== racer.id && !r.finished);
                 if (leaders.length > 0) {
@@ -1258,53 +1862,36 @@
                             showCinematicSubtitle(`🛡 [${target.name}] 쉴드로 번개 방어!`);
                         } else {
                             target.spinTimer = 1.4;
-                            createSparks(target.mesh.position, 0x00ffff);
                             showCinematicSubtitle(`⚡ [${racer.name}]의 번개 저격! [${target.name}] 감전!`);
                         }
                     });
-                    screenShakeIntensity = 0.8;
+                    screenShakeIntensity = 0.7;
                 } else {
                     racer.speedMultiplier = 1.8;
                     showCinematicSubtitle(`⚡ [${racer.name}] 번개 오버차지 충전!`);
                 }
-            } else if (chosen === 'magnet') {
+            } else if (itemType === 'magnet') {
                 racer.currentItem = '🧲';
                 const frontRacer = racers.find(r => r.rank === racer.rank - 1);
                 if (frontRacer) {
                     racer.progress = Math.min(frontRacer.progress - 0.005, racer.progress + 0.035);
                     racer.speedMultiplier = 1.8;
-                    createSparks(racer.mesh.position, 0xff00ff);
                     showCinematicSubtitle(`🧲 [${racer.name}] 자석 흡착! [${frontRacer.name}] 뒤로 급속 흡입!`);
                 } else {
                     racer.speedMultiplier = 1.9;
                     showCinematicSubtitle(`🧲 [${racer.name}] 자력 가속 추진!`);
                 }
-            } else if (chosen === 'shield') {
+            } else if (itemType === 'shield') {
                 racer.currentItem = '🛡️';
                 racer.hasShield = true;
                 racer.shieldTimer = 5.0;
                 showCinematicSubtitle(`🛡️ [${racer.name}] 황금 쉴드 전개!`);
-            } else if (chosen === 'banana') {
-                racer.currentItem = '🍌';
-                const bananaGeo = new THREE.TorusGeometry(1.4, 0.6, 8, 16, Math.PI);
-                const bananaMat = new THREE.MeshStandardMaterial({ color: 0xffea00, emissive: 0xffaa00, emissiveIntensity: 0.5 });
-                const mesh = new THREE.Mesh(bananaGeo, bananaMat);
-                scene.add(mesh);
-                dynamicTraps.push({
-                    mesh: mesh,
-                    type: 'banana',
-                    progress: Math.max(0, racer.progress - 0.01),
-                    laneOffset: racer.laneOffset,
-                    active: true
-                });
-                alignAllEntities();
-                showCinematicSubtitle(`🍌 [${racer.name}] 트랙에 바나나 투척!`);
             }
 
             setTimeout(() => { racer.currentItem = null; }, 3500);
         }
 
-        // --- 11. 레이서 서피스 접지 정렬 ---
+        // --- 11. 레이서 위치 정렬 ---
         function alignRacersToTrack() {
             if (!trackSpline || surfaceFrames.length === 0) return;
 
@@ -1314,41 +1901,40 @@
             racers.forEach(r => {
                 const { point, tangent, normal, binormal } = getSurfaceOrientationAt(r.progress);
 
-                let jumpYOffset = 0;
-                const safeProgress = Math.min(0.999, Math.max(0.0001, r.progress));
+                let trackJumpY = 0;
+                const safeProgress = THREE.MathUtils.clamp(r.progress, 0.0001, 0.999);
                 const activeJump = jumpZones.find(z => safeProgress >= z.start && safeProgress <= z.end);
 
                 if (activeJump) {
                     r.isAirborne = true;
                     const jumpNorm = (safeProgress - activeJump.start) / (activeJump.end - activeJump.start);
-                    jumpYOffset = Math.sin(jumpNorm * Math.PI) * activeJump.height;
+                    trackJumpY = Math.sin(jumpNorm * Math.PI) * activeJump.height;
                 } else {
-                    if (r.isAirborne) {
+                    if (r.isAirborne && r.airLaunchHeight === 0) {
                         r.isAirborne = false;
                         SoundEngine.playMetallicHit(0.5, r.mesh.position);
-                        createSparks(r.mesh.position, 0x00e5ff);
                     }
                 }
 
+                const sagHeight = getTrackSagHeight(r.laneOffset);
+                const totalY = BALL_RADIUS + sagHeight + trackJumpY + r.airLaunchHeight;
+
                 r.mesh.position.copy(point)
                     .add(binormal.clone().multiplyScalar(r.laneOffset))
-                    .add(normal.clone().multiplyScalar(BALL_RADIUS + jumpYOffset));
+                    .add(normal.clone().multiplyScalar(totalY));
 
                 const rotMatrix = new THREE.Matrix4();
-                rotMatrix.makeBasis(binormal, normal, tangent);
+                rotMatrix.makeBasis(binormal, normal, tangent.clone().negate());
                 r.mesh.quaternion.setFromRotationMatrix(rotMatrix);
 
-                r.marbleMesh.rotation.x = r.rollAngle;
-
                 if (r.spinAngle > 0) {
-                    const spinQuat = new THREE.Quaternion();
-                    spinQuat.setFromAxisAngle(normal, r.spinAngle);
+                    const spinQuat = new THREE.Quaternion().setFromAxisAngle(normal, r.spinAngle);
                     r.mesh.quaternion.premultiply(spinQuat);
                 }
             });
         }
 
-        // --- 12. 세로형 롱 서킷 미니맵 레이더 ---
+        // --- 12. 전방향 2D 톱다운 텔레메트리 레이더 ---
         function drawMinimap() {
             const canvas = document.getElementById('minimap-canvas');
             if (!canvas || !trackSpline) return;
@@ -1360,8 +1946,7 @@
             }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const points = trackSpline.getPoints(160);
+            const points = trackSpline.getPoints(200);
 
             let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
             points.forEach(p => {
@@ -1371,16 +1956,22 @@
                 if (p.z > maxZ) maxZ = p.z;
             });
 
-            const pad = 14;
+            const pad = 16;
             const rangeX = (maxX - minX) || 1;
             const rangeZ = (maxZ - minZ) || 1;
+            
+            const maxRange = Math.max(rangeX, rangeZ);
+            const scale = (Math.min(canvas.width, canvas.height) - pad * 2) / maxRange;
+            const offsetX = (canvas.width - rangeX * scale) / 2;
+            const offsetY = (canvas.height - rangeZ * scale) / 2;
 
-            const mapX = (x) => pad + ((x - minX) / rangeX) * (canvas.width - pad * 2);
-            const mapY = (z) => pad + ((z - minZ) / rangeZ) * (canvas.height - pad * 2);
+            const mapX = (x) => offsetX + (x - minX) * scale;
+            const mapY = (z) => offsetY + (z - minZ) * scale;
 
-            ctx.lineWidth = 4.5;
+            ctx.lineWidth = 4.0;
             ctx.lineCap = 'round';
-            ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.45)';
             ctx.beginPath();
             points.forEach((p, idx) => {
                 if (idx === 0) ctx.moveTo(mapX(p.x), mapY(p.z));
@@ -1388,13 +1979,21 @@
             });
             ctx.stroke();
 
-            if (activeWormhole && activeWormhole.active) {
-                const pt = trackSpline.getPointAt(activeWormhole.enter);
-                ctx.fillStyle = '#9333ea';
-                ctx.beginPath();
-                ctx.arc(mapX(pt.x), mapY(pt.z), 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            dynamicFlippers.forEach(f => {
+                const pt = trackSpline.getPointAt(f.progress);
+                ctx.fillStyle = f.side === 'left' ? '#ff007f' : '#00e5ff';
+                ctx.fillRect(mapX(pt.x) - 3.5, mapY(pt.z) - 3.5, 7, 7);
+            });
+
+            activeWormholes.forEach(w => {
+                if (w.active) {
+                    const pt = trackSpline.getPointAt(w.enter);
+                    ctx.fillStyle = '#9333ea';
+                    ctx.beginPath();
+                    ctx.arc(mapX(pt.x), mapY(pt.z), 4.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
 
             ctx.fillStyle = '#00e5ff';
             ctx.beginPath(); ctx.arc(mapX(points[0].x), mapY(points[0].z), 4, 0, Math.PI * 2); ctx.fill();
@@ -1408,7 +2007,7 @@
 
                 ctx.fillStyle = r.colorStr || '#' + r.color.toString(16).padStart(6, '0');
                 ctx.beginPath();
-                ctx.arc(rx, ry, r.id === selectedTargetRacer?.id ? 6.0 : 3.8, 0, Math.PI * 2);
+                ctx.arc(rx, ry, r.id === selectedTargetRacer?.id ? 5.5 : 3.5, 0, Math.PI * 2);
                 ctx.fill();
 
                 if (r.id === selectedTargetRacer?.id || r.rank === 1) {
@@ -1422,7 +2021,6 @@
         // --- 13. 레이스 제어 흐름 ---
         function startRace() {
             if (raceStarted && !raceEnded) return;
-
             getAudioContext();
 
             raceStarted = true;
@@ -1430,6 +2028,7 @@
             raceEnded = false;
             raceTime = 0;
             finishedCount = 0;
+            clock.start();
 
             setControlsLocked(true);
 
@@ -1438,10 +2037,13 @@
                 r.finishTime = 0;
                 r.isAirborne = false;
                 r.speedMultiplier = 1.0;
-                r.rollAngle = 0;
+                r.currentVelocity = r.baseSpeed;
                 r.spinTimer = 0;
                 r.hasShield = false;
                 r.bumperInvulTimer = 0;
+                r.airLaunchHeight = 0;
+                r.airLaunchVelocity = 0;
+                r.flipperCooldown = 0;
                 r.currentItem = null;
                 r.velocityOffset = 0;
             });
@@ -1462,7 +2064,6 @@
 
         function togglePauseRace() {
             if (!raceStarted || raceEnded) return;
-
             racePaused = !racePaused;
             updatePauseButtonUI();
 
@@ -1471,6 +2072,7 @@
                 document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded font-mono font-bold';
                 showCinematicSubtitle("⏸️ 레이스가 일시 중지되었습니다.");
             } else {
+                clock.getDelta();
                 document.getElementById('race-status-badge').textContent = 'RACING';
                 document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded font-mono font-bold animate-pulse';
                 showCinematicSubtitle("▶ 레이스를 재개합니다!");
@@ -1500,7 +2102,6 @@
 
             const sorted = [...racers].sort((a, b) => a.finishTime - b.finishTime);
             showCinematicSubtitle(`🏆 1위 [${sorted[0].name}] 결승선 통과! 최종 챔피언!`);
-
             openResultModal(sorted);
         }
 
@@ -1529,23 +2130,26 @@
             document.getElementById('race-status-badge').textContent = 'READY';
             document.getElementById('race-status-badge').className = 'text-[10px] px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded font-mono font-bold';
 
+            const totalP = racers.length;
             racers.forEach((r, index) => {
                 r.progress = Math.max(0, 0.005 - (index * 0.0006));
-                r.laneOffset = currentPlayers.length === 1 ? 0 : ((index % 5) - 2) * 4.6;
+                r.laneOffset = totalP === 1 ? 0 : (-7.0 + (index / (totalP - 1)) * 14.0);
                 r.targetLaneOffset = r.laneOffset;
                 r.speedMultiplier = 1.0;
-                r.rollAngle = 0;
                 r.spinTimer = 0;
                 r.hasShield = false;
                 r.bumperInvulTimer = 0;
+                r.airLaunchHeight = 0;
+                r.airLaunchVelocity = 0;
+                r.flipperCooldown = 0;
                 r.finished = false;
                 r.finishTime = 0;
                 r.currentItem = null;
                 r.velocityOffset = 0;
+                r.aiDecisionTimer = Math.random() * 0.4;
             });
 
             proceduralSpawnEntities();
-
             selectedTargetRacer = racers[0];
             alignRacersToTrack();
             updateLeaderboardUI();
@@ -1614,7 +2218,7 @@
                 id: 'p' + (Date.now() % 10000),
                 name: `구슬 ${currentPlayers.length + 1}`,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                desc: '질주하는 크롬 마블!'
+                desc: '자율 주행 슈퍼 마블!'
             });
             renderPlayerEditList();
         }
@@ -1630,7 +2234,7 @@
                 id: 'p' + (i + 1),
                 name: name,
                 color: palette[i % palette.length],
-                desc: '질주하는 슈퍼 마블!'
+                desc: '자율 주행 슈퍼 마블!'
             }));
 
             document.getElementById('bulk-player-input').value = '';
@@ -1639,7 +2243,12 @@
 
         function resetDefaultPlayers() {
             currentPlayers = [
-                { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '빛나는 황금빛 크롬 스틸볼!' }
+                { id: 'p1', name: 'JENNIE', color: '#ff2d75', desc: '황금빛 크롬 챔피언!' },
+                { id: 'p2', name: 'MIN SO-HEE', color: '#00e5ff', desc: '날카로운 레인 파고들기!' },
+                { id: 'p3', name: '제니꾹빡', color: '#ffd700', desc: '폭발적인 공격성!' },
+                { id: 'p4', name: '흰혹등고래', color: '#38bdf8', desc: '묵직한 드래프팅 순항!' },
+                { id: 'p5', name: '관우', color: '#ef4444', desc: '강력한 정면 돌파!' },
+                { id: 'p6', name: '루피', color: '#00ff66', desc: '변칙적인 와이드 드리프터!' }
             ];
             renderPlayerEditList();
         }
@@ -1672,8 +2281,8 @@
                         <span class="font-bold text-[12px] tracking-wide" style="color: ${r.colorStr}">${r.name}</span>
                         ${r.currentItem ? `<span class="text-xs animate-bounce">${r.currentItem}</span>` : ''}
                     </div>
-                    <span class="text-[10px] font-mono ${r.finished ? 'text-green-400 font-bold' : (r.spinTimer > 0 ? 'text-red-400 font-bold animate-pulse' : (r.speedMultiplier > 1.5 ? 'text-yellow-300 font-bold' : 'text-white/60'))}">
-                        ${r.finished ? 'GOAL!' : (r.spinTimer > 0 ? 'SPIN!' : (r.speedMultiplier > 1.5 ? 'BOOST!' : Math.floor(r.progress * 100) + '%'))}
+                    <span class="text-[10px] font-mono ${r.finished ? 'text-green-400 font-bold' : (r.airLaunchHeight > 0 ? 'text-yellow-300 font-bold animate-bounce' : (r.spinTimer > 0 ? 'text-red-400 font-bold animate-pulse' : (r.speedMultiplier > 1.5 ? 'text-cyan-300 font-bold' : 'text-white/60')))}">
+                        ${r.finished ? 'GOAL!' : (r.airLaunchHeight > 0 ? 'LAUNCH!' : (r.spinTimer > 0 ? 'SPIN!' : (r.speedMultiplier > 1.5 ? 'BOOST!' : Math.floor(r.progress * 100) + '%')))}
                     </span>
                 </div>
             `).join('');
@@ -1756,31 +2365,6 @@
             }, 2600);
         }
 
-        function createSparks(pos, colorHex) {
-            const count = 16;
-            const geom = new THREE.BufferGeometry();
-            const positions = [];
-            const velocities = [];
-
-            for (let i = 0; i < count; i++) {
-                positions.push(pos.x, pos.y, pos.z);
-                velocities.push(
-                    (Math.random() - 0.5) * 2.2,
-                    Math.random() * 1.6 + 0.4,
-                    (Math.random() - 0.5) * 2.2
-                );
-            }
-
-            geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            const mat = new THREE.PointsMaterial({
-                color: colorHex, size: 0.8, transparent: true, opacity: 1.0, blending: THREE.AdditiveBlending
-            });
-
-            const pSystem = new THREE.Points(geom, mat);
-            scene.add(pSystem);
-            particles.push({ system: pSystem, velocities: velocities, life: 25 });
-        }
-
         function setupMouseControls() {
             const container = document.getElementById('canvas-container');
             
@@ -1804,17 +2388,20 @@
             window.addEventListener('mouseup', () => { isMouseDown = false; });
             
             container.addEventListener('wheel', (e) => {
-                orbitRadius = Math.max(15, Math.min(450, orbitRadius + e.deltaY * 0.08));
+                orbitRadius = Math.max(15, Math.min(500, orbitRadius + e.deltaY * 0.08));
             });
         }
 
-        // --- 16. 메인 애니메이션 렌더 루프 ---
+        // --- 16. 메인 렌더 루프 ---
         function animate() {
             requestAnimationFrame(animate);
 
+            const rawDelta = clock.getDelta();
+            const deltaTime = Math.min(rawDelta, 0.1);
+
             if (raceStarted && !racePaused && !raceEnded && trackSpline) {
-                raceTime += 0.016;
-                updatePhysicsAndItems();
+                raceTime += deltaTime;
+                updatePhysicsAndItems(deltaTime);
                 alignRacersToTrack();
 
                 if (Math.floor(raceTime * 10) % 8 === 0) {
@@ -1822,23 +2409,7 @@
                 }
             }
 
-            for (let idx = particles.length - 1; idx >= 0; idx--) {
-                const p = particles[idx];
-                const posArr = p.system.geometry.attributes.position.array;
-                for (let i = 0; i < p.velocities.length / 3; i++) {
-                    posArr[i * 3] += p.velocities[i * 3];
-                    posArr[i * 3 + 1] += p.velocities[i * 3 + 1];
-                    posArr[i * 3 + 2] += p.velocities[i * 3 + 2];
-                    p.velocities[i * 3 + 1] -= 0.04;
-                }
-                p.system.geometry.attributes.position.needsUpdate = true;
-                p.system.material.opacity -= 0.04;
-                p.life--;
-                if (p.life <= 0) {
-                    scene.remove(p.system);
-                    particles.splice(idx, 1);
-                }
-            }
+            const pTimeScale = deltaTime / 0.016;
 
             if (selectedTargetRacer && trackSpline) {
                 const targetPos = selectedTargetRacer.mesh.position;
@@ -1855,7 +2426,7 @@
                         .add(normal.clone().multiplyScalar((orbitAngleY - Math.PI / 4) * (orbitRadius * 0.25)));
 
                     desiredCameraPos.copy(targetPos).add(rotatedOffset);
-                    camera.position.lerp(desiredCameraPos, 0.12);
+                    camera.position.lerp(desiredCameraPos, 0.12 * pTimeScale);
                     camera.lookAt(targetPos.clone().add(normal.clone().multiplyScalar(1.5)));
 
                 } else if (cameraMode === 'action') {
@@ -1864,7 +2435,7 @@
                         .add(normal.clone().multiplyScalar(Math.sin(orbitAngleY) * (orbitRadius * 0.12)));
 
                     desiredCameraPos.copy(targetPos).add(baseOffset);
-                    camera.position.lerp(desiredCameraPos, 0.12);
+                    camera.position.lerp(desiredCameraPos, 0.12 * pTimeScale);
                     camera.lookAt(targetPos);
 
                 } else if (cameraMode === 'drone') {
@@ -1874,7 +2445,7 @@
                     desiredCameraPos.copy(targetPos)
                         .add(new THREE.Vector3(Math.sin(orbitAngleX) * droneDist, droneHeight, Math.cos(orbitAngleX) * droneDist));
 
-                    camera.position.lerp(desiredCameraPos, 0.09);
+                    camera.position.lerp(desiredCameraPos, 0.09 * pTimeScale);
                     camera.lookAt(targetPos);
 
                 } else if (cameraMode === 'orbit') {
@@ -1889,10 +2460,12 @@
             if (screenShakeIntensity > 0) {
                 camera.position.x += (Math.random() - 0.5) * screenShakeIntensity;
                 camera.position.y += (Math.random() - 0.5) * screenShakeIntensity;
-                screenShakeIntensity *= 0.9;
+                screenShakeIntensity *= Math.pow(0.9, pTimeScale);
             }
 
-            if (renderer && scene && camera) {
+            if (composer) {
+                composer.render();
+            } else if (renderer && scene && camera) {
                 renderer.render(scene, camera);
             }
 
@@ -1904,15 +2477,13 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            if (composer) composer.setSize(window.innerWidth, window.innerHeight);
         }
 
         window.onload = function() {
-            // 스페이스바 단축키 이벤트 리스너
             window.addEventListener('keydown', (e) => {
                 const tag = e.target.tagName.toLowerCase();
-                if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) {
-                    return;
-                }
+                if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
 
                 if (e.code === 'Space' || e.key === ' ') {
                     e.preventDefault();
@@ -1928,7 +2499,7 @@
 
             initThree();
             animate();
-            showCinematicSubtitle("🎬 JENNIE 볼 준비 완료! [레이스 스타트] 또는 [Space]를 눌러주세요.");
+            showCinematicSubtitle("🎬 울트라 PBR 그래픽스 에디션 가동! [레이스 스타트] 또는 [Space]");
         };
     </script>
 </body>
