@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>허제니 퀴즈 아레나 | MBTI 상황 추론 실전 에디션 (100제)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg-dark:#050914;
+  --panel-bg:rgba(9,16,34,.94);
+  --panel-border:rgba(93,157,255,.28);
+  --p1-cyan:#54e8ff;
+  --p1-glow:rgba(40,205,255,.26);
+  --p1-dark:rgba(32,153,255,.12);
+  --p2-red:#ff637e;
+  --p2-glow:rgba(255,65,105,.24);
+  --p2-dark:rgba(255,55,95,.12);
+  --gold:#ffd477;
+  --gold-glow:rgba(255,190,76,.24);
+  --success:#55f2b0;
+  --danger:#ff5473;
+  --text-main:#f5f8ff;
+  --text-muted:#a8b8d5;
+  --font-num:'Orbitron',ui-monospace,monospace;
+  --font-kr:'Noto Sans KR',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;word-break:keep-all;overflow-wrap:anywhere}
+html,body{width:100%;height:100%;min-height:0;overflow:hidden;background:var(--bg-dark);color:var(--text-main);font-family:var(--font-kr)}
+body{
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(24,64,124,.24),transparent 58%),
+    linear-gradient(135deg,#050914 0%,#091126 52%,#070a16 100%);
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.24;background-image:linear-gradient(rgba(98,153,230,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(98,153,230,.08) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,black,transparent 92%)}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.6}
+.ambient-scanline{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.12;background:linear-gradient(transparent 50%,rgba(0,0,0,.22) 50%);background-size:100% 4px}
+.app{position:relative;z-index:1;width:100%;height:100%;min-height:0;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px;min-height:58px;flex-shrink:0;background:linear-gradient(110deg,rgba(13,24,48,.97),rgba(8,14,30,.94));border:1px solid rgba(119,166,238,.25);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.045);backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;font-size:20px;color:#08101e;background:linear-gradient(145deg,#fff0b7,#eab44c 62%,#9b6724);clip-path:polygon(50% 0,92% 20%,100% 62%,68% 100%,22% 90%,0 48%,16% 14%);box-shadow:0 0 20px var(--gold-glow)}
+.brand-title{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.brand-title h1{font-size:clamp(16px,1.35vw,23px);font-weight:900;letter-spacing:-.7px;background:linear-gradient(100deg,#fff 15%,#a9eaff 85%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-badge{font-size:11px;color:#ffdf98;font-weight:900;background:rgba(255,194,91,.09);border:1px solid rgba(255,202,112,.32);padding:5px 8px;border-radius:5px;white-space:nowrap}
+.top-actions{display:flex;gap:8px;flex-shrink:0}
+.btn{font-family:var(--font-kr);font-size:14px;font-weight:800;letter-spacing:-.2px;padding:9px 14px;border-radius:7px;border:1px solid rgba(153,181,226,.24);background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));color:var(--text-main);cursor:pointer;transition:border-color .16s ease,background .16s ease,transform .16s ease,box-shadow .16s ease}
+.btn:hover:not(:disabled){border-color:rgba(84,232,255,.7);background:rgba(84,232,255,.1);box-shadow:0 0 18px rgba(84,232,255,.1)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn.primary{background:linear-gradient(115deg,#a9f3ff,#52c8f4 58%,#6ca5ff);border:1px solid rgba(202,248,255,.8);color:#061226;box-shadow:0 5px 18px rgba(49,174,235,.17);font-weight:900}
+.btn.primary:hover:not(:disabled){background:linear-gradient(115deg,#d2f9ff,#78ddff 58%,#a2c4ff);box-shadow:0 6px 22px rgba(49,174,235,.25)}
+.btn.danger{border-color:rgba(255,84,115,.48);color:#ff8da2;background:rgba(255,55,95,.07)}
+.stage{flex:1;min-height:0;position:relative;background:linear-gradient(145deg,rgba(10,18,38,.94),rgba(6,12,27,.96));border:1px solid rgba(110,159,235,.28);border-radius:14px;box-shadow:0 18px 55px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035);overflow:hidden;display:flex}
+.stage:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(55,139,226,.045),transparent 32%,transparent 68%,rgba(239,81,127,.035));z-index:0}
+.screen{width:100%;height:100%;min-height:0;display:none;position:relative;z-index:1}
+.screen.active{display:flex;flex-direction:column}
+.setup-container,.result-container{width:100%;max-width:1040px;margin:auto;padding:clamp(16px,3vh,34px) clamp(16px,3vw,40px);text-align:center}
+.hero-title{font-size:clamp(30px,4vw,56px);font-weight:900;line-height:1.18;letter-spacing:-1.8px;margin:14px 0 12px}
+.hero-title span,.result-title span{background:linear-gradient(100deg,#fff0bb,#ffd477 48%,#ff9f74);-webkit-background-clip:text;background-clip:text;color:transparent}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0;text-align:left}
+.field{background:linear-gradient(135deg,rgba(25,40,70,.6),rgba(10,18,36,.8));border:1px solid rgba(139,170,221,.19);padding:15px;border-radius:10px}
+.field label{display:block;font-size:14px;font-weight:900;color:#9feeff;margin-bottom:9px}
+.field input,.field select{width:100%;background:#080f20;color:#fff;border:1px solid rgba(149,181,230,.3);padding:12px 14px;font-size:16px;font-weight:700;outline:none;border-radius:7px}
+.field input:focus,.field select:focus{border-color:var(--p1-cyan);box-shadow:0 0 0 3px rgba(84,232,255,.09)}
+.speed-arena{display:grid;grid-template-columns:minmax(175px,clamp(185px,16vw,270px)) minmax(0,1fr) minmax(175px,clamp(185px,16vw,270px));width:100%;height:100%;min-height:0;gap:clamp(8px,1vw,16px);padding:clamp(10px,1.4vw,20px)}
+.fighter-card{display:flex;flex-direction:column;min-width:0;min-height:0;background:linear-gradient(155deg,rgba(18,32,58,.92),rgba(8,15,30,.96));border:1px solid rgba(139,170,221,.22);border-radius:12px;padding:clamp(12px,1.2vw,20px);position:relative;justify-content:space-between;overflow:hidden;transition:opacity .2s ease,border-color .2s ease,box-shadow .2s ease}
+.fighter-card:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--team-color);opacity:.95}
+.fighter-card:after{content:"";position:absolute;right:-45px;top:50px;width:130px;height:130px;border:1px solid color-mix(in srgb,var(--team-color) 20%,transparent);transform:rotate(45deg);pointer-events:none}
+.fighter-card.blue{--team-color:var(--p1-cyan);--team-glow:var(--p1-glow)}
+.fighter-card.red{--team-color:var(--p2-red);--team-glow:var(--p2-glow)}
+.fighter-card.active-turn{border-color:var(--team-color);box-shadow:0 0 0 1px var(--team-glow),0 10px 32px var(--team-glow),inset 0 0 28px var(--team-glow)}
+.fighter-card.disabled-turn{opacity:.48;filter:saturate(.55)}
+.fighter-name{position:relative;z-index:1;font-size:clamp(17px,1.55vw,25px);font-weight:900;line-height:1.3;margin:8px 0 6px;color:var(--team-color);overflow-wrap:anywhere}
+.fighter-rank{position:relative;z-index:1;font-size:clamp(12px,.95vw,15px);font-weight:800;color:var(--text-muted)}
+.fighter-score-box{position:relative;z-index:1;margin:18px 0;text-align:center;background:rgba(2,7,17,.55);padding:clamp(12px,1.3vw,20px) 8px;border-radius:9px;border:1px solid rgba(255,255,255,.075)}
+.fighter-score{font-family:var(--font-num);font-size:clamp(32px,3.2vw,54px);font-weight:900;line-height:1.15;letter-spacing:-1.8px}
+.blue .fighter-score{color:var(--p1-cyan);text-shadow:0 0 22px rgba(84,232,255,.15)}
+.red .fighter-score{color:var(--p2-red);text-shadow:0 0 22px rgba(255,99,126,.15)}
+.buzzer-tag{position:relative;z-index:1;font-size:clamp(13px,1vw,16px);font-weight:900;padding:11px 8px;border-radius:7px;text-align:center;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.12);color:var(--text-muted)}
+.active-turn .buzzer-tag{background:var(--team-color);border-color:var(--team-color);color:#07101f;box-shadow:0 0 18px var(--team-glow)}
+#meta0,#meta1{position:relative;z-index:1;font-size:clamp(12px,.9vw,14px)!important;line-height:1.5;margin-top:12px}
+.main-stage-col{display:flex;flex-direction:column;justify-content:space-between;padding:4px clamp(2px,.6vw,10px);min-width:0;min-height:0;gap:clamp(8px,1.2vh,14px)}
+.center-hud-bar{display:flex;align-items:center;justify-content:space-between;gap:clamp(8px,1vw,16px);padding:4px 0 12px;border-bottom:1px solid rgba(145,177,229,.18);flex-shrink:0}
+.round-badge{background:rgba(255,212,119,.08);border:1px solid rgba(255,212,119,.45);color:var(--gold);padding:8px 12px;font-size:clamp(12px,.95vw,15px);font-weight:900;font-family:var(--font-num);letter-spacing:.8px;border-radius:6px;white-space:nowrap}
+.progress-wrap{flex:1;height:7px;background:rgba(255,255,255,.09);border-radius:99px;overflow:hidden}
+.progress{height:100%;width:0%;background:linear-gradient(90deg,#6ee9ff,#8faaff,#ff8b9f);transition:width .35s ease}
+.timer{font-family:var(--font-num);font-size:clamp(27px,2.8vw,43px);font-weight:900;min-width:clamp(64px,6vw,92px);text-align:right;color:var(--p1-cyan);text-shadow:0 0 18px rgba(84,232,255,.18);white-space:nowrap}
+.timer.urgent{color:var(--danger);text-shadow:0 0 18px rgba(255,84,115,.25);animation:timerPulse .8s ease-in-out infinite alternate}
+@keyframes timerPulse{to{opacity:.72}}
+.question-box{text-align:center;padding:clamp(4px,.8vh,10px) 4px;margin:0;flex-shrink:0}
+.category{display:inline-flex;align-items:center;justify-content:center;font-size:clamp(13px,1vw,16px);font-weight:900;color:var(--gold);background:rgba(255,212,119,.08);border:1px solid rgba(255,212,119,.3);padding:6px 14px;border-radius:5px;margin-bottom:clamp(8px,1.1vh,13px)}
+.question{font-size:clamp(18px,1.65vw,27px);font-weight:900;line-height:1.45;text-shadow:0 2px 18px rgba(0,0,0,.35);margin-bottom:8px;letter-spacing:-.6px;text-wrap:balance}
+.question-sub{font-size:clamp(14px,1.05vw,17px);color:#c0cde3;font-weight:700;line-height:1.45;min-height:1.45em}
+.speed-answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1vw,14px);margin:4px 0;flex:1;min-height:0;max-height:360px}
+.speed-ans-btn{position:relative;min-width:0;min-height:68px;background:linear-gradient(145deg,rgba(21,35,61,.96),rgba(9,17,34,.98));border:1px solid rgba(151,180,225,.28);color:#f7f9ff;padding:clamp(10px,1.1vw,18px);border-radius:10px;font-size:clamp(17px,1.45vw,25px);font-weight:900;text-align:left;cursor:pointer;display:flex;align-items:center;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease;line-height:1.35;letter-spacing:-.4px;box-shadow:inset 0 1px rgba(255,255,255,.035)}
+.speed-ans-btn:before{content:"";position:absolute;left:0;top:16%;bottom:16%;width:3px;background:rgba(116,167,236,.5);border-radius:0 3px 3px 0}
+.speed-ans-btn:hover:not(:disabled){border-color:var(--gold);background:linear-gradient(145deg,rgba(54,56,66,.98),rgba(21,27,42,.98));box-shadow:0 0 0 1px rgba(255,212,119,.12),0 8px 20px rgba(0,0,0,.18)}
+.speed-ans-btn .letter{width:clamp(32px,2.5vw,42px);height:clamp(32px,2.5vw,42px);background:rgba(128,167,224,.12);border:1px solid rgba(143,181,235,.2);border-radius:7px;display:grid;place-items:center;font-family:var(--font-num);font-size:clamp(14px,1.1vw,19px);font-weight:900;margin-right:clamp(10px,1vw,16px);flex-shrink:0;color:#b9dfff}
+.speed-ans-btn span:last-child{min-width:0}
+.speed-ans-btn:disabled{cursor:default}
+.speed-ans-btn.is-correct{background:linear-gradient(145deg,rgba(20,111,87,.65),rgba(8,48,47,.96))!important;border-color:var(--success)!important;color:#d9fff0!important;box-shadow:0 0 24px rgba(85,242,176,.12)!important}
+.speed-ans-btn.is-correct .letter{background:rgba(85,242,176,.15);color:var(--success);border-color:rgba(85,242,176,.45)}
+.speed-ans-btn.is-wrong{background:rgba(106,24,45,.42)!important;border-color:rgba(255,84,115,.58)!important;color:#ffb3c0!important;opacity:.5!important;cursor:not-allowed;text-decoration:line-through}
+.reveal-banner{display:none;width:100%;margin:10px auto 0;padding:clamp(10px,1vw,16px) 18px;background:linear-gradient(120deg,rgba(12,80,66,.35),rgba(12,38,49,.6));border:1px solid rgba(85,242,176,.68);border-radius:9px;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,.12)}
+.reveal-banner.show{display:block;animation:bannerIn .22s ease-out}
+@keyframes bannerIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.reveal-banner strong{color:var(--success);font-size:clamp(17px,1.4vw,23px);font-weight:900;line-height:1.35}
+.reveal-banner p{margin-top:5px;font-size:clamp(13px,1vw,16px);font-weight:700;color:#e0f8ef;line-height:1.5}
+.controls-bar{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid rgba(145,177,229,.16);flex-shrink:0}
+.controls-bar .btn{padding:9px clamp(10px,1.2vw,18px);font-size:clamp(12px,.95vw,15px)}
+.result-title{font-size:clamp(30px,4vw,54px);font-weight:900;letter-spacing:-1px}
+.winner-card{margin:clamp(12px,2vh,24px) auto;padding:clamp(16px,2vh,26px);max-width:760px;background:radial-gradient(ellipse at 50% 0,rgba(255,212,119,.13),transparent 70%),linear-gradient(145deg,rgba(22,32,55,.94),rgba(7,13,27,.96));border:1px solid rgba(255,212,119,.55);border-radius:14px;box-shadow:0 12px 35px rgba(0,0,0,.2)}
+.crown{font-size:clamp(38px,4vw,58px)}
+.winner-name{font-size:clamp(28px,3vw,42px);font-weight:900;color:var(--gold);margin:8px 0;overflow-wrap:anywhere}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;text-align:left;margin:16px 0}
+.result-player{background:linear-gradient(145deg,rgba(22,35,59,.8),rgba(9,16,32,.9));border:1px solid rgba(151,180,225,.2);padding:16px;border-radius:10px}
+.result-player h3{font-size:clamp(16px,1.5vw,22px);font-weight:900;margin-bottom:8px;overflow-wrap:anywhere}
+.stat-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;font-size:14px;color:var(--text-muted);border-top:1px solid rgba(255,255,255,.08)}
+.stat-row b{color:#fff;font-size:15px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,12px);max-width:90vw;background:#edf8ff;color:#07101e;font-weight:900;font-size:16px;padding:12px 24px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:9999;box-shadow:0 12px 35px rgba(0,0,0,.3)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+@media (max-width:1100px){
+  .app{padding:8px;gap:7px}.topbar{min-height:50px;padding:6px 10px}.brand-mark{width:32px;height:32px}.brand-title{gap:6px}.brand-badge{font-size:10px;padding:4px 6px}
+  .speed-arena{grid-template-columns:minmax(135px,18%) minmax(0,1fr) minmax(135px,18%);gap:8px;padding:9px}
+  .fighter-card{padding:10px}.fighter-score-box{margin:12px 0}.question{font-size:clamp(17px,2.0vw,24px)}.speed-ans-btn{font-size:clamp(16px,1.6vw,22px);padding:10px}.controls-bar{gap:6px}.controls-bar .btn{padding:8px 9px}
+}
+@media (max-height:720px){
+  .app{padding:7px 10px;gap:7px}.topbar{min-height:44px;padding:5px 12px}.brand-mark{width:30px;height:30px;font-size:16px}.stage{border-radius:10px}
+  .speed-arena{padding:8px}.main-stage-col{gap:6px}.center-hud-bar{padding-bottom:6px}.question-box{padding:0 2px}.category{margin-bottom:5px;padding:4px 10px}.question{font-size:clamp(16px,1.6vw,22px);line-height:1.3;margin-bottom:4px}.question-sub{font-size:13px}.speed-answer-grid{gap:7px;max-height:none}.speed-ans-btn{min-height:54px;padding:8px 10px;font-size:clamp(15px,1.3vw,20px)}.speed-ans-btn .letter{width:28px;height:28px;margin-right:9px}.controls-bar{padding-top:6px}.controls-bar .btn{padding:6px 10px}.fighter-score-box{margin:8px 0;padding:10px 6px}.fighter-score{font-size:clamp(29px,2.6vw,42px)}
+}
+@media (max-width:760px){
+  .app{padding:5px;gap:5px}.topbar{min-height:44px;padding:5px 8px}.brand{gap:7px}.brand-mark{width:27px;height:27px;font-size:14px}.brand-title h1{font-size:14px}.brand-badge{display:none}.top-actions{gap:4px}.top-actions .btn{font-size:11px;padding:6px 7px}
+  .speed-arena{grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr);gap:6px;padding:7px}
+  .fighter-card{min-height:74px;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 8px}
+  .fighter-card:after{display:none}.fighter-card>div:first-child{grid-row:1;grid-column:1}.fighter-score-box{grid-row:1 / span 2;grid-column:2;margin:0;padding:5px 8px;min-width:70px}.fighter-score-box>div:first-child{font-size:10px!important}.fighter-score{font-size:25px}.fighter-name{font-size:14px;margin:0}.fighter-rank{font-size:10px}.buzzer-tag{grid-column:1;font-size:11px;padding:4px}.fighter-card #meta0,.fighter-card #meta1{grid-column:1 / -1;font-size:10px!important;margin:0;text-align:left!important}
+  .main-stage-col{grid-column:1 / -1;grid-row:2;padding:2px;gap:6px}.center-hud-bar{padding-bottom:6px}.round-badge{font-size:10px;padding:5px 7px}.timer{font-size:25px;min-width:60px}.question{font-size:clamp(16px,4.1vw,23px)}.question-sub{font-size:12px}.speed-answer-grid{gap:7px}.speed-ans-btn{font-size:clamp(15px,3.6vw,20px);min-height:56px;padding:8px}.speed-ans-btn .letter{width:26px;height:26px;font-size:12px;margin-right:7px}.controls-bar{gap:5px}.controls-bar .btn{font-size:11px;padding:6px 7px}
+  .setup-container,.result-container{padding:14px}.setup-grid{gap:8px;margin:14px 0}.field{padding:9px}.field label{font-size:12px}.field input,.field select{font-size:14px;padding:9px}.hero-title{font-size:26px}.result-grid{gap:8px}.result-player{padding:10px}
+}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="ambient-scanline"></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🎭</div>
+      <div class="brand-title">
+        <span class="brand-badge">SITUATION MBTI 100</span>
+        <h1>허제니 퀴즈 아레나</h1>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn" id="soundBtn">🔊 효과음 켜짐</button>
+      <button class="btn" id="fullBtn">⛶ 전체 화면</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <!-- 설정 화면 -->
+    <section class="screen active" id="setupScreen">
+      <div class="setup-container">
+        <div style="color:var(--gold); font-size: 14px; font-weight: 900; letter-spacing: 2px;">실전 상황 추론 심리 배틀</div>
+        <h2 class="hero-title">이 사람의 <span>MBTI 유형</span>은?</h2>
+        <p style="font-size:15px; color:var(--text-muted); margin-bottom:18px;">
+          16개 전 성격유형이 완벽히 균등하게 출제됩니다! 상황 속 행동을 분석해 정답을 맞혀보세요.
+        </p>
+        <div class="setup-grid">
+          <div class="field">
+            <label for="name1">도전자 1 (🔵 블루 진영 · 키패드 1~4)</label>
+            <input id="name1" maxlength="16" value="도전자 A" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="name2">도전자 2 (🔴 레드 진영 · 키패드 7~0)</label>
+            <input id="name2" maxlength="16" value="도전자 B" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="roundCount">대결 라운드 수</label>
+            <select id="roundCount">
+              <option value="10">10문제 · 스피드전</option>
+              <option value="20" selected>20문제 · 스탠다드</option>
+              <option value="50">50문제 · 하프 토너먼트</option>
+              <option value="100">100문제 · 마라톤 전 문항 완주</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="timeLimit">문제 제한 시간</label>
+            <select id="timeLimit">
+              <option value="15">15초 · 번개전</option>
+              <option value="20" selected>20초 · 표준</option>
+              <option value="30">30초 · 여유</option>
+              <option value="0">무제한</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn primary" id="startBtn" style="font-size: 18px; padding: 13px 36px;">배틀 시작하기 ➔</button>
+      </div>
+    </section>
+
+    <!-- 배틀 아레나 화면 -->
+    <section class="screen" id="gameScreen">
+      <div class="speed-arena">
+        <!-- 좌측: 도전자 1 (블루) -->
+        <article class="fighter-card blue" id="card0">
+          <div>
+            <div class="fighter-name" id="playerName0">도전자 A</div>
+            <div class="fighter-rank" id="rank0">심리 관찰자</div>
+          </div>
+          <div class="fighter-score-box">
+            <div style="font-size:13px; color:var(--text-muted); font-weight:800; margin-bottom:4px;">획득 점수</div>
+            <div class="fighter-score" id="score0">0</div>
+          </div>
+          <div class="buzzer-tag" id="buzzer0">버저 대기</div>
+          <div style="font-size:13px; color:var(--text-muted); text-align:center; font-weight:800;" id="meta0">정답 0 · 오답 0</div>
+        </article>
+
+        <!-- 중앙: 문제 및 공용 4지선다 보기 -->
+        <div class="main-stage-col">
+          <div class="center-hud-bar">
+            <span class="round-badge" id="roundLabel">ROUND 01</span>
+            <div class="progress-wrap"><div class="progress" id="progress"></div></div>
+            <div class="timer" id="timer">20</div>
+          </div>
+
+          <div class="question-box">
+            <div class="category" id="category">[상황 에피소드]</div>
+            <h2 class="question" id="question">문제를 불러오는 중...</h2>
+            <div class="question-sub" id="questionSub">상황을 보고 가장 일치하는 MBTI 유형을 선택하세요!</div>
+            <div class="reveal-banner" id="revealBanner">
+              <strong id="revealTitle">정답 공개!</strong>
+              <p id="revealText"></p>
+            </div>
+          </div>
+
+          <!-- 4지선다 공용 대형 타일 (2열 2행) -->
+          <div class="speed-answer-grid" id="sharedAnswers"></div>
+
+          <div class="controls-bar">
+            <button class="btn" id="claimP1Btn" style="border-color:var(--p1-cyan); color:var(--p1-cyan);">🔵 블루 선택권</button>
+            <button class="btn" id="claimP2Btn" style="border-color:var(--p2-red); color:var(--p2-red);">🔴 레드 선택권</button>
+            <button class="btn" id="skipBtn">문제 패스</button>
+            <button class="btn primary" id="nextBtn" hidden>다음 문제 ➔</button>
+            <button class="btn danger" id="endBtn">종료</button>
+          </div>
+        </div>
+
+        <!-- 우측: 도전자 2 (레드) -->
+        <article class="fighter-card red" id="card1">
+          <div>
+            <div class="fighter-name" id="playerName1">도전자 B</div>
+            <div class="fighter-rank" id="rank1">심리 관찰자</div>
+          </div>
+          <div class="fighter-score-box">
+            <div style="font-size:13px; color:var(--text-muted); font-weight:800; margin-bottom:4px;">획득 점수</div>
+            <div class="fighter-score" id="score1">0</div>
+          </div>
+          <div class="buzzer-tag" id="buzzer1">버저 대기</div>
+          <div style="font-size:13px; color:var(--text-muted); text-align:center; font-weight:800;" id="meta1">정답 0 · 오답 0</div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 결과 화면 -->
+    <section class="screen" id="resultScreen">
+      <div class="result-container">
+        <div style="color:var(--gold); font-size: 15px; font-weight: 900;">허제니 퀴즈 아레나 경기 결과</div>
+        <h2 class="result-title">오늘의 <span>성격 간파왕</span></h2>
+        <div class="winner-card">
+          <div class="crown" id="winnerIcon">👑</div>
+          <div class="winner-name" id="winnerName">오늘의 챔피언</div>
+          <div style="font-size: 16px; font-weight: 800; color: #dce6fb;" id="winnerSub">인간 관찰 및 심리 분석 마스터 등극</div>
+        </div>
+        <div class="result-grid" id="resultGrid"></div>
+        <div style="display:flex; justify-content:center; gap:12px;">
+          <button class="btn primary" id="rematchBtn" style="padding:10px 22px; font-size:16px;">↻ 재경기</button>
+          <button class="btn" id="homeBtn" style="padding:10px 22px; font-size:16px;">처음 화면</button>
+          <button class="btn" id="copyBtn" style="padding:10px 22px; font-size:16px;">결과 복사</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// 16개 성격유형 정답 횟수 완전 균등화 (INTJ, INTP, ENFP, ESTJ 각 7회 / 나머지 12개 유형 각 6회 = 총 100문제)
+// 보기 위치 k(0, 1, 2, 3) 각각 정확히 25회씩 완전 4등분 배분 완료
+const QUESTIONS = [
+  // 1 ~ 10
+  {c:'여행 상황', q:'여행 2주 전부터 엑셀에 분 단위 이동 경로, 플랜 B 맛집, 공항 체크인 동선과 준비물 체크리스트를 완벽히 정리해 공유한 사람의 유형은?', a:['ESTJ','ENFP','ISFP','ENTP'], k:0, e:'철저한 사전 계획과 현실적인 체계(Te+Si)로 여행의 일정과 통제를 완벽히 조직하는 전형적인 ESTJ입니다.'},
+  {c:'여행 상황', q:'도착하자마자 "비행기 표만 끊고 왔다! 골목길 걷다가 마음에 드는 식당에 들어가자"며 발길 닿는 대로 즉흥 탐험을 즐기는 사람의 유형은?', a:['ISTJ','ESFP','INTJ','ISFJ'], k:1, e:'사전 계획에 얽매이지 않고 현재의 감각과 즉흥적인 즐거움(Se)을 만끽하는 ESFP입니다.'},
+  {c:'여행 상황', q:'친구들이 인생샷을 찍느라 바쁠 때, 혼자 오래된 고성의 건축 양식 뒤에 숨겨진 철학적 배경과 역사의 흐름을 사색하며 깊은 통찰에 잠긴 사람은?', a:['ESTP','ESFJ','INFJ','ENTJ'], k:2, e:'화려한 현실 풍경 너머의 상징, 의미, 인간의 역사적 영혼을 내적으로 조망하는 Ni+Fe 기반의 INFJ입니다.'},
+  {c:'여행 상황', q:'렌터카 엔진에서 이상 소음이 나자 트렁크에서 장갑을 꺼내 보닛을 열고 기계 부품의 체결 상태를 즉각 분해 점검하여 고쳐내는 사람은?', a:['ENFJ','INFP','ESFJ','ISTP'], k:3, e:'원리와 도구에 대한 직관적 이해와 냉철한 즉각 해결 능력(Ti+Se)을 발휘하는 ISTP입니다.'},
+  {c:'여행 상황', q:'모두가 피곤해할 때 가이드북의 추천 동선 대신 "저 산 너머 폐허에 가보면 엄청난 아이디어가 떠오를 것 같지 않아?"라며 독특한 모험을 제안하는 사람은?', a:['ENFP','ISTJ','ISFJ','ESTJ'], k:0, e:'새로운 가능성과 영감을 외부로 발산하며 모험을 유도하는 Ne 주기능의 ENFP입니다.'},
+  {c:'여행 상황', q:'해외여행 중 동행자가 물갈이로 배탈이 나자, 가방에서 상비약, 보온병, 소화제를 꺼내 정성스레 간호하며 팀원들의 안색을 살피는 사람은?', a:['ENTP','ISFJ','INTJ','ESTP'], k:1, e:'세심한 관찰과 현실적 기억력(Si), 그리고 타인의 필요를 따뜻하게 챙기는 Fe가 결합된 ISFJ입니다.'},
+  {c:'여행 상황', q:'여행 가이드가 설명하는 역사적 사실의 연도가 3년 틀린 것을 발견하고 즉시 스마트폰으로 논문과 위키를 검색해 팩트의 논리적 오류를 지적하는 사람은?', a:['ESFP','ENFJ','INTP','ISFP'], k:2, e:'지적 정밀성과 내면의 논리적 정확성(Ti)을 무엇보다 중요하게 여기는 INTP입니다.'},
+  {c:'여행 상황', q:'숙소 예약이 취소되는 비상사태가 터지자 당황하지 않고 5분 만에 대안 호텔 3곳의 견적과 동선을 비교해 일행에게 일사불란하게 지시하는 사람은?', a:['INFP','ISFP','INFJ','ENTJ'], k:3, e:'위기 상황에서 강력한 리더십과 논리적 전략 실행(Te+Ni)으로 통제력을 발휘하는 ENTJ입니다.'},
+  {c:'여행 상황', q:'유명 관광지의 붐비는 인파를 피해 조용한 골목의 공방에 들어가 말없이 은반지를 세공하며 감각적인 손맛과 여유를 즐기는 사람은?', a:['ISFP','ESTJ','ENTP','ENTJ'], k:0, e:'내면의 미적 감수성(Fi)과 오감의 현재적 체험(Se)을 조용히 즐기는 예술가형 ISFP입니다.'},
+  {c:'여행 상황', q:'패키지여행 중 버스 안에서 마이크를 잡고 모든 승객에게 말을 걸며 순식간에 분위기 메이커가 되어 저녁 단체 뒤풀이까지 주도하는 사람은?', a:['INTJ','ESFJ','INTP','ISTJ'], k:1, e:'주변 사람들의 정서적 유대와 집단의 분위기를 활기차게 이끄는 Fe+Si 기반의 ESFJ입니다.'},
+
+  // 11 ~ 20
+  {c:'업무 상황', q:'신규 프로젝트를 기획할 때 3년 뒤 시장의 기술 패러다임 변화를 예측하고, 이를 관통하는 거대한 아키텍처 비전을 문서화해 제시하는 팀장은?', a:['ESFP','ISFJ','INTJ','ESTP'], k:2, e:'미래의 패턴과 전체 청사진을 수렴하여 전략적 시스템을 구축하는 Ni+Te의 INTJ입니다.'},
+  {c:'업무 상황', q:'회의 중 상사의 모호한 지시에 대해 "기존 규정집 14조 2항의 작성 지침과 과거 3개년 집행 데이터 서식에 맞춰 진행하면 될까요?"라고 묻는 사람은?', a:['ENFP','ENTP','ISFP','ISTJ'], k:3, e:'과거의 표준 절차, 명문화된 규범, 정확한 선례(Si+Te)를 중시하는 철저한 원칙주의자 ISTJ입니다.'},
+  {c:'업무 상황', q:'팀원들 간에 갈등이 생기자 개인 면담을 자청해 양측의 상처받은 감정을 경청하고, 서로의 장점을 살려 원팀으로 화합하도록 격려하는 리더는?', a:['ENFJ','ISTP','INTP','ESTJ'], k:0, e:'사람들의 잠재력을 신뢰하고 정서적 조화와 집단의 성장을 이끄는 Fe+Ni의 ENFJ입니다.'},
+  {c:'업무 상황', q:'모두가 "관행상 불가능하다"고 결론 내린 규제 조항을 보고, 법률의 맹점을 파고들어 기존 상식을 뒤엎는 기발한 우회 전략을 찾아내 토론을 벌이는 사람은?', a:['ISFJ','ENTP','ISTJ','ESFJ'], k:1, e:'기존 질서에 끊임없이 의문을 던지고 새로운 가능성과 지적 논쟁을 즐기는 Ne+Ti의 ENTP입니다.'},
+  {c:'업무 상황', q:'사무실 책상에 아기자기한 식물과 좋아하는 작가의 문구를 두고, 회사의 이익보다 이 프로젝트가 사회적 약자에게 어떤 윤리적 의미를 줄지 고민하는 기획자는?', a:['ESTJ','ENTJ','INFP','ESTP'], k:2, e:'자신의 깊은 신념, 도덕적 가치, 인도주의적 이상(Fi+Ne)을 가장 소중히 여기는 INFP입니다.'},
+  {c:'업무 상황', q:'영업 미팅에서 고객사의 미세한 표정 변화와 사무실 인테리어를 순식간에 파악하고, 상대의 반응에 맞춰 기민하게 화술을 바꾸어 현장 계약을 따내는 사람은?', a:['INTJ','INFJ','INTP','ESTP'], k:3, e:'현재 오감 자극을 기민하게 포착하고 임기응변으로 돌파하는 Se+Ti의 사업가형 ESTP입니다.'},
+  {c:'업무 상황', q:'보고서의 디자인이나 폰트 크기보다 "데이터베이스 설계의 정규화 모델에 개념적 모순이 없는가?"를 새벽까지 파고들어 무결점 시스템을 설계하는 엔지니어는?', a:['INTP','ESFP','ESFJ','ENFP'], k:0, e:'내면의 정밀한 논리 체계와 이론적 무결성(Ti+Ne)을 끝까지 추구하는 INTP입니다.'},
+  {c:'업무 상황', q:'동료의 실수로 부서 전체가 야근 위기에 처하자, 감정적 질책 없이 화이트보드에 긴급 타임라인을 그리고 각자 분담할 태스크를 1분 만에 배분하는 관리자는?', a:['INFP','ESTJ','ISFP','INFJ'], k:1, e:'객관적 상황 판단과 외부 자원의 즉각적인 구조화(Te)를 실행하는 ESTJ입니다.'},
+  {c:'업무 상황', q:'클라이언트의 피드백을 전달할 때 날카로운 비판보다는 상대의 노고를 먼저 인정해주며, 팀원들의 사기가 떨어지지 않도록 세심한 간식을 챙겨주는 선배는?', a:['INTJ','ISTP','ESFJ','ENTP'], k:2, e:'타인의 감정을 배려하고 따뜻한 유대감을 조성하는 Fe+Si의 ESFJ입니다.'},
+  {c:'업무 상황', q:'조직의 복잡한 정치 싸움에 전혀 끼어들지 않고, 오직 자신에게 주어진 실무 기계 작업이나 코딩을 혼자 묵묵히 완벽하게 끝마친 뒤 정시 퇴근하는 직원은?', a:['ENFJ','ESFP','ENFP','ISTP'], k:3, e:'불필요한 인간관계 소모를 배제하고 실용적 문제 해결에 집중하는 Ti+Se의 ISTP입니다.'},
+
+  // 21 ~ 30
+  {c:'연애 상황', q:'연인이 "나 오늘 직장에서 너무 힘들었어"라고 울먹일 때, 상황의 앞뒤 인과관계를 묻기 전에 따뜻하게 안아주며 "정말 속상했겠다"고 공감부터 해주는 유형은?', a:['ENFJ','INTJ','ISTP','ESTJ'], k:0, e:'문제 해결책보다 정서적 교감과 따뜻한 지지를 우선시하는 외향 감정(Fe)의 ENFJ입니다.'},
+  {c:'연애 상황', q:'연인이 "나 회사에서 억울하게 혼났어"라고 할 때, "누가 잘못한 건데? 네 업무 범위가 맞았어? 규정상 네 책임은 어디까지야?"라며 사실관계부터 따지는 유형은?', a:['INFP','ESTJ','ISFP','ENFP'], k:1, e:'감정적 위로보다 사실의 진위와 객관적 인과관계(Te)를 먼저 분석해 해결책을 주려는 ESTJ입니다.'},
+  {c:'연애 상황', q:'좋아하는 사람이 생겼지만 겉으로는 전혀 티를 내지 않고 혼자 일기장에 시를 쓰며 마음속 깊은 곳에서 순수한 이상형으로 간직하는 사람은?', a:['ESTP','ESFP','INFP','ENTJ'], k:2, e:'깊은 내면의 감정(Fi)을 간직하며 겉으로 드러내기보다 소중히 품는 INFP입니다.'},
+  {c:'연애 상황', q:'첫 데이트 장소로 조용하고 어두운 와인바를 골라 인생의 의미, 인간 실존의 고독, 우주의 본질에 대해 밤새 심오한 대화를 나누고 싶어 하는 사람은?', a:['ESFP','ESTP','ESTJ','INFJ'], k:3, e:'표면적인 스몰토크보다 영혼과 내면의 깊은 교감(Ni+Fe)을 갈망하는 INFJ입니다.'},
+  {c:'연애 상황', q:'주말 데이트 때 "오늘 날씨 대박이다! 한강 가서 자전거 타고 저녁엔 핫플 라운지 펍 가자!"라며 즉흥적이고 에너제틱한 하루를 선물하는 사람은?', a:['ESFP','INTJ','INTP','ISTJ'], k:0, e:'현재의 감각적 자극과 즐거움을 함께 나누며 에너지를 발산하는 Se+Fi의 ESFP입니다.'},
+  {c:'연애 상황', q:'연인의 생일 몇 주 전부터 연인이 무심코 지나치며 흘렸던 말을 기억해 두었다가 가장 필요했던 선물을 깜짝 준비하는 사람은?', a:['ENTP','ISFJ','ENTJ','ISTP'], k:1, e:'상대의 세부 정보를 정성스럽게 기억(Si)하여 배려로 실천하는 Fe의 ISFJ입니다.'},
+  {c:'연애 상황', q:'연인과 갈등이 생겼을 때 감정적인 눈물이나 비난 대신, 메모장을 켜고 우리가 왜 다투게 되었는지 논리적 트리 구조로 분석하자고 제안하는 사람은?', a:['ENFP','ESFP','INTJ','ISFP'], k:2, e:'감정 소모를 지양하고 갈등의 근본 원인을 논리적 인과율(Te+Ni)로 해결하려는 INTJ입니다.'},
+  {c:'연애 상황', q:'모임에서 처음 만난 매력적인 이성에게 유쾌한 장난과 위트 있는 농담을 건네며 자연스럽게 분위기를 리드해 전화번호를 받아내는 사람은?', a:['INFJ','INTP','ISFJ','ESTP'], k:3, e:'두려움 없는 순발력과 매력적인 현실 적응력(Se+Ti)을 발휘하는 ESTP입니다.'},
+  {c:'연애 상황', q:'데이트 중 상대방의 말에 호응하면서도 머릿속으로는 "만약 우리가 결혼해서 화성에 집을 짓는다면 어떨까?"라는 기상천외한 상상에 빠져드는 사람은?', a:['ENFP','ISTJ','ESTJ','ISFJ'], k:0, e:'사소한 대화에서도 무한한 가능성과 엉뚱한 아이디어가 발산되는 Ne의 ENFP입니다.'},
+  {c:'연애 상황', q:'연인 사이라도 개인의 독립적인 공간과 취미 시간은 철저히 존중되어야 하며, 감정적으로 과도하게 구속당하는 것을 극도로 답답해하는 사람은?', a:['ESFJ','ISTP','ENFJ','ISFJ'], k:1, e:'자율성과 효율적 개인 영역을 중시하며 감정적 침해를 꺼리는 Ti+Se의 ISTP입니다.'},
+
+  // 31 ~ 40
+  {c:'쇼핑 상황', q:'노트북을 살 때 엑셀로 CPU 벤치마크 점수, 전력 소모량, 포트 구성, 가격 대비 성능비를 완벽히 비교표로 정리한 뒤에야 결제하는 사람은?', a:['ESFP','ENFP','INTP','ISFP'], k:2, e:'데이터와 스펙의 논리적 정합성(Ti)을 철저히 검증해야 직성이 풀리는 INTP입니다.'},
+  {c:'쇼핑 상황', q:'옷가게에 들어가 거울을 보더니 "이 가죽 재킷의 질감과 핏이 지금 내 무드에 완벽해!"라며 가격표도 크게 신경 쓰지 않고 즉시 결제하는 사람은?', a:['ISTJ','INTJ','ISFJ','ESFP'], k:3, e:'현재의 시각적·촉각적 감각과 개인의 직관적 끌림(Se+Fi)에 따라 즉각 구매하는 ESFP입니다.'},
+  {c:'쇼핑 상황', q:'가전제품을 살 때 10년 무상 AS 보증 여부, 브랜드의 오랜 신뢰도, 기존 사용자들의 누적 후기를 꼼꼼히 확인하고 스테디셀러를 택하는 사람은?', a:['ISTJ','ENTP','ENFP','ESTP'], k:0, e:'검증된 과거의 선례와 안정성(Si)을 가장 신뢰하는 원칙주의자 ISTJ입니다.'},
+  {c:'쇼핑 상황', q:'남들이 다 입는 명품 로고 제품을 꺼리고, 친환경 업사이클링 브랜드나 독립 디자이너의 독창적인 철학이 담긴 의류를 골라 입는 사람은?', a:['ESTJ','INFP','ESFJ','ENTJ'], k:1, e:'자신만의 진정성 있는 가치관과 윤리적 의미(Fi)를 소비에 반영하는 INFP입니다.'},
+  {c:'쇼핑 상황', q:'가구 박람회에서 "이 모듈형 책상은 공간에 따라 5가지 형태로 변형 조립할 수 있겠는데?"라며 구조적 혁신에 매료되어 구매하는 사람은?', a:['ISFJ','ESFJ','ENTP','ISTJ'], k:2, e:'새로운 개념과 다용도 변형 가능성(Ne+Ti)에 열광하는 ENTP입니다.'},
+  {c:'쇼핑 상황', q:'백화점 마감 세일 코너에서 신선 식품 할인 품목을 발 빠르게 챙겨 알뜰하게 가족들의 저녁 식탁을 풍성하게 채우는 주부는?', a:['INTJ','INTP','ENTP','ESFJ'], k:3, e:'가족과 지인들의 영양과 일상의 행복을 현실적으로 챙기는 Fe+Si의 ESFJ입니다.'},
+  {c:'쇼핑 상황', q:'캠핑 용품점에 가서 접이식 멀티툴과 티타늄 버너의 금속 결합 마감, 기계적 내구성을 손으로 꼼꼼히 만져보며 감탄하는 사람은?', a:['ISTP','ENFJ','INFJ','INFP'], k:0, e:'도구의 물리적 구조와 기능적 실용성(Ti+Se)을 정확히 평가하는 ISTP입니다.'},
+  {c:'쇼핑 상황', q:'새 집 인테리어를 할 때 10년 뒤의 라이프스타일 변화까지 고려하여 불필요한 장식을 배제하고 미니멀한 첨단 스마트홈 시스템을 구축하는 사람은?', a:['ESFP','INTJ','ISFP','ESFJ'], k:1, e:'장기적인 비전과 고도의 효율성을 중심으로 환경을 통제하는 Ni+Te의 INTJ입니다.'},
+  {c:'쇼핑 상황', q:'플리마켓에서 도예가가 손으로 빚은 비대칭 질감의 찻잔을 보며 흙의 따뜻한 감촉과 마음에 드는 색채에 반해 조용히 소장하는 사람은?', a:['ESTJ','ENTJ','ISFP','ENTP'], k:2, e:'소박하지만 독창적인 미적 감각과 촉각적 아름다움(Fi+Se)을 즐기는 ISFP입니다.'},
+  {c:'쇼핑 상황', q:'고가 장비를 구매할 때 판매원과 협상하여 단체 할인과 추가 사은품을 당당하게 요구해 최상의 가성비로 딜을 성사시키는 사람은?', a:['INFP','INFJ','ISFP','ENTJ'], k:3, e:'목표를 위해 협상과 통제력을 발휘하여 최고의 효율적 결과를 이끌어내는 Te의 ENTJ입니다.'},
+
+  // 41 ~ 50
+  {c:'팀플 상황', q:'대학 조별 과제 첫날, 아무도 말을 안 하자 "제가 조장하겠습니다. 각자 파트 나누고 목요일 18시까지 자료 취합하겠습니다"라고 정리하는 사람은?', a:['ESTJ','INFP','ISFP','INTP'], k:0, e:'추진력 있게 역할을 분담하고 명확한 마감 기준을 수립하는 Te 주기능의 ESTJ입니다.'},
+  {c:'팀플 상황', q:'조별 과제 발표 준비를 할 때 디자인 툴로 3D 그래픽과 인터랙티브한 효과를 넣어 청중의 이목을 사로잡는 화려한 PPT를 뚝딱 만들어오는 사람은?', a:['ISTJ','ESFP','INTJ','INTP'], k:1, e:'시각적 연출과 청중의 즉각적인 반응을 이끌어내는 감각(Se)이 탁월한 ESFP입니다.'},
+  {c:'팀플 상황', q:'조원들이 발표 주제를 못 정해 헤맬 때, "인공지능과 조선시대 유교 사상의 결합 어때?"라며 끊임없이 엉뚱하고 기발한 아이디어를 던지는 사람은?', a:['ISTJ','ISFJ','ENFP','ESTJ'], k:2, e:'틀에 얽매이지 않고 확산적 사고로 아이디어를 브레인스토밍하는 Ne의 ENFP입니다.'},
+  {c:'팀플 상황', q:'조원들이 조사해 온 방대한 자료 속에 담긴 통계적 오류와 논리적 비약을 단번에 찾아내어 논증 구조를 탄탄하게 뜯어고치는 사람은?', a:['ESFP','ESFJ','ENFJ','INTP'], k:3, e:'논리적 모순과 오류를 비판적으로 분석해 바로잡는 Ti의 INTP입니다.'},
+  {c:'팀플 상황', q:'의견 충돌로 조원들 사이에 냉랭한 기류가 흐르자, 중간에서 양쪽의 입장을 부드럽게 대변하며 "우리 맛있는 거 먹으면서 다시 해보자"고 다독이는 사람은?', a:['ESFJ','INTJ','ISTP','ENTP'], k:0, e:'집단의 화합과 정서적 안정을 최우선으로 돌보는 Fe의 ESFJ입니다.'},
+  {c:'팀플 상황', q:'팀플 과제 보고서의 각주 표기법, 폰트 통일, 맞춤법 검사, 참고문헌 양식을 마지막까지 꼼꼼하게 검토하여 완벽한 규격으로 제출하는 사람은?', a:['ENTP','ISTJ','ENFP','ESTP'], k:1, e:'세부 지침과 표준 규격을 철저하게 준수하는 세심한 완성자 ISTJ입니다.'},
+  {c:'팀플 상황', q:'모두가 힘들어하는 거대한 프로젝트의 최종 발표자로 나서서, 압도적인 카리스마와 명확한 어조로 교수님과 청중을 설득해 A+를 받아내는 사람은?', a:['ISFP','INFP','ENTJ','ISFJ'], k:2, e:'자신감 넘치는 전략적 발표로 청중을 설득하고 결과를 쟁취하는 ENTJ입니다.'},
+  {c:'팀플 상황', q:'팀플 회의에는 조용히 참여하지만, 맡은 파트인 파이썬 데이터 크롤링 스크립트를 밤새 완벽하게 코딩해 군더더기 없이 결과물만 툭 올려놓는 사람은?', a:['ENFJ','ESFP','ENFP','ISTP'], k:3, e:'말보다 실질적인 기술적 결과물로 역할을 확실히 끝내는 실용주의자 ISTP입니다.'},
+  {c:'팀플 상황', q:'조별 과제 주제를 다룰 때 사회적 소외 계층의 아픔이나 환경 파괴 문제를 진정성 있게 다루자며 프로젝트의 윤리적 가치를 조원들에게 호소하는 사람은?', a:['INFP','ESTP','ENTJ','ESTJ'], k:0, e:'과제의 결과물에 인간에 대한 따뜻한 가치와 신념(Fi)을 담고자 하는 INFP입니다.'},
+  {c:'팀플 상황', q:'교수님의 피드백이 추상적이어서 다들 멘붕에 빠졌을 때, 교수님이 의도한 본질적 맥락과 숨은 의미를 정확히 꿰뚫어 해석해 방향을 잡아주는 사람은?', a:['ESTP','INFJ','ESFP','ESTJ'], k:1, e:'행간의 숨겨진 의미와 미래의 지향점을 직관적으로 통찰하는 Ni의 INFJ입니다.'},
+
+  // 51 ~ 60
+  {c:'학습 상황', q:'기말고사 시험공부를 할 때 목차를 바탕으로 전체 개념 간의 유기적 연결 관계도를 마인드맵으로 정리하며 인과관계를 이해해야 암기가 되는 사람은?', a:['ESFP','ISFJ','INTJ','ESTP'], k:2, e:'개념 간의 맥락과 구조적 통합(Ni+Te)을 통해 지식을 체계화하는 INTJ입니다.'},
+  {c:'학습 상황', q:'교과서의 형광펜 표시, 기출문제 5개년 오답 정리, 선생님이 수업 중 칠판에 적은 필기를 토시 하나 안 틀리고 단권화 노트에 정리하는 사람은?', a:['ENTP','ENFP','ISFP','ISTJ'], k:3, e:'구체적인 사실 데이터와 축적된 선례를 꼼꼼히 정리하는 Si의 전형적인 ISTJ입니다.'},
+  {c:'학습 상황', q:'시험 전날까지 책 한 글자 안 보다가, 시험 당일 새벽 벼락치기 초인적인 집중력으로 핵심 요약본만 빠르게 훑고 평균 이상의 점수를 받아가는 사람은?', a:['ESTP','INFJ','ISFJ','ISTJ'], k:0, e:'위기 상황에서의 놀라운 임기응변과 순발력(Se+Ti)을 발휘하는 ESTP입니다.'},
+  {c:'학습 상황', q:'스터디 그룹을 직접 결성하여 친구들에게 어려운 수학 개념을 친절하고 열정적으로 강의해주며 함께 성적을 올리자고 동기부여하는 사람은?', a:['INTP','ENFJ','ISTP','INTJ'], k:1, e:'타인의 성장을 돕고 지식을 나누며 정서적 시너지를 내는 Fe+Ni의 ENFJ입니다.'},
+  {c:'학습 상황', q:'수업 시간에 선생님의 설명에 대해 "선생님, 그런데 그 이론의 반례로 이런 경우는 어떻게 설명되나요?"라며 지적 호기심으로 질문을 쏟아내는 사람은?', a:['ISFJ','ISTJ','ENTP','ESFJ'], k:2, e:'기존 지식의 논리적 허점을 파고들며 지적 토론을 유발하는 Ne+Ti의 ENTP입니다.'},
+  {c:'학습 상황', q:'독서실의 차가운 분위기보다 아늑한 방에서 자신이 좋아하는 음악을 틀어놓고, 문학 작품을 읽으며 감정이입해 눈물을 훔치는 학생은?', a:['ESTJ','ENTJ','ESTP','INFP'], k:3, e:'텍스트 이면의 정서와 인물의 마음에 깊이 공명하는 Fi 중심의 INFP입니다.'},
+  {c:'학습 상황', q:'단순 암기 과목은 질색하지만, 컴퓨터 알고리즘이나 물리학 법칙의 유도 과정을 스스로 증명해 내는 데 며칠 밤을 새우며 희열을 느끼는 학구파는?', a:['INTP','ESFP','ESFJ','ENFP'], k:0, e:'원리의 본질적 이해와 지적 탐구 자체를 순수하게 즐기는 Ti의 INTP입니다.'},
+  {c:'학습 상황', q:'독서실 총무 역할을 맡아 친구들의 출석 체크를 철저히 관리하고, 졸고 있는 친구를 깨워주며 다 같이 합격하자고 응원하는 든든한 맏형 같은 사람은?', a:['INFP','ESTJ','ISFP','INFJ'], k:1, e:'규율을 확립하고 집단의 목표 달성을 체계적으로 관리하는 Te의 ESTJ입니다.'},
+  {c:'학습 상황', q:'공부하다가도 단체 카톡방에 재미있는 짤을 공유하고, 친구들과 쉬는 시간 매점에 가서 수다를 떨어야 에너지가 충전되어 공부가 되는 학생은?', a:['INTJ','INTP','ESFP','ISTJ'], k:2, e:'사람들과의 즉각적인 교류와 활동적인 자극을 통해 생기를 얻는 ESFP입니다.'},
+  {c:'학습 상황', q:'친구들이 질문을 가져오면 자신의 공부 시간을 쪼개어 정성껏 풀이 과정을 적어주고, 친구가 이해할 때까지 따뜻하게 가르쳐주는 사람은?', a:['ENTJ','ISTP','ENTP','ISFJ'], k:3, e:'헌신적이고 자상하게 주변 사람의 필요를 돕는 Si+Fe의 ISFJ입니다.'},
+
+  // 61 ~ 70
+  {c:'모임 상황', q:'시끌벅적한 대규모 파티에 참석했다가 1시간 만에 기가 빨려, 거실 한구석에서 집주인의 고양이와 단둘이 교감하며 시간을 보내는 사람은?', a:['INFP','ESTP','ESFP','ENFJ'], k:0, e:'많은 사람과의 표면적 교류에서 에너지가 빠르게 소진되는 내향 감정형 INFP입니다.'},
+  {c:'모임 상황', q:'파티에 도착하자마자 음악에 맞춰 춤을 추고, 모르는 사람들에게 음료를 건네며 30분 만에 파티의 핵인싸로 등극하는 사람은?', a:['INTJ','ESFP','INTP','ISTJ'], k:1, e:'현장의 열기와 신체적 에너지를 주도하며 사람들을 즐겁게 만드는 Se 주기능의 ESFP입니다.'},
+  {c:'모임 상황', q:'파티 테이블 한쪽에서 소수의 사람들을 모아놓고 인류의 미래, 양자역학, 인공지능 윤리에 대해 열띤 토론의 장을 만들어버리는 사람은?', a:['ISFJ','ESFJ','ENTP','ISFP'], k:2, e:'가벼운 농담보다 지적인 주제로 대화의 장을 확장하는 것을 즐기는 ENTP입니다.'},
+  {c:'모임 상황', q:'술자리가 끝난 뒤 소지품을 잃어버린 사람이 없는지 테이블 밑을 확인하고, 만취한 친구들을 택시에 태워 보낸 뒤 마지막에 귀가하는 사람은?', a:['ENTP','ENTJ','ISTP','ISFJ'], k:3, e:'끝까지 주변을 정돈하고 타인의 안전을 묵묵히 챙기는 헌신적인 ISFJ입니다.'},
+  {c:'모임 상황', q:'동창회 모임 장소의 주차 공간, 1인당 회비 예산, 룸 예약 상태를 사전에 완벽히 조율해 총무 역할을 빈틈없이 수행하는 사람은?', a:['ESTJ','INFP','ENFP','ISFP'], k:0, e:'현실적인 행정 절차와 자원 관리를 확실하게 집행하는 관리자 ESTJ입니다.'},
+  {c:'모임 상황', q:'처음 보는 사람들과도 10분 만에 속마음을 트게 만들고, 그 사람의 인생 고민을 진지하게 들어주며 눈물을 글썽이는 감성적인 인싸는?', a:['ISTJ','ENFP','INTJ','ESTP'], k:1, e:'인간에 대한 무한한 호기심과 따뜻한 공감대로 깊은 대화를 이끄는 ENFP입니다.'},
+  {c:'모임 상황', q:'모임 전체의 분위기를 관찰하다가 소외되어 혼자 겉돌고 있는 내성적인 친구에게 다가가 자연스럽게 대화에 낄 수 있도록 다리를 놓아주는 사람은?', a:['ISTP','INTP','ENFJ','ESTJ'], k:2, e:'모두가 어우러지는 조화로운 공동체를 지향하는 따뜻한 조력자 ENFJ입니다.'},
+  {c:'모임 상황', q:'친구의 생일 파티에서 깜짝 서프라이즈 케이크를 준비하고, 직접 만든 정성 가득한 쿠키를 포장해 선물하며 행복해하는 사람은?', a:['INTJ','ISTP','ENTP','ESFJ'], k:3, e:'주변 사람들에게 실질적인 정성과 사랑을 표현하는 데서 기쁨을 느끼는 ESFJ입니다.'},
+  {c:'모임 상황', q:'단체 모임에서 사람들이 하는 대화를 조용히 듣고 관찰하며, 사람들의 심리와 역학 관계를 머릿속으로 조용히 통찰하고 있는 사람은?', a:['INFJ','ESTP','ESFP','ESFJ'], k:0, e:'겉으로 드러나지 않지만 사람들의 심리적 이면을 직관적으로 꿰뚫어 보는 INFJ입니다.'},
+  {c:'모임 상황', q:'회식 자리가 2차, 3차로 길어지자 "내일 일정이 있어서 먼저 들어가겠습니다"라고 단호하게 인사한 뒤 미련 없이 칼같이 퇴장하는 사람은?', a:['ESFP','ISTJ','ENFP','ESFJ'], k:1, e:'자신의 원칙과 정해진 루틴을 타인의 시선보다 엄격하게 지키는 ISTJ입니다.'},
+
+  // 71 ~ 80
+  {c:'휴식 상황', q:'주말에 스마트폰을 비행기 탑승 모드로 돌려두고, 암막 커튼을 친 채 방 안에서 혼자 침대에 누워 OTT를 보며 완벽한 에너지 충전을 하는 사람은?', a:['ESFP','ENFJ','INTP','ESTP'], k:2, e:'외부와의 접촉을 완전히 차단하고 혼자만의 사색과 휴식에서 에너지를 얻는 내향형 INTP입니다.'},
+  {c:'휴식 상황', q:'토요일 아침 7시에 기상해 조깅을 마치고, 밀린 빨래와 방 청소를 구역별로 완벽히 끝낸 뒤 스케줄러를 확인하며 뿌듯해하는 사람은?', a:['INFP','ENFP','ISFP','ESTJ'], k:3, e:'휴일에도 무계획으로 늘어지지 않고 질서와 청결, 루틴을 유지하는 ESTJ입니다.'},
+  {c:'휴식 상황', q:'날씨가 좋다는 이유 하나만으로 차를 몰고 근교 드라이브를 떠나, 우연히 발견한 강가에 캠핑 의자를 펴고 바람을 맞으며 그림을 그리는 사람은?', a:['ISFP','ESTJ','INTJ','ENTJ'], k:0, e:'자연의 감각적 아름다움 속에서 조용히 내면의 예술성을 표현하는 ISFP입니다.'},
+  {c:'휴식 상황', q:'휴일에 집에서 자전거를 직접 분해해 체인에 기름을 치고, 고장 난 블루투스 스피커의 회로를 납땜하여 완벽히 수리해내는 취미를 가진 사람은?', a:['ENFJ','ISTP','INFP','ESFJ'], k:1, e:'손재주와 기계적 메커니즘을 탐구하며 혼자 집중하는 것을 즐기는 ISTP입니다.'},
+  {c:'휴식 상황', q:'주말에 쉬면서도 새로운 재테크 기법, 글로벌 경제 트렌드 전문 서적을 탐독하며 미래의 자산 포트폴리오를 시뮬레이션하는 사람은?', a:['ESFP','ISFP','INTJ','ESFJ'], k:2, e:'지적 생산성과 장기적인 목표 달성을 위해 휴식 시간에도 전략을 구상하는 INTJ입니다.'},
+  {c:'휴식 상황', q:'주말 아침에 눈뜨자마자 친구들에게 전화를 돌려 "오늘 날씨 짱인데 번개 모임 할 사람?"이라며 약속 3개를 연달아 잡는 사람은?', a:['INTJ','INTP','ISTJ','ESFP'], k:3, e:'사람들과 어울려 활동하고 에너지를 나누는 데서 삶의 활력을 얻는 ESFP입니다.'},
+  {c:'휴식 상황', q:'집 근처 유기견 보호소에 주말 봉사활동을 신청해 강아지들을 목욕시키고 돌보며 가슴 벅찬 보람과 힐링을 느끼는 사람은?', a:['ENFJ','ISTP','ENTP','INTJ'], k:0, e:'생명에 대한 사랑과 봉사를 통해 세상에 긍정적인 온기를 전하는 ENFJ입니다.'},
+  {c:'휴식 상황', q:'휴일에 요리 유튜브를 보며 가족들이 좋아할 만한 전통 한식 갈비찜을 레시피 순서대로 정성스레 만들어 식탁을 차리는 사람은?', a:['ENTP','ISFJ','ENTJ','ISTP'], k:1, e:'가족을 향한 따뜻한 사랑과 헌신을 손수 만든 요리로 표현하는 ISFJ입니다.'},
+  {c:'휴식 상황', q:'서점에 가서 철학, 심리학, 우주과학 코너를 몇 시간 동안 어슬렁거리며 책들을 훑어보고 지적 영감을 채우는 사람은?', a:['ESTP','ESFP','INFP','ESTJ'], k:2, e:'추상적인 관념과 깊은 영혼의 통찰을 제공하는 텍스트에 몰입하는 INFP입니다.'},
+  {c:'휴식 상황', q:'주말 동안 새로운 팟캐스트를 들으며 떠오른 아이디어를 바탕으로 사이드 프로젝트 웹사이트 기획안을 단숨에 써 내려가는 사람은?', a:['ISFJ','ISTJ','ESFJ','ENTP'], k:3, e:'새로운 가능성을 보면 즉각적인 지적 생산과 도전으로 연결하는 ENTP입니다.'},
+
+  // 81 ~ 90
+  {c:'갈등 대처', q:'업무 중 치명적인 시스템 장애가 발생했을 때, "책임 소재는 나중에 따지고, 지금 즉시 백업 서버로 전환하고 고객 공지문부터 띄우세요"라고 결단하는 사람은?', a:['ENTJ','INFP','ISFP','INFJ'], k:0, e:'위기 상황에서 냉철하게 우선순위를 판단하고 즉각적인 실행을 지휘하는 ENTJ입니다.'},
+  {c:'갈등 대처', q:'팀원 간에 심각한 감정 대립이 일어났을 때, 양측의 격앙된 감정이 가라앉을 때까지 묵묵히 기다려준 뒤 각자의 마음속 상처를 어루만져 주는 중재자는?', a:['ESTP','INFJ','ENTJ','ISTP'], k:1, e:'심리적 깊이를 이해하고 인간관계의 근본적인 상처를 치유하려는 INFJ입니다.'},
+  {c:'갈등 대처', q:'상대방이 말도 안 되는 억지 논리로 자신을 비난할 때, 감정적으로 맞서지 않고 상대방 주장의 논리적 모순 3가지를 조목조목 짚어 할 말을 잃게 만드는 사람은?', a:['ESFP','ESFJ','INTP','ENFP'], k:2, e:'객관적 사실과 논리적 반박으로 상대의 억지를 무력화하는 냉철한 INTP입니다.'},
+  {c:'갈등 대처', q:'교통사고가 났을 때 당황하지 않고 즉시 차에서 내려 사고 부위 사진을 각도별로 찍고, 블랙박스 확보 후 보험사에 정확히 접수하는 사람은?', a:['ENFP','INFP','ISFP','ISTJ'], k:3, e:'위기 매뉴얼과 절차에 따라 침착하고 정확하게 대처하는 ISTJ입니다.'},
+  {c:'갈등 대처', q:'길거리에서 시비가 붙었을 때, "어이 형씨, 좋은 날에 왜 그래요? 제가 시원한 음료수 하나 살 테니 풀고 갑시다!"라며 넉살 좋게 싸움을 무마시키는 사람은?', a:['ESTP','INTJ','INFJ','ISTJ'], k:0, e:'탁월한 현장 감각과 위트 있는 임기응변으로 긴장 상황을 유연하게 넘기는 ESTP입니다.'},
+  {c:'갈등 대처', q:'친구가 억울한 누명을 쓰고 비난받을 때, 불이익을 두려워하지 않고 나서서 친구의 결백과 인간적 진실성을 끝까지 지켜주는 의리파는?', a:['ESTJ','INFP','ENTP','ENTJ'], k:1, e:'자신의 도덕적 신념과 소중한 사람의 진실을 목숨처럼 지키는 잔다르크형 INFP입니다.'},
+  {c:'갈등 대처', q:'가게에서 직원이 주문을 잘못 받았을 때, 얼굴 붉히지 않고 "바쁘셔서 헷갈리셨나 봐요. 그냥 먹어도 괜찮습니다"라며 웃어넘겨 주는 너그러운 손님은?', a:['ESTJ','ENTJ','ISFP','INTJ'], k:2, e:'타인과의 불필요한 마찰을 피하고 평화와 조화를 선택하는 온화한 ISFP입니다.'},
+  {c:'갈등 대처', q:'사내에서 부당한 대우를 당했을 때, 사규집과 노동법 조항을 꼼꼼히 검토해 인사팀에 공식적인 시정 요구서를 정식 문서로 제출하는 사람은?', a:['ENFP','ESFP','INFP','ESTJ'], k:3, e:'법과 규칙, 공식적인 절차를 통해 부당함을 시정하는 합리적 원칙주의자 ESTJ입니다.'},
+  {c:'갈등 대처', q:'프로젝트 납기가 코앞인데 외주 업체가 펑크를 내자, 자신이 가진 모든 인맥을 총동원해 2시간 만에 대체 인력을 섭외해 위기를 넘기는 사람은?', a:['ENFP','ISTJ','INTP','INTJ'], k:0, e:'폭넓은 대인 네트워크와 순발력 있는 위기 대처 역량을 발휘하는 ENFP입니다.'},
+  {c:'갈등 대처', q:'단체 행사 중 갑작스러운 폭우로 야외 무대가 취소될 위기에 처하자, 실내 강당으로 장소를 긴급 변경하고 음향 장비를 능숙하게 재배치하는 스태프는?', a:['INFJ','ISTP','INFP','ISFJ'], k:1, e:'돌발 상황에서 현장의 물리적 도구와 환경을 즉각 재조정하는 능력자 ISTP입니다.'},
+
+  // 91 ~ 100
+  {c:'스트레스 상황', q:'평소 매우 차분하고 지적이던 사람이 극심한 번아웃에 빠지자, 충동적으로 폭식을 하거나 명품을 긁어모으며 감각적 쾌락에 탐닉한다면 이 사람의 유형은?', a:['ESFP','ESTP','INTJ','ESFJ'], k:2, e:'Ni 주기능자가 스트레스 한계 상황에서 열등기능인 외향 감각(Se)의 부정적 분출(그립 상태)을 겪는 전형적인 모습입니다.'},
+  {c:'스트레스 상황', q:'평소 감정 표현이 거의 없던 논리적인 엔지니어가 번아웃 상태에서 "아무도 날 존중하지 않아! 다들 날 미워하지?"라며 갑자기 서럽게 폭발한다면?', a:['ENFJ','ESFJ','ENFP','INTP'], k:3, e:'Ti 주기능자가 한계에 달했을 때 열등기능인 외향 감정(Fe)이 미성숙하게 터져 나오는 현상입니다.'},
+  {c:'스트레스 상황', q:'평소 늘 쾌활하고 긍정적이던 사람이 지속적인 좌절을 겪더니, 사소한 편두통 하나에 "나 뇌종양 아닐까?"라며 극단적인 건강염려증에 시달린다면?', a:['ENFP','ISTJ','ISFJ','ESTJ'], k:0, e:'Ne 주기능자가 극심한 스트레스 하에서 열등기능인 내향 감각(Si)의 병적인 신체 집착으로 퇴행한 모습입니다.'},
+  {c:'스트레스 상황', q:'평소 매사를 철저히 계획하고 빈틈없이 일하던 관리자가 번아웃이 오자, "앞으로 우리 회사는 망할 거야"라며 파국적인 미래 망상에 사로잡힌다면?', a:['ENTP','ISTJ','ESTP','ESFP'], k:1, e:'Si 주기능자가 통제력을 잃었을 때 열등기능인 외향 직관(Ne)의 부정적 파국화 상상에 휩싸인 상태입니다.'},
+  {c:'스트레스 상황', q:'평소 늘 밝고 사교적이며 분위기를 띄우던 사람이 심한 스트레스를 받자, "주변 사람들이 날 함정에 빠뜨리려 해"라며 음모론적 의심에 사로잡힌다면?', a:['INTJ','INFJ','ESFP','INTP'], k:2, e:'Se 주기능자가 스트레스 상황에서 열등기능인 내향 직관(Ni)의 어둡고 불길한 망상에 빠진 모습입니다.'},
+  {c:'스트레스 상황', q:'평소 조직을 카리스마 있게 이끌던 리더가 프로젝트 실패 후, "나는 아무런 가치도 없는 쓰레기야"라며 깊은 자기비하와 우울의 늪에 빠진다면?', a:['ISFP','INFP','INFJ','ENTJ'], k:3, e:'Te 주기능자가 한계에 부딪혔을 때 열등기능인 내향 감정(Fi)의 왜곡된 자기연민에 갇힌 상태입니다.'},
+  {c:'스트레스 상황', q:'평소 온화하고 헌신적이던 사람이 계속되는 과로와 무시를 당하자, 차갑게 눈빛이 변하며 상대방의 모든 과거 실수를 잔인할 정도로 냉혹하게 비판한다면?', a:['ISFJ','ENTP','ENFP','ESFP'], k:0, e:'Fe 부기능의 헌신이 무너졌을 때 3차 기능인 Ti가 왜곡되어 냉혹하고 비판적인 형태로 돌변하는 모습입니다.'},
+  {c:'스트레스 상황', q:'평소 아이디어가 넘치고 토론을 즐기던 사람이 심각한 탈진 상태가 되자, 방문을 걸어 잠그고 엑셀 장부의 1원 단위 오차에 집착하며 결벽증을 보인다면?', a:['ISFP','ENTP','ENFJ','ESFP'], k:1, e:'Ne 주기능자가 열등 Si의 그립 상태에 빠져 사소한 세부사항에 강박적으로 매몰된 증상입니다.'},
+  {c:'스트레스 상황', q:'평소 갈등을 극도로 싫어하고 조용히 양보하던 사람이 감정의 한계점에 도달하자, 물건을 집어던지며 주변 사람들의 모순을 공격적으로 폭로한다면?', a:['ENTJ','ESTJ','ISFP','ISTJ'], k:2, e:'Fi 주기능자가 열등기능인 Te의 미성숙한 폭력성(공격적 통제)으로 폭발한 모습입니다.'},
+  {c:'미래 계획', q:'새해 첫날 10년 뒤의 은퇴 자금, 주거 계획, 자기계발 마스터플랜을 단계별 로드맵으로 설계하고 즉시 실행에 옮기는 사람은?', a:['ESFP','ENFP','ISFP','INTJ'], k:3, e:'장기적 미래 통찰과 철저한 논리적 전략 실행(Ni+Te)을 결합하여 인생을 설계하는 INTJ입니다.'}
+];
+
+const QUESTION_BANK = QUESTIONS.slice();
+const $ = id => document.getElementById(id);
+
+const state = {
+  players: [], deck: [], round: 0, total: 20, timeLimit: 20,
+  timeLeft: 20, timerId: null, phase: 'setup', sound: true, audio: null,
+  previousSetup: null, question: null,
+  currentTurnPlayer: null,
+  disabledOptionsCount: 0
+};
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shuffle(arr){ for(let i=arr.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); }
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._id); toast._id = setTimeout(() => t.classList.remove('show'), 2000); }
+
+function tone(freq=440, duration=0.1, type='sine', gain=0.04){
+  if(!state.sound) return;
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(!C) return;
+    if(!state.audio) state.audio = new C();
+    if(state.audio.state === 'suspended') state.audio.resume();
+    const osc = state.audio.createOscillator(), g = state.audio.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, state.audio.currentTime);
+    g.gain.setValueAtTime(gain, state.audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, state.audio.currentTime + duration);
+    osc.connect(g); g.connect(state.audio.destination);
+    osc.start(); osc.stop(state.audio.currentTime + duration);
+  } catch(e){}
+}
+
+function fanfare(){ tone(523,0.12,'triangle'); setTimeout(()=>tone(659,0.12,'triangle'),90); setTimeout(()=>tone(1046,0.25,'triangle'),180); }
+
+function updateHUDStatus(){
+  if(state.currentTurnPlayer === null){
+    $('card0').className = 'fighter-card blue';
+    $('card1').className = 'fighter-card red';
+    $('buzzer0').textContent = '버저 대기';
+    $('buzzer1').textContent = '버저 대기';
+  } else if(state.currentTurnPlayer === 0){
+    $('card0').className = 'fighter-card blue active-turn';
+    $('card1').className = 'fighter-card red disabled-turn';
+    $('buzzer0').textContent = state.disabledOptionsCount > 0 ? '🔥 기회 획득!' : '선점 완료';
+    $('buzzer1').textContent = '기회 대기';
+  } else if(state.currentTurnPlayer === 1){
+    $('card0').className = 'fighter-card blue disabled-turn';
+    $('card1').className = 'fighter-card red active-turn';
+    $('buzzer0').textContent = '기회 대기';
+    $('buzzer1').textContent = state.disabledOptionsCount > 0 ? '🔥 기회 획득!' : '선점 완료';
+  }
+}
+
+function startGame(){
+  const n1 = $('name1').value.trim() || '도전자 A';
+  const n2 = $('name2').value.trim() || '도전자 B';
+  state.previousSetup = { n1, n2, total: Number($('roundCount').value), time: Number($('timeLimit').value) };
+  state.total = Math.min(state.previousSetup.total, QUESTION_BANK.length);
+  state.timeLimit = state.previousSetup.time;
+  state.deck = shuffle(QUESTION_BANK.map((q,i) => ({...q, id:i}))).slice(0, state.total);
+  state.round = 0;
+  state.players = [
+    { name: n1, score: 0, correct: 0, wrong: 0 },
+    { name: n2, score: 0, correct: 0, wrong: 0 }
+  ];
+  state.phase = 'playing';
+  showScreen('gameScreen');
+  nextQuestion(true);
+  fanfare();
+}
+
+function stopTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId = null; } }
+
+function nextQuestion(first=false){
+  stopTimer();
+  if(state.round >= state.total){ finishGame(); return; }
+  state.phase = 'playing';
+  state.question = state.deck[state.round];
+  state.currentTurnPlayer = null;
+  state.disabledOptionsCount = 0;
+
+  $('roundLabel').textContent = `ROUND ${String(state.round+1).padStart(2,'0')}`;
+  $('category').textContent = `[${state.question.c}]`;
+  $('question').textContent = state.question.q;
+  $('questionSub').textContent = '상황 속 인물에게 가장 잘 들어맞는 성격유형을 선택하세요!';
+  $('progress').style.width = (state.round / state.total * 100) + '%';
+  $('revealBanner').classList.remove('show');$('nextBtn').hidden = true;
+  $('skipBtn').disabled = false;
+
+  renderFighters();
+  renderSharedAnswers();
+  updateHUDStatus();
+
+  if(state.timeLimit > 0){
+    state.timeLeft = state.timeLimit;
+    updateTimer();
+    state.timerId = setInterval(() => {
+      if(state.phase !== 'playing') return;
+      state.timeLeft--;
+      updateTimer();
+      if(state.timeLeft <= 0){
+        stopTimer();
+        tone(140, 0.4, 'sawtooth', 0.08);
+        revealAnswerTimeout();
+      }
+    }, 1000);
+  } else {
+    $('timer').textContent = '∞';$('timer').classList.remove('urgent');
+  }
+  if(!first) tone(600, 0.08);
+}
+
+function updateTimer(){
+  $('timer').textContent = state.timeLeft + '초';
+  $('timer').classList.toggle('urgent', state.timeLeft <= 5);
+  if(state.timeLeft <= 5 && state.timeLeft > 0) tone(880, 0.05, 'square', 0.02);
+}
+
+function renderFighters(){
+  state.players.forEach((p, i) => {
+    $('playerName' + i).textContent = p.name;
+    $('score' + i).textContent = p.score;
+    $('meta' + i).textContent = `정답 ${p.correct} · 오답 ${p.wrong}`;
+    $('rank' + i).textContent = p.wrong >= p.correct + 3 ? '혼돈의 심리술사' : p.correct >= 3 ? 'MBTI 프로파일러' : '심리 관찰자';
+  });
+}
+
+function renderSharedAnswers(){
+  const container = $('sharedAnswers');
+  container.innerHTML = state.question.a.map((ans, j) => `
+    <button class="speed-ans-btn" data-ans="${j}">
+      <span class="letter">${'ABCD'[j]}</span>
+      <span>${escapeHTML(ans)}</span>
+    </button>
+  `).join('');
+
+  container.querySelectorAll('.speed-ans-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pIdx = state.currentTurnPlayer !== null ? state.currentTurnPlayer : 0;
+      handleAnswerAttempt(pIdx, Number(btn.dataset.ans));
+    });
+  });
+}
+
+function handleAnswerAttempt(playerIdx, ansIdx){
+  if(state.phase !== 'playing') return;
+
+  if(state.currentTurnPlayer !== null && state.currentTurnPlayer !== playerIdx) {
+    toast(`${state.players[state.currentTurnPlayer].name}에게 선택권이 있습니다!`);
+    return;
+  }
+
+  const btn = $('sharedAnswers').querySelector(`[data-ans="${ansIdx}"]`);
+  if(btn && btn.disabled) return;
+
+  const player = state.players[playerIdx];
+  const isCorrect = ansIdx === state.question.k;
+
+  if(isCorrect){
+    stopTimer();
+    state.phase = 'reveal';
+    player.correct++;
+    player.score += 100;
+
+    $('sharedAnswers').querySelectorAll('.speed-ans-btn').forEach((b, j) => {
+      b.disabled = true;
+      if(j === state.question.k) b.classList.add('is-correct');
+    });
+
+    state.currentTurnPlayer = playerIdx;
+    updateHUDStatus();
+    $('buzzer' + playerIdx).textContent = '🎉 정답! (+100점)';
+    $('questionSub').textContent = `${player.name} 완벽 간파! (+100점)`;
+
+    $('revealTitle').textContent = `정답: ${'ABCD'[state.question.k]}번 (${state.question.a[state.question.k]})`;
+    $('revealText').textContent = state.question.e || '';
+    $('revealBanner').classList.add('show');$('nextBtn').hidden = false;
+    $('skipBtn').disabled = true;
+
+    fanfare();
+    renderFighters();
+  } else {
+    player.wrong++;
+    player.score = Math.max(0, player.score - 50);
+    btn.classList.add('is-wrong');
+    btn.disabled = true;
+    state.disabledOptionsCount++;
+    tone(130, 0.35, 'sawtooth', 0.08);
+
+    if(state.disabledOptionsCount >= 3){
+      stopTimer();
+      state.phase = 'reveal';
+
+      $('sharedAnswers').querySelectorAll('.speed-ans-btn').forEach((b, j) => {
+        b.disabled = true;
+        if(j === state.question.k) b.classList.add('is-correct');
+      });
+
+      $('buzzer0').textContent = '기회 소진';
+      $('buzzer1').textContent = '기회 소진';
+      $('questionSub').textContent = `오답 누적으로 라운드가 종료되었습니다!`;
+
+      $('revealTitle').textContent = `정답: ${'ABCD'[state.question.k]}번 (${state.question.a[state.question.k]})`;
+      $('revealText').textContent = state.question.e || '';
+      $('revealBanner').classList.add('show');$('nextBtn').hidden = false;
+      $('skipBtn').disabled = true;
+
+      renderFighters();
+    } else {
+      const nextPlayerIdx = 1 - playerIdx;
+      state.currentTurnPlayer = nextPlayerIdx;
+      updateHUDStatus();
+
+      $('questionSub').textContent = `❌ ${player.name} 오답 (-50점)! 선택권이 ${state.players[nextPlayerIdx].name}에게 넘어갑니다!`;
+      toast(`오답! 기회가 ${state.players[nextPlayerIdx].name}에게 넘어갑니다!`);
+
+      if(state.timeLimit > 0){
+        state.timeLeft = Math.max(state.timeLeft, 8);
+        updateTimer();
+      }
+      renderFighters();
+    }
+  }
+}
+
+function revealAnswerTimeout(){
+  state.phase = 'reveal';
+  $('sharedAnswers').querySelectorAll('.speed-ans-btn').forEach((b, j) => { b.disabled = true; if(j === state.question.k) b.classList.add('is-correct'); });$('buzzer0').textContent = '시간 초과';
+  $('buzzer1').textContent = '시간 초과';
+  $('questionSub').textContent = '제한 시간 종료! 정답을 공개합니다.';
+  $('revealTitle').textContent = `정답: ${'ABCD'[state.question.k]}번 (${state.question.a[state.question.k]})`;
+  $('revealText').textContent = state.question.e || '';
+  $('revealBanner').classList.add('show');$('nextBtn').hidden = false;
+  $('skipBtn').disabled = true;
+}
+
+function finishGame(){
+  stopTimer();
+  state.phase = 'result';
+  showScreen('resultScreen');
+
+  const [a, b] = state.players;
+  const winner = a.score === b.score ? null : (a.score > b.score ? a : b);
+
+  $('winnerIcon').textContent = winner ? '👑' : '🤝';
+  $('winnerName').textContent = winner ? winner.name : '무승부';
+  $('winnerSub').textContent = winner ? `최종 점수 ${winner.score}점으로 승리!` : '양측 동점으로 무승부 판정';
+
+  if(winner) fanfare();
+
+  $('resultGrid').innerHTML = state.players.map((p, i) => {
+    const total = p.correct + p.wrong;
+    const acc = total ? Math.round(p.correct / total * 100) : 0;
+    return `
+      <article class="result-player">
+        <h3 style="color:${i===0?'var(--p1-cyan)':'var(--p2-red)'}">${i===0?'🔵 블루 진영':'🔴 레드 진영'} : ${escapeHTML(p.name)}</h3>
+        <div style="font-size: 28px; font-weight: 900; color: var(--gold); margin: 6px 0;">${p.score.toLocaleString()} 점</div>
+        <div class="stat-row"><span>적중률</span><b>${acc}% (${p.correct}/${total})</b></div>
+        <div class="stat-row"><span>정답 수</span><b>${p.correct} 회</b></div>
+        <div class="stat-row"><span>오답 수</span><b>${p.wrong} 회</b></div>
+      </article>
+    `;
+  }).join('');
+}
+
+(function initCanvasFX(){
+  const canvas = $('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+
+  function resize(){ w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for(let i=0; i<35; i++){
+    particles.push({
+      x: Math.random() * w, y: Math.random() * h,
+      size: Math.random() * 2 + 1,
+      speedY: -(Math.random() * 0.35 + 0.1), speedX: (Math.random() - 0.5) * 0.25,
+      color: Math.random() > 0.5 ? '#00f0ff' : '#ff2233', alpha: Math.random() * 0.4 + 0.1
+    });
+  }
+
+  function loop(){
+    ctx.clearRect(0, 0, w, h);
+    for(let p of particles){
+      p.y += p.speedY; p.x += p.speedX;
+      if(p.y < 0) { p.y = h; p.x = Math.random() * w; }
+      ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+$('startBtn').addEventListener('click', startGame);$('nextBtn').addEventListener('click', () => { state.round++; nextQuestion(); });
+$('skipBtn').addEventListener('click', () => { if(state.phase !== 'playing') return; revealAnswerTimeout(); });$('endBtn').addEventListener('click', () => { if(confirm('대결을 종료할까요?')) finishGame(); });
+$('rematchBtn').addEventListener('click', () => {
+  if(!state.previousSetup) return;
+  $('name1').value = state.previousSetup.n1; 
+  $('name2').value = state.previousSetup.n2;
+  $('roundCount').value = String(state.previousSetup.total);$('timeLimit').value = String(state.previousSetup.time);
+  startGame();
+});
+$('homeBtn').addEventListener('click', () => { stopTimer(); state.phase='setup'; showScreen('setupScreen'); });$('copyBtn').addEventListener('click', () => {
+  const text = state.players.map(p => `${p.name}: ${p.score}점 (정답 ${p.correct} / 오답 ${p.wrong})`).join('\n') + '\n#MBTI 상황 추론 퀴즈 결과';
+  navigator.clipboard.writeText(text).then(() => toast('결과가 복사되었습니다.'));
+});
+$('soundBtn').addEventListener('click', () => {
+  state.sound = !state.sound;
+  $('soundBtn').textContent = state.sound ? '🔊 효과음 켜짐' : '🔇 효과음 꺼짐';
+  if(state.sound) tone(660, 0.1);
+});
+$('fullBtn').addEventListener('click', () => {
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+});
+
+$('claimP1Btn').addEventListener('click', () => { state.currentTurnPlayer = 0; updateHUDStatus(); });$('claimP2Btn').addEventListener('click', () => { state.currentTurnPlayer = 1; updateHUDStatus(); });
+
+document.addEventListener('keydown', e => {
+  const active = document.activeElement;
+  if(active && ['INPUT','SELECT','TEXTAREA'].includes(active.tagName)) return;
+
+  if(state.phase === 'playing'){
+    if(['1','2','3','4'].includes(e.key)){
+      handleAnswerAttempt(0, Number(e.key) - 1);
+    } else if(['7','8','9','0'].includes(e.key)){
+      const map = {'7':0, '8':1, '9':2, '0':3};
+      handleAnswerAttempt(1, map[e.key]);
+    }
+  } else if(state.phase === 'reveal' && e.code === 'Space'){
+    e.preventDefault();
+    state.round++; nextQuestion();
+  }
+});
+</script>
+</body>
+</html>
+```<FollowUp>
+100문제의 텍스트가 모두 반영되었는데, 대결 라운드 진행 중 폰트 크기나 타임아웃 시간 등 추가로 튜닝하고 싶은 UI 요소가 있으신가요?
+</FollowUp>
